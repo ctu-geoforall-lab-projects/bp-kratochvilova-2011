@@ -1,0 +1,15 @@
+<menudata>
+  <menubar>
+    <menu>
+      <label>&amp;File</label>
+      <items>
+	<menuitem>
+	  <label>Quit</label>
+	  <help>Close Hardcopy Map Output Utility</help>
+	  <handler>OnCloseWindow</handler>
+	  <shortcut>Ctrl+W</shortcut>
+	</menuitem>
+      </items>
+    </menu>
+  </menubar>
+</menudata>
