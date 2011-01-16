@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 """!
 @package psmap
 
@@ -24,9 +26,22 @@ import menu
 from   menudata   import MenuData, etcwxdir
 from   toolbars   import AbstractToolbar
 from   icon       import Icons
-
+from   gcmd       import RunCommand
 import wx
 
+
+class UnitConversion():
+    def __init__(self):
+        self._unitEquivalence = {'inch':1,
+                            'meter':0.0254,
+                            'centimeter':2.54,
+                            'milimeter':25.4}
+    def getUnits(self):
+        return self._unitEquivalence.keys()
+    def convert(self, value, fromUnit=None, toUnit=None):
+        return value/self._unitEquivalence[fromUnit]*self._unitEquivalence[toUnit]
+        
+    
 class PsMapData(MenuData):
     def __init__(self, path = None):
         """!Menu for Hardcopy Map Output Utility (psmap.py)
@@ -36,7 +51,7 @@ class PsMapData(MenuData):
         if not path:
             gisbase = os.getenv('GISBASE')
             global etcwxdir
-	    path = os.path.join(etcwxdir, 'xml', 'menudata_psmap.xml')
+        path = os.path.join(etcwxdir, 'xml', 'menudata_psmap.xml')
         
         MenuData.__init__(self, path)
 
@@ -56,14 +71,161 @@ class PsMapToolbar(AbstractToolbar):
         """!Toolbar data
         """
         self.quit = wx.NewId()
+        self.pagesetup = wx.NewId()
         
         # tool, label, bitmap, kind, shortHelp, longHelp, handler
         return (
+            (self.pagesetup, 'page setup', Icons['settings'].GetBitmap(),
+             wx.ITEM_NORMAL, "Page setup", "Specify paper size, margins and orientation",
+             self.parent.OnPageSetup),
             (self.quit, 'quit', Icons['quit'].GetBitmap(),
              wx.ITEM_NORMAL, Icons['quit'].GetLabel(), Icons['quit'].GetDesc(),
-             self.parent.OnCloseWindow),
+             self.parent.OnCloseWindow)
             )
+class PageSetupDialog(wx.Dialog):
+    def __init__(self, parent, pageSetupDict):
+        wx.Dialog.__init__(self, parent, -1, title="Page setup", size=wx.DefaultSize, style=wx.DEFAULT_DIALOG_STYLE)
+        paperString = RunCommand('ps.map', flags='p', read=True)
+        self.paperTable = self._toList(paperString) 
+        self.units = UnitConversion()
+        self.unitsList = self.units.getUnits()
+        self.pageSetupDict = pageSetupDict
+
+        self.doLayout()
+        
+        if self.pageSetupDict:
+            for item in self.cat[:3]:
+                self.getCtrl(item).SetSelection(self.getCtrl(item).FindString(self.pageSetupDict[item]))
+            for item in self.cat[3:]:
+                self.getCtrl(item).SetValue("{0:4.2f}".format(self.pageSetupDict[item]))
+        else: #default
+            self.pageSetupDict = dict()
+            default = ['inch','a4','Portrait']
+            for i, item in enumerate(self.cat[:3]):
+                self.getCtrl(item).SetSelection(self.getCtrl(item).FindString(default[i]))
+                self.pageSetupDict[item] = default[i]
+            
+            for item in self.cat[3:]:
+                val = "{0:4.2f}".format(float(self.paperTable[0][item]))
+                self.getCtrl(item).SetValue(val)
+                self.pageSetupDict[item] = float(val)
+       
+        if self.getCtrl('Format').GetString(self.getCtrl('Format').GetSelection()) != 'custom':
+            self.getCtrl('Width').Disable()
+            self.getCtrl('Height').Disable()
+        else:
+            self.getCtrl('Orientation').Disable()
+        # events
+        self.getCtrl('Units').Bind(wx.EVT_CHOICE, self.OnChoice)
+        self.getCtrl('Format').Bind(wx.EVT_CHOICE, self.OnChoice)
+        self.getCtrl('Orientation').Bind(wx.EVT_CHOICE, self.OnChoice)
+        self.btnOk.Bind(wx.EVT_BUTTON, self.OnOK)
     
+    def getInfo(self):
+        return self.pageSetupDict
+    
+    def _update(self):
+        self.pageSetupDict['Units'] = self.getCtrl('Units').GetString(self.getCtrl('Units').GetSelection())
+        self.pageSetupDict['Format'] = self.paperTable[self.getCtrl('Format').GetSelection()]['Format']
+        self.pageSetupDict['Orientation'] = self.getCtrl('Orientation').GetString(self.getCtrl('Orientation').GetSelection())
+        for item in self.cat[3:]:
+            self.pageSetupDict[item] = float(self.getCtrl(item).GetValue())
+            
+    def OnOK(self, event):
+        self._update()
+        event.Skip()
+        
+    def doLayout(self):
+        size = (110,-1)
+        #sizers
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        pageBox = wx.StaticBox(self, id=wx.ID_ANY, label=" Page size ")
+        pageSizer = wx.StaticBoxSizer(pageBox, wx.VERTICAL)
+        marginBox = wx.StaticBox(self, id=wx.ID_ANY, label=" Margins ")
+        marginSizer = wx.StaticBoxSizer(marginBox, wx.VERTICAL)
+        horSizer = wx.BoxSizer(wx.HORIZONTAL) 
+        #staticText + choice
+        choices = [self.unitsList, [item['Format'] for item in self.paperTable], ['Portrait', 'Landscape']]
+        propor = [0,1,1]
+        border = [5,3,3]
+        self.hBoxDict={}
+        for i, item in enumerate(self.cat[:3]):
+            hBox = wx.BoxSizer(wx.HORIZONTAL)
+            stText = wx.StaticText(self, -1, label = item + ':')
+            choice = wx.Choice(self, -1, choices = choices[i], size=size)
+            hBox.Add(stText, proportion=propor[i], flag=wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=border[i])
+            hBox.Add(choice, proportion=0, flag=wx.ALL, border=border[i])
+            if item == 'Units':
+                hBox.Add(size,1) 
+            self.hBoxDict[item] = hBox    
+
+        #staticText + TextCtrl
+        for item in self.cat[3:]:
+            hBox = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(self, -1, label = item+':')
+            textctrl = wx.TextCtrl(self, id=wx.ID_ANY, size=size, value='')
+            hBox.Add(label, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=3)
+            hBox.Add(textctrl, proportion=0, flag=wx.ALIGN_CENTRE|wx.ALL, border=3)
+            self.hBoxDict[item] = hBox
+         
+        sizer = list([mainSizer] + [pageSizer]*4 + [marginSizer]*4)
+        for i, item in enumerate(self.cat):
+                sizer[i].Add(self.hBoxDict[item], 0, wx.GROW|wx.RIGHT|wx.LEFT,5)
+        # OK button
+        btnSizer = wx.StdDialogButtonSizer()
+        self.btnOk = wx.Button(self, wx.ID_OK)
+        self.btnOk.SetDefault()
+        btnSizer.AddButton(self.btnOk)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnSizer.AddButton(btn)
+        btnSizer.Realize()
+    
+    
+        horSizer.Add(pageSizer, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM,10)
+        horSizer.Add(marginSizer, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND,10)
+        mainSizer.Add(horSizer, 0, 10)  
+        mainSizer.Add(btnSizer, 0,wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)      
+        self.SetSizer(mainSizer)
+        mainSizer.Fit(self)
+    
+    def OnChoice(self, event):
+        currPaper = self.paperTable[self.getCtrl('Format').GetSelection()]
+        currUnit = self.getCtrl('Units').GetString(self.getCtrl('Units').GetSelection())
+        currOrient = self.getCtrl('Orientation').GetString(self.getCtrl('Orientation').GetSelection())
+        newSize = dict()
+        for item in self.cat[3:]:
+            newSize[item] = self.units.convert(float(currPaper[item]), fromUnit='inch', toUnit=currUnit)
+
+        enable = True
+        if currPaper['Format'] != 'custom':
+            if currOrient == 'Landscape':
+                newSize['Width'], newSize['Height'] = newSize['Height'], newSize['Width']
+                newSize['Left'], newSize['Right'], newSize['Top'], newSize['Bottom'] =\
+                (newSize['Bottom'],newSize['Top'], newSize['Left'], newSize['Right'])
+            for item in self.cat[3:]:
+                self.getCtrl(item).ChangeValue("{0:4.2f}".format(newSize[item]))
+            enable = False
+        self.getCtrl('Width').Enable(enable)
+        self.getCtrl('Height').Enable(enable)
+        self.getCtrl('Orientation').Enable(not enable)
+
+
+    def getCtrl(self, item):
+         return self.hBoxDict[item].GetItem(1).GetWindow()
+        
+    def _toList(self, paperStr):
+        self.cat = ['Units', 'Format', 'Orientation', 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
+        sizeList = list()
+        for line in paperStr.strip().split('\n'):
+            d = dict(zip([self.cat[1]]+ self.cat[3:],line.split()))
+            sizeList.append(d)
+        d = {}.fromkeys([self.cat[1]]+ self.cat[3:], 100)
+        d.update(Format='custom')
+        sizeList.append(d)
+        return sizeList
+        
+        
+        
 class PsMapFrame(wx.Frame):
     def __init__(self, parent = None, id = wx.ID_ANY,
                  title = _("GRASS GIS Hardcopy Map Output Utility"), **kwargs):
@@ -89,22 +251,32 @@ class PsMapFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar(number = 1)
         
         self.canvas = PsMapBufferedWindow(parent = self)
+        self.pageSetupDict={}
         
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
         self._layout()
-        self.SetMinSize(wx.Size(640, 480))
+        self.SetMinSize(wx.Size(700, 600))
         
     def _layout(self):
         """!Do layout
         """
         pass
     
+    def OnPageSetup(self, event):
+        """!Specify paper size, margins and orientation"""
+        dlg = PageSetupDialog(self, self.pageSetupDict) 
+        dlg.CenterOnScreen()
+        val = dlg.ShowModal()
+        if val == wx.ID_OK:
+            self.pageSetupDict=dlg.getInfo()
+        dlg.Destroy()
+        
     def OnCloseWindow(self, event):
         """!Close window"""
         self.Destroy()
 
-class PsMapBufferedWindow(wx.Window):
+class PsMapBufferedWindow(wx.ScrolledWindow):
     """!A buffered window class.
     
     @param parent parent window
@@ -113,13 +285,20 @@ class PsMapBufferedWindow(wx.Window):
     def __init__(self, parent, id =  wx.ID_ANY,
                  style = wx.NO_FULL_REPAINT_ON_RESIZE,
                  **kwargs):
+        wx.ScrolledWindow.__init__(self, parent, id = id, style = style, **kwargs)
         self.parent = parent
+        self.maxWidth = 2000
+        self.maxHeight = 2000
+        self.SetBackgroundColour("WHITE")
+        self.SetVirtualSize((self.maxWidth, self.maxHeight))
+        self.SetScrollRate(20,20)
+        
         # store an off screen empty bitmap for saving to file
         self._buffer = None
         # indicates whether or not a resize event has taken place
         self.resize = False 
         
-        wx.Window.__init__(self, parent, id = id, style = style, **kwargs)
+        
         
         self.pdc = wx.PseudoDC()
         
@@ -154,7 +333,11 @@ class PsMapBufferedWindow(wx.Window):
         dc.Clear()
         
         # draw to the DC using the calculated clipping rect
+        xv, yv = self.GetViewStart()
+        dx, dy = self.GetScrollPixelsPerUnit()
+        x, y   = (xv * dx, yv * dy)
         rgn = self.GetUpdateRegion()
+        rgn.Offset(x,y)
         self.pdc.DrawToDCClipped(dc, rgn.GetBox())
         
     def OnSize(self, event):
