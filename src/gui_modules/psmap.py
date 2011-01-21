@@ -20,7 +20,9 @@ This program is free software under the GNU General Public License
 """
 
 import os
+import sys
 
+sys.path.append(os.path.join(os.getenv('GISBASE'), 'etc', 'gui', 'wxpython', 'gui_modules'))
 import globalvar
 import menu
 from   menudata   import MenuData, etcwxdir
