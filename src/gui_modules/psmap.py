@@ -20,27 +20,34 @@ This program is free software under the GNU General Public License
 """
 
 import os
-import sys
+import tempfile
 
-sys.path.append(os.path.join(os.getenv('GISBASE'), 'etc', 'gui', 'wxpython', 'gui_modules'))
 import globalvar
 import menu
 from   menudata   import MenuData, etcwxdir
+from   gselect    import Select
 from   toolbars   import AbstractToolbar
 from   icon       import Icons
 from   gcmd       import RunCommand
+from grass.script import core as grass
+
 import wx
+try:
+    from agw import flatnotebook as fnb
+except ImportError: # if it's not there locally, try the wxPython lib.
+    import wx.lib.agw.flatnotebook as fnb
 
 
 class UnitConversion():
     def __init__(self):
-        self._unitEquivalence = {'inch':1,
-                            'meter':0.0254,
+        self._unitEquivalence = {'inch':1.0,
+                            'point':72.0,
+                            'meter': 0.0254,
                             'centimeter':2.54,
                             'milimeter':25.4}
     def getUnits(self):
         return self._unitEquivalence.keys()
-    def convert(self, value, fromUnit=None, toUnit=None):
+    def convert(self, value, fromUnit = None, toUnit = None):
         return value/self._unitEquivalence[fromUnit]*self._unitEquivalence[toUnit]
         
     
@@ -77,6 +84,10 @@ class PsMapToolbar(AbstractToolbar):
         self.zoomIn = wx.NewId()
         self.zoomOut = wx.NewId()
         self.zoomAll = wx.NewId()
+        self.addMap = wx.NewId()
+        self.instructionFile = wx.NewId()
+        self.generatePS = wx.NewId()
+        self.pan = wx.NewId()
         
         # tool, label, bitmap, kind, shortHelp, longHelp, handler
         return (
@@ -92,13 +103,26 @@ class PsMapToolbar(AbstractToolbar):
             (self.zoomOut, 'zoom out', Icons['zoom_out'].GetBitmap(),
              wx.ITEM_NORMAL, "Zoom out", "Zoom out",
              self.parent.OnZoomOut),
+            (self.pan, 'panning', Icons['pan'].GetBitmap(),
+             wx.ITEM_NORMAL, "Panning", "Panning",
+             self.parent.OnPan),
+            (self.addMap, 'add map', Icons['addrast'].GetBitmap(),
+             wx.ITEM_NORMAL, "Raster map", "Place raster map",
+             self.parent.OnAddMap),
+            (self.instructionFile, 'generate', Icons['savefile'].GetBitmap(),
+             wx.ITEM_NORMAL, "Generate file", "Generate mapping instruction file",
+             self.parent.OnInstructionFile),
+            (self.generatePS, 'generatePS', Icons['modelToImage'].GetBitmap(),
+             wx.ITEM_NORMAL, "Create PS file", "Create PostScript file",
+             self.parent.PSFile),
             (self.quit, 'quit', Icons['quit'].GetBitmap(),
              wx.ITEM_NORMAL, Icons['quit'].GetLabel(), Icons['quit'].GetDesc(),
              self.parent.OnCloseWindow)
             )
 class PageSetupDialog(wx.Dialog):
     def __init__(self, parent, pageSetupDict):
-        wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, title = "Page setup", size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
+        wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
+                            title = "Page setup", size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
         
         self.cat = ['Units', 'Format', 'Orientation', 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
         paperString = RunCommand('ps.map', flags = 'p', read = True)
@@ -107,13 +131,13 @@ class PageSetupDialog(wx.Dialog):
         self.unitsList = self.units.getUnits()
         self.pageSetupDict = pageSetupDict
 
-        self.doLayout()
+        self._layout()
         
         if self.pageSetupDict:
             for item in self.cat[:3]:
                 self.getCtrl(item).SetSelection(self.getCtrl(item).FindString(self.pageSetupDict[item]))
             for item in self.cat[3:]:
-                self.getCtrl(item).SetValue("{0:4.2f}".format(self.pageSetupDict[item]))
+                self.getCtrl(item).SetValue("{0:4.3f}".format(self.pageSetupDict[item]))
 
        
         if self.getCtrl('Format').GetString(self.getCtrl('Format').GetSelection()) != 'custom':
@@ -135,7 +159,8 @@ class PageSetupDialog(wx.Dialog):
         self.pageSetupDict['Format'] = self.paperTable[self.getCtrl('Format').GetSelection()]['Format']
         self.pageSetupDict['Orientation'] = self.getCtrl('Orientation').GetString(self.getCtrl('Orientation').GetSelection())
         for item in self.cat[3:]:
-            self.pageSetupDict[item] = float(self.getCtrl(item).GetValue())
+            self.pageSetupDict[item] = self.units.convert(value = float(self.getCtrl(item).GetValue()),
+                                        fromUnit = self.pageSetupDict['Units'], toUnit = 'inch')
             
 
             
@@ -148,7 +173,7 @@ class PageSetupDialog(wx.Dialog):
         else:
             event.Skip()
         
-    def doLayout(self):
+    def _layout(self):
         size = (110,-1)
         #sizers
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -213,10 +238,8 @@ class PageSetupDialog(wx.Dialog):
         if currPaper['Format'] != 'custom':
             if currOrient == 'Landscape':
                 newSize['Width'], newSize['Height'] = newSize['Height'], newSize['Width']
-                newSize['Left'], newSize['Right'], newSize['Top'], newSize['Bottom'] =\
-                (newSize['Bottom'],newSize['Top'], newSize['Left'], newSize['Right'])
             for item in self.cat[3:]:
-                self.getCtrl(item).ChangeValue("{0:4.2f}".format(newSize[item]))
+                self.getCtrl(item).ChangeValue("{0:4.3f}".format(newSize[item]))
             enable = False
         self.getCtrl('Width').Enable(enable)
         self.getCtrl('Height').Enable(enable)
@@ -236,8 +259,126 @@ class PageSetupDialog(wx.Dialog):
         d.update(Format = 'custom')
         sizeList.append(d)
         return sizeList
+    
+class MapDialog(wx.Dialog):
+    def __init__(self, parent, mapDict = None):
+        wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, title = "Map settings",
+                            size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
+        
+        self.parent = parent
+        self.mapDialogDict = mapDict
+        self.mapsets = [grass.gisenv()['MAPSET'],]
+        self.scale, (self.x, self.y, self.w, self.h) = self.GetAutoScale()
+        self.mapDialogDict['rect']['x'] = self.x
+        self.mapDialogDict['rect']['y'] = self.y
+        self.mapDialogDict['rect']['w'] = self.w
+        self.mapDialogDict['rect']['h'] = self.h
+        self._layout()
+
+        
+        if self.mapDialogDict['raster']:
+            self.select.SetValue(self.mapDialogDict['raster'])
+        self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.scale))
+     
+        self.btnOk.Bind(wx.EVT_BUTTON, self.OnOK)
+
         
         
+    def GetAutoScale(self):
+        currRegion = RunCommand('g.region', flags = 'g', read = True)
+        currRegionDict = {}
+        for item in currRegion.strip().split('\n'):
+            currRegionDict[item.split('=')[0]] = float(item.split('=')[1])
+            
+        units = UnitConversion()
+        rX = units.convert(value = self.mapDialogDict['rect']['x'], fromUnit = 'inch', toUnit = 'meter')
+        rY = units.convert(value = self.mapDialogDict['rect']['y'], fromUnit = 'inch', toUnit = 'meter')
+        rW = units.convert(value = self.mapDialogDict['rect']['w'], fromUnit = 'inch', toUnit = 'meter')
+        rH = units.convert(value = self.mapDialogDict['rect']['h'], fromUnit = 'inch', toUnit = 'meter')
+        mW, mH = currRegionDict['e'] - currRegionDict['w'], currRegionDict['n'] - currRegionDict['s']
+        
+        scale = min(rW/mW, rH/mH)
+        
+        if rW/rH > mW/mH:
+            x = rX - (rH*(mW/mH) - rW)/2
+            y = rY
+            rWNew = rH*(mW/mH)
+            rHNew = rH
+        else:
+            x = rX
+            y = rY - (rW*(mH/mW) - rH)/2
+            rHNew = rW*(mH/mW)
+            rWNew = rW
+            
+        x = units.convert(value = x, fromUnit = 'meter', toUnit = 'inch')
+        y = units.convert(value = y, fromUnit = 'meter', toUnit = 'inch')
+        rHNew = units.convert(value = rHNew, fromUnit = 'meter', toUnit = 'inch')
+        rWNew = units.convert(value = rWNew, fromUnit = 'meter', toUnit = 'inch')
+        return scale, (x, y, rHNew, rWNew) #inch
+#        
+##                yView = rect.GetY() - (rW*(cH/cW) - rH)/2
+##                xView = rect.GetX()
+##                if self.mouse['use'] == 'zoomout':
+##                    x,y = rect.GetX()-(rW-(cW/cH)*rH)/2, rect.GetY()
+##                    xView, yView = -x, -y
+##            else:
+##                xView = rect.GetX() - (rH*(cW/cH) - rW)/2
+##                yView = rect.GetY()
+##                if self.mouse['use'] == 'zoomout':
+##                    x,y = rect.GetX(), rect.GetY() -(rH-(cH/cW)*rW)/2
+##                    xView, yView = -x, -y
+        
+    def _layout(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        
+        hBox = wx.BoxSizer(wx.HORIZONTAL)
+        text = wx.StaticText(self, id = wx.ID_ANY, label = "Choose raster map: ")
+        self.select = Select(self, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
+                 type = 'raster', multiple = False, mapsets = self.mapsets,
+                 updateOnPopup = True, onPopup = None)
+        hBox.Add(text, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 3)
+        hBox.Add(self.select, proportion = 0, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
+        mainSizer.Add(hBox, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
+        
+        hBox = wx.BoxSizer(wx.HORIZONTAL)
+        text = wx.StaticText(self, id = wx.ID_ANY, label = "Scale: ")
+        self.choice = wx.Choice(self, id = wx.ID_ANY, choices = ['Automatic', 'Fixed'])
+        self.textCtrl = wx.TextCtrl(self, id = wx.ID_ANY, value = '1:10000', style = wx.TE_RIGHT)
+        hBox.Add(text, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 3)
+        hBox.Add(self.choice, proportion = 1, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
+        hBox.Add(self.textCtrl, proportion = 1, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
+        mainSizer.Add(hBox, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
+        
+        #button OK
+        btnSizer = wx.StdDialogButtonSizer()
+        self.btnOk = wx.Button(self, wx.ID_OK)
+        self.btnOk.SetDefault()
+        btnSizer.AddButton(self.btnOk)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnSizer.AddButton(btn)
+        btnSizer.Realize()
+        
+        
+         
+        mainSizer.Add(btnSizer, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
+        self.SetSizer(mainSizer)
+        mainSizer.Fit(self)
+    
+        self.choice.Bind(wx.EVT_CHOICE, self.OnScaleChoice)
+        
+    def OnScaleChoice(self, event):
+        scale = self.choice.GetSelection()
+       # if scale == 0 # automatic
+            
+    def _update(self):
+        self.mapDialogDict['raster'] = self.select.GetValue() 
+
+    def getInfo(self):
+        return self.mapDialogDict
+    
+    def OnOK(self, event):
+        self._update()
+        event.Skip()
         
 class PsMapFrame(wx.Frame):
     def __init__(self, parent = None, id = wx.ID_ANY,
@@ -263,11 +404,9 @@ class PsMapFrame(wx.Frame):
         #satusbar
         self.statusbar = self.CreateStatusBar(number = 1)
         
-
             
         self.SetDefault()
         self.canvas = PsMapBufferedWindow(parent = self)
-        
         
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
@@ -278,22 +417,109 @@ class PsMapFrame(wx.Frame):
     def SetDefault(self, **kwargs):
         self.pageSetupDict = dict(zip(PageSetupDialog(self, None).cat,
                                 ['inch','a4','Portrait',8.268, 11.693, 0.5, 0.5, 1, 1]))
+        self.mapDialogDict = dict(raster = None, rect = None) 
             
     def _layout(self):
         """!Do layout
         """
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        self.book = fnb.FlatNotebook(self, wx.ID_ANY, style = fnb.FNB_BOTTOM)
+        self.book.AddPage(self.canvas, "Page 1")
+        self.book.AddPage(wx.Panel(self), "Page 2")
+        mainSizer.Add(self.book,1, wx.EXPAND)
+        
+        self.SetSizer(mainSizer)
+        mainSizer.Fit(self)
+            
         pass
+            
+    def InstructionFile(self):
+        instruction = []
+        # paper
+        if self.pageSetupDict['Format'] == 'custom':
+            paperInstruction = "paper\n    width {Width}\n    height {Height}\n".format(**self.pageSetupDict)
+        else:
+            paperInstruction = "paper {Format}\n".format(**self.pageSetupDict)
+        paperInstruction = paperInstruction +\
+                            "    left {Left}\n    right {Right}\n"    \
+                            "    bottom {Bottom}\n    top {Top}\nend".format(**self.pageSetupDict)
+                        
+        instruction.append(paperInstruction)
+        # raster
+        rasterInstruction = ''
+        if self.mapDialogDict['raster']:
+            rasterInstruction = "raster {raster}".format(**self.mapDialogDict)
+        instruction.append(rasterInstruction)
+        #maploc
+        maplocInstruction = "maploc {rect[x]} {rect[y]} {rect[w]} {rect[h]}".format(**self.mapDialogDict)
+        instruction.append(maplocInstruction)
+        
+        return '\n'.join(instruction)
     
+    def PSFile(self, event):
+        filename = self.GetFile(wildcard = "PostScript (*.ps)|*.ps|Encapsulated PostScript (*.eps)|*.eps")
+        if filename:
+            instrFile = tempfile.NamedTemporaryFile(mode = 'w')
+            instrFile.file.write(self.InstructionFile())
+            instrFile.file.flush()
+            flags = ''
+            if os.path.splitext(filename)[1] == '.eps':
+                flags = flags + 'e'
+            if self.pageSetupDict['Orientation'] == 'Landscape':
+                flags = flags + 'r'
+            RunCommand('ps.map', flags = flags, read = False, 
+                        input = instrFile.name, output = filename)
+                
+                    
+    def GetFile(self, wildcard):
+        suffix = []
+        for filter in wildcard.split('|')[1::2]:
+            s = filter.strip('*').split('.')[1]
+            if s:
+                s = '.' + s
+            suffix.append(s)
+            
+        if self.mapDialogDict['raster']:
+            mapName = self.mapDialogDict['raster'].split('@')[0] + suffix[0]
+        else:
+            mapName = ''
+            
+        filename = ''
+        dlg = wx.FileDialog(self, message = "Save file as", defaultDir = "", 
+                            defaultFile = mapName, wildcard = wildcard,
+                            style = wx.CHANGE_DIR|wx.SAVE|wx.OVERWRITE_PROMPT)
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            suffix = suffix[dlg.GetFilterIndex()]
+            if not os.path.splitext(filename)[1]:
+                filename = filename + suffix
+            elif os.path.splitext(filename)[1] != suffix and suffix != '':
+                filename = os.path.splitext(filename)[0] + suffix
+            
+        dlg.Destroy()
+        return filename
+        
+                        
+    def OnInstructionFile(self, event):
+        filename = self.GetFile(wildcard = "All files(*.*)|*.*|Text file|*.txt")        
+        if filename:    
+            instrFile = open(filename, "w")
+            instrFile.write(self.InstructionFile())
+            instrFile.close()            
+        
     def OnPageSetup(self, event = None):
         """!Specify paper size, margins and orientation"""
         dlg = PageSetupDialog(self, self.pageSetupDict) 
         dlg.CenterOnScreen()
         val = dlg.ShowModal()
         if val == wx.ID_OK:
-            self.pageSetupDict=dlg.getInfo()
+            self.pageSetupDict = dlg.getInfo()
             self.canvas.SetPage()
         dlg.Destroy()
         
+    def OnPan(self, event):
+        self.canvas.mouse["use"] = "pan"
+            
     def OnZoomIn(self, event):
         self.canvas.mouse["use"] = "zoomin"
         
@@ -303,12 +529,23 @@ class PsMapFrame(wx.Frame):
     def OnZoomAll(self, event):
         self.canvas.mouse["use"] = "zoomall"
         self.canvas.ZoomAll()
-        
+    def OnAddMap(self, event):
+        for item in self.canvas.itemDict.values():
+            if item['type'] == 'map':
+                dlg = MapDialog(parent = self, mapDict = self.mapDialogDict)
+                val = dlg.ShowModal()
+                if val == wx.ID_OK:
+                    self.mapDialogDict = dlg.getInfo()
+                dlg.Destroy()
+                return
+        self.canvas.mouse["use"] = "addMap"
+            
+    
     def OnCloseWindow(self, event):
         """!Close window"""
         self.Destroy()
 
-class PsMapBufferedWindow(wx.ScrolledWindow):
+class PsMapBufferedWindow(wx.Window):
     """!A buffered window class.
     
     @param parent parent window
@@ -317,11 +554,10 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
     def __init__(self, parent, id =  wx.ID_ANY,
                  style = wx.NO_FULL_REPAINT_ON_RESIZE,
                  **kwargs):
-        wx.ScrolledWindow.__init__(self, parent, id = id, style = style, **kwargs)
+        wx.Window.__init__(self, parent, id = id, style = style, **kwargs)
         self.parent = parent
     
         self.FitInside()
-        self.SetScrollRate(20,20)
       
         # store an off screen empty bitmap for saving to file
         self._buffer = None
@@ -338,11 +574,17 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         # pen and brush
         self.pen = {
             'paper': wx.Pen("BLACK", 1),
-            'object': wx.Pen("RED", 2)
+            'margins': wx.Pen("GREY", 1),
+            'foo': wx.Pen("RED", 2),
+            'map': wx.Pen("GREEN", 1),
+            'box': wx.Pen("BLACK", 1)
             }
         self.brush = {
             'paper': wx.WHITE_BRUSH,
-            'object': wx.GREEN_BRUSH
+            'margins': wx.TRANSPARENT_BRUSH,            
+            'foo': wx.GREEN_BRUSH,
+            'map': wx.CYAN_BRUSH,
+            'box': wx.TRANSPARENT_BRUSH
             }
         # define PseudoDC
         self.pdcObj = wx.PseudoDC()
@@ -352,13 +594,14 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         self.SetClientSize((700,510))#?
         self._buffer = wx.EmptyBitmap(*self.GetClientSize())
         
-        self.idPaper = None
-        self.idVirtualPaper = None # it's used to set some free space around paper
-        self.objIds = []
-        self.objRectDic = {}
+        self.pageId = []
+        self.objectId = []
+        self.itemDict = {}
+             
+
         self.idBoxTmp = 1000
         self.currScale = None
-        
+        #self.SetupAttributes()
         self.Clear()
         self.DrawObj(self.pdcObj)
         
@@ -369,6 +612,23 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         self.Bind(wx.EVT_IDLE,  self.OnIdle)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouse)
         
+##    def SetupAttributes(self):
+##        idPaper = wx.NewId()
+##        idMargins = wx.NewId()
+##        self.pageId = [idPaper, idMargins]
+##        self.itemDict[self.pageId[0]] = {   'type': 'paper',
+##                                            'drawRect': wx.Rect()}   
+##        self.itemDict[self.pageId[1]] = {   'type': 'margins',
+##                                            'drawRect': wx.Rect()} 
+##                                            
+##        idMap = wx.NewId()
+##        #self.objectId.append(idMap)
+##        self.itemDict[idMap] = {'name': 'map',
+##                                'drawRect': wx.Rect()}
+##        idFoo = wx.NewId()
+##        self.itemDict[idFoo] = {'name': 'foo',
+##                                'drawRect': wx.Rect()}
+##        
     def Clear(self):
         """!Clear canvas and set paper
         """
@@ -378,68 +638,75 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         self.pdcPaper.Clear()
         self.pdcPaper.EndDrawing()
         
-        if self.idPaper:
-            self.pdcPaper.RemoveId(self.idPaper)
-        if self.idVirtualPaper:
-            self.pdcPaper.RemoveId(self.idVirtualPaper)
-
-        self.idPaper = wx.NewId()
-        self.idVirtualPaper = wx.NewId()
-        
         self.SetPage()
         
 
-    def PageRect(self, pageDict, inflate = 0):
-        """! Returnes offset and scaled page """
+    def PageRect(self, pageDict):
+        """! Returnes offset and scaled page and margins rectangles"""
+        ppi = wx.PaintDC(self).GetPPI()
         cW, cH = self.GetClientSize()
-        pW, pH = pageDict['Width']*72 + inflate, pageDict['Height']*72 + inflate
+        pW, pH = pageDict['Width']*ppi[0], pageDict['Height']*ppi[1]
+
         if self.currScale is None:
             self.currScale = min(cW/pW, cH/pH)
+        paperRect = wx.Rect()
         pW = pW * self.currScale
         pH = pH * self.currScale
         x = cW/2 - pW/2
         y = cH/2 - pH/2
-        return wx.Rect(x, y, pW, pH)# pixel
+        paperRect = wx.Rect(x, y, pW, pH)
+        #margins
+        marginRect = wx.Rect(   x + pageDict['Left']*ppi[0] * self.currScale,
+                                y + pageDict['Top']*ppi[1] * self.currScale,
+                                pW - pageDict['Left']*ppi[0] * self.currScale - pageDict['Right']*ppi[0] * self.currScale,
+                                pH - pageDict['Top']*ppi[1] * self.currScale - pageDict['Bottom']*ppi[1] * self.currScale)
+        return paperRect, marginRect
+    
+    def PaperCanvasCoordinates(self, rect):
+        """!Converts canvas to paper coordinates and size in inches"""
+        pRect = self.pdcPaper.GetIdBounds(self.pageId[0])
+        realWidth = UnitConversion().convert(value = rect.GetWidth()/self.currScale,
+                                fromUnit = 'point', toUnit = 'inch')
+        realHeight = UnitConversion().convert(value = rect.GetHeight()/self.currScale,
+                                fromUnit = 'point', toUnit = 'inch')
+        realX = UnitConversion().convert(value = (rect.GetX() - pRect.GetX())/self.currScale,
+                                fromUnit = 'point', toUnit = 'inch')
+        realY = UnitConversion().convert(value = (rect.GetY() - pRect.GetY())/self.currScale,
+                                fromUnit = 'point', toUnit = 'inch')
+        return {'x': realX, 'y': realY, 'w': realWidth, 'h': realHeight}
+        
         
     def SetPage(self):
         """!Sets and changes page, redraws paper"""
-        vW, vH = self.GetVirtualSize()
+        if len(self.pageId) == 0:
+            idPaper = wx.NewId()
+            idMargins = wx.NewId()
+            self.pageId = [idPaper, idMargins]
+            self.itemDict[self.pageId[0]] = {   'type': 'paper',
+                                                'drawRect': wx.Rect()}   
+            self.itemDict[self.pageId[1]] = {   'type': 'margins',
+                                                'drawRect': wx.Rect()} 
         cW, cH = self.GetClientSize()
-        virtualPaper = self.PageRect(pageDict = self.parent.pageSetupDict, inflate = 30)
-        newPaper = self.PageRect(pageDict = self.parent.pageSetupDict, inflate = 0)
-        pW, pH = virtualPaper.GetWidth(), virtualPaper.GetHeight()
-        sc = max(float(pW)/vW, float(pH)/vH)
-        vWNew = vW * sc
-        vHNew = vH * sc
-        self.SetVirtualSize((vWNew, vHNew))
-        virtualPaper.OffsetXY((vWNew - cW)/2, (vHNew - cH)/2)
-        newPaper.OffsetXY((vWNew - cW)/2, (vHNew - cH)/2)
-
-        self.pdcPaper.SetIdBounds(self.idVirtualPaper, virtualPaper)
-        
-        self.Draw(pen = self.pen['paper'], brush = self.brush['paper'], pdc = self.pdcPaper,
-                    pdctype = 'rect', drawid = self.idPaper, bb = newPaper)
-        
-        # move objects when they are out of virtual size            
-        for objId in self.objIds:
-            rect = self.pdcObj.GetIdBounds(objId)
-            if not wx.Rect(0,0,*self.GetVirtualSize()).ContainsRect(rect):
-                x, y = rect.GetBottomRight().x - vWNew, rect.GetBottomRight().y - vHNew
-                rect.OffsetXY(-x, -y)
-                self.Draw(pen = self.pen['object'], brush = self.brush['object'], pdc = self.pdcObj,
-                            pdctype = 'rect', drawid = objId, bb = rect)
-
+        rectangles = self.PageRect(pageDict = self.parent.pageSetupDict)
+        for id, rect, type in zip(self.pageId, rectangles, ['paper', 'margins']):
+            self.itemDict[id]['drawRect'] = rect  
+            self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
+                    pdctype = 'rect', drawid = id, bb = rect)
 
             
     def DrawObj(self, pdc):
-        id = wx.NewId()
         testRect = wx.Rect(0,0,100,100)
-        self.objRectDic[id] = testRect
         rect = self.ScaleRect(testRect, self.currScale)
         rect.OffsetXY(200,300)
-        self.Draw(pen = self.pen['object'], brush = self.brush['object'], pdc = self.pdcObj,
+              
+        id = wx.NewId()
+        self.itemDict[id] = {   'type': 'foo',
+                                'drawRect': rect} 
+        type = self.itemDict[id]['type']
+        
+        self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
                     pdctype = 'rect', drawid = id, bb = rect)
-        self.objIds.append(id)
+        self.objectId.append(id)
 
     def modifyRectangle(self, r):
         """! Recalculates rectangle not to have negative size"""
@@ -458,7 +725,6 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         if not self._buffer:
             return
         dc = wx.BufferedPaintDC(self, self._buffer)
-        
         # use PrepareDC to set position correctly
         self.PrepareDC(dc)
         
@@ -467,53 +733,64 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         # draw paper
         self.pdcPaper.DrawToDC(dc)
         # draw to the DC using the calculated clipping rect
-        xv, yv = self.GetViewStart()
-        dx, dy = self.GetScrollPixelsPerUnit()
-        x, y   = (xv * dx, yv * dy)
+
         rgn = self.GetUpdateRegion()
-        rgn.Offset(x,y)
         
         self.pdcObj.DrawToDCClipped(dc, rgn.GetBox())
         self.pdcTmp.DrawToDCClipped(dc, rgn.GetBox())
     
     def OnMouse(self, event):
         if event.LeftDown():
-            if self.mouse['use'] in ('zoomin', 'zoomout'):
-                self.mouse['begin'] = self.CalcUnscrolledPosition(event.GetPosition())
+            if self.mouse['use'] in ('pan', 'zoomin', 'zoomout', 'addMap'):
+                self.mouse['begin'] = event.GetPosition()
                 self.oldR = wx.Rect()
-        elif event.Dragging():
-            if self.mouse['use'] in ('zoomin', 'zoomout'):
-                self.pdcTmp.BeginDrawing()
-                self.pdcTmp.RemoveId(self.idBoxTmp)
-                self.pdcTmp.SetId(self.idBoxTmp)
-            
-                self.pdcTmp.SetPen(wx.Pen('BLACK', 1))
-                self.pdcTmp.SetBrush(wx.TRANSPARENT_BRUSH)
-
-                #draw
-                self.mouse['end'] = self.CalcUnscrolledPosition(event.GetPosition())
+                
+        elif event.Dragging() and event.LeftIsDown():
+            #draw box
+            if self.mouse['use'] in ('zoomin', 'zoomout', 'addMap'):
+                self.mouse['end'] = event.GetPosition()
                 r = wx.Rect(self.mouse['begin'][0], self.mouse['begin'][1],
                             self.mouse['end'][0]-self.mouse['begin'][0], self.mouse['end'][1]-self.mouse['begin'][1])
                 r = self.modifyRectangle(r)
-                self.pdcTmp.DrawRectangleRect(r)
-                self.pdcTmp.SetIdBounds(self.idBoxTmp,r)
-                #refresh
-                r.Inflate(2,2)
-                self.RefreshRect(self.oldR)
-                xx,yy = self.CalcScrolledPosition(r.GetX(),r.GetY())
-                r.SetX(xx)
-                r.SetY(yy)
-                self.oldR = r
+                self.Draw(pen = self.pen['box'], brush = self.brush['box'], pdc = self.pdcTmp, drawid = self.idBoxTmp,
+                            pdctype = 'rect', bb = r)
+            # panning                
+            if self.mouse["use"] == 'pan':
+                self.mouse['end'] = event.GetPosition()
+                view = self.mouse['begin'][0] - self.mouse['end'][0], self.mouse['begin'][1] - self.mouse['end'][1]
+                zoomFactor = 1
+                self.Zoom(zoomFactor, view)
+                self.mouse['begin'] = event.GetPosition()
                 
-                self.pdcTmp.EndDrawing()
         elif event.LeftUp():
+            # zoom in, zoom out
             if self.mouse['use'] in ('zoomin','zoomout'):
                 zoomR = self.pdcTmp.GetIdBounds(self.idBoxTmp)
                 self.pdcTmp.RemoveId(self.idBoxTmp)
                 self.Refresh()
-                self.Zoom(zoomR)
-
-
+                zoomFactor, view = self.ComputeZoom(zoomR)
+                self.Zoom(zoomFactor, view)
+            # draw map frame    
+            if self.mouse['use'] == 'addMap':
+                rectTmp = self.pdcTmp.GetIdBounds(self.idBoxTmp)
+                rectPaper = self.PaperCanvasCoordinates(rect = rectTmp)
+                self.pdcTmp.RemoveId(self.idBoxTmp)
+                self.Refresh()
+                self.parent.mapDialogDict['rect'] = rectPaper 
+                dlg = MapDialog(parent = self, mapDict = self.parent.mapDialogDict)
+                val = dlg.ShowModal()
+                if val == wx.ID_OK:
+                    self.parent.mapDialogDict = dlg.getInfo()
+                    print self.parent.mapDialogDict
+                else:
+                    self.parent.mapDialogDict['rect'] = None    
+                dlg.Destroy()
+                id = wx.NewId()
+                self.itemDict[id] = {'type': 'map', 'drawRect': rectTmp}
+                type = self.itemDict[id]['type']
+                self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
+                                                drawid = id, pdctype = 'rect', bb = rectTmp)
+                self.objectId.append(id)
         event.Skip()
             
     def ComputeZoom(self, rect):
@@ -538,57 +815,48 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
                 yView = rect.GetY() - (rW*(cH/cW) - rH)/2
                 xView = rect.GetX()
                 if self.mouse['use'] == 'zoomout':
-                    x,y = self.CalcScrolledPosition(rect.GetX()-(rW-(cW/cH)*rH)/2, rect.GetY())
-                    xView, yView = self.CalcUnscrolledPosition(-x, -y)
+                    x,y = rect.GetX()-(rW-(cW/cH)*rH)/2, rect.GetY()
+                    xView, yView = -x, -y
             else:
                 xView = rect.GetX() - (rH*(cW/cH) - rW)/2
                 yView = rect.GetY()
                 if self.mouse['use'] == 'zoomout':
-                    x,y = self.CalcScrolledPosition(rect.GetX(), rect.GetY() -(rH-(cH/cW)*rW)/2)
-                    xView, yView = self.CalcUnscrolledPosition(-x, -y)
+                    x,y = rect.GetX(), rect.GetY() -(rH-(cH/cW)*rW)/2
+                    xView, yView = -x, -y
         return zoomFactor, (xView, yView)
                
                 
-    def Zoom(self, zoomR):
+    def Zoom(self, zoomFactor, view):
         """! Zoom to specified region, scroll view, redraw"""
-        zoomFactor, view = self.ComputeZoom(zoomR)
         self.currScale = self.currScale*zoomFactor
-        currSize = self.GetVirtualSize()
-        currSize.Scale(zoomFactor, zoomFactor)
-        # zoomin limit
-        if currSize.GetWidth() > 10000:
-            return
-        self.SetVirtualSize(currSize)
-        pPU = self.GetScrollPixelsPerUnit()
-        self.Scroll(view[0]*zoomFactor/pPU[0], view[1]*zoomFactor/pPU[1])
+        if self.currScale > 10 or self.currScale < 0.2:
+            self.currScale = self.currScale/zoomFactor
+            return 
         
         # redraw paper
-        pRect = self.pdcPaper.GetIdBounds(self.idPaper)
-        pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
-        if pRect.GetWidth() < 50:# zoom out limit
-            return 
-        self.Draw(pen = self.pen['paper'], brush = self.brush['paper'], pdc = self.pdcPaper,
-                    drawid = self.idPaper, pdctype = 'rect', bb = pRect)
+        for i, id in enumerate(self.pageId):
+            pRect = self.pdcPaper.GetIdBounds(self.pageId[i])
+            pRect.OffsetXY(-view[0], -view[1])
+            pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
+            type = self.itemDict[id]['type']
+            self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
+                        drawid = id, pdctype = 'rect', bb = pRect)
+
         
         #redraw objects
-        for objId in self.objIds:
-            oRect = self.pdcObj.GetIdBounds(objId)
+        for i, id in enumerate(self.objectId):
+            oRect = self.pdcObj.GetIdBounds(id)
+            oRect.OffsetXY(-view[0] , -view[1])
             oRect = self.ScaleRect(rect = oRect, scale = zoomFactor)
-            self.Draw(pen = self.pen['object'], brush = self.brush['object'], pdc = self.pdcObj,
-                        drawid = objId, pdctype = 'rect', bb = oRect)
-            
-        width, height = self.GetClientSize()
-        self._buffer = wx.EmptyBitmap(width, height)
+            type = self.itemDict[id]['type']
+            self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
+                        drawid = id, pdctype = 'rect', bb = oRect)
         
     def ZoomAll(self):
-        """! Zoom to full extent"""
-        for i in range(2):  # very dummy solution! in some cases it's necessary
-            zoomP = self.pdcPaper.GetIdBounds(self.idVirtualPaper)
-            self.Zoom(zoomP)
-            self.SetVirtualSize(self.GetClientSize())
-            width, height = self.GetClientSize()
-            self._buffer = wx.EmptyBitmap(width, height)
-            self.SetPage()
+        """! Zoom to full extent"""  
+        zoomP = self.pdcPaper.GetIdBounds(self.pageId[0])
+        zoomFactor, view = self.ComputeZoom(zoomP)
+        self.Zoom(zoomFactor, view)
                     
     def Draw(self, pen, brush, pdc, drawid = None, pdctype = 'rect', bb = wx.Rect(0,0,0,0)): 
         """! Draw object"""    
@@ -605,8 +873,9 @@ class PsMapBufferedWindow(wx.ScrolledWindow):
         pdc.SetIdBounds(drawid, bb)
         self.Refresh()
         pdc.EndDrawing()
-        
+
         return drawid
+    
     def OnSize(self, event):
         """!Init image size to match window size
         """
