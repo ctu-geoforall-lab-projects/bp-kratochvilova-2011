@@ -21,6 +21,7 @@ This program is free software under the GNU General Public License
 
 import os
 import tempfile
+from collections import namedtuple
 
 import globalvar
 import menu
@@ -38,17 +39,26 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     import wx.lib.agw.flatnotebook as fnb
 
 
+# like wx.Rect but supports float     
+Rect = namedtuple('Rect', 'x y width height')
+
 class UnitConversion():
-    def __init__(self):
-        self._unitEquivalence = {'inch':1.0,
+    
+    def __init__(self, parent):
+        self.parent = parent
+        ppi = wx.PaintDC(self.parent).GetPPI()
+        self._unitsPage = {'inch':1.0,
                             'point':72.0,
-                            'meter': 0.0254,
                             'centimeter':2.54,
                             'milimeter':25.4}
-    def getUnits(self):
-        return self._unitEquivalence.keys()
+        self._units = { 'pixel': ppi[0],
+                        'meter': 0.0254}
+        self._units.update(self._unitsPage)
+
+    def getPageUnits(self):
+        return self._unitsPage.keys()
     def convert(self, value, fromUnit = None, toUnit = None):
-        return value/self._unitEquivalence[fromUnit]*self._unitEquivalence[toUnit]
+        return value/self._units[fromUnit]*self._units[toUnit]
         
     
 class PsMapData(MenuData):
@@ -127,8 +137,8 @@ class PageSetupDialog(wx.Dialog):
         self.cat = ['Units', 'Format', 'Orientation', 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
         paperString = RunCommand('ps.map', flags = 'p', read = True)
         self.paperTable = self._toList(paperString) 
-        self.units = UnitConversion()
-        self.unitsList = self.units.getUnits()
+        self.units = UnitConversion(self)
+        self.unitsList = self.units.getPageUnits()
         self.pageSetupDict = pageSetupDict
 
         self._layout()
@@ -268,37 +278,46 @@ class MapDialog(wx.Dialog):
         self.parent = parent
         self.mapDialogDict = mapDict
         self.mapsets = [grass.gisenv()['MAPSET'],]
-        self.scale, (self.x, self.y, self.w, self.h) = self.GetAutoScale()
-        self.mapDialogDict['rect']['x'] = self.x
-        self.mapDialogDict['rect']['y'] = self.y
-        self.mapDialogDict['rect']['w'] = self.w
-        self.mapDialogDict['rect']['h'] = self.h
+        self.scale, self.rectAdjusted = self.AutoAdjust()
+
+        
+
         self._layout()
+        
 
         
         if self.mapDialogDict['raster']:
             self.select.SetValue(self.mapDialogDict['raster'])
-        self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.scale))
-     
+            
+        if self.mapDialogDict['scaleType'] is not None: #0 - automatic, 1 - fixed
+            self.choice.SetSelection(self.mapDialogDict['scaleType'])
+            if self.mapDialogDict['scaleType'] == 0:
+                self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.scale))
+                self.textCtrl.Disable()
+            elif self.mapDialogDict['scaleType'] == 1:
+ 
+                self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.mapDialogDict['scale']))
+                self.textCtrl.Enable()
+
+            
         self.btnOk.Bind(wx.EVT_BUTTON, self.OnOK)
 
         
         
-    def GetAutoScale(self):
-        currRegion = RunCommand('g.region', flags = 'g', read = True)
-        currRegionDict = {}
-        for item in currRegion.strip().split('\n'):
-            currRegionDict[item.split('=')[0]] = float(item.split('=')[1])
+    def AutoAdjust(self):
+        grass.del_temp_region()
+        currRegionDict = grass.region()
             
-        units = UnitConversion()
-        rX = units.convert(value = self.mapDialogDict['rect']['x'], fromUnit = 'inch', toUnit = 'meter')
-        rY = units.convert(value = self.mapDialogDict['rect']['y'], fromUnit = 'inch', toUnit = 'meter')
-        rW = units.convert(value = self.mapDialogDict['rect']['w'], fromUnit = 'inch', toUnit = 'meter')
-        rH = units.convert(value = self.mapDialogDict['rect']['h'], fromUnit = 'inch', toUnit = 'meter')
-        mW, mH = currRegionDict['e'] - currRegionDict['w'], currRegionDict['n'] - currRegionDict['s']
+        units = UnitConversion(self)
+        rX = self.mapDialogDict['rect'].x
+        rY = self.mapDialogDict['rect'].y
+        rW = self.mapDialogDict['rect'].width
+        rH = self.mapDialogDict['rect'].height
         
+        mW = units.convert(value = currRegionDict['e'] - currRegionDict['w'], fromUnit = 'meter', toUnit = 'inch')
+        mH = units.convert(value = currRegionDict['n'] - currRegionDict['s'], fromUnit = 'meter', toUnit = 'inch')
         scale = min(rW/mW, rH/mH)
-        
+
         if rW/rH > mW/mH:
             x = rX - (rH*(mW/mH) - rW)/2
             y = rY
@@ -309,24 +328,7 @@ class MapDialog(wx.Dialog):
             y = rY - (rW*(mH/mW) - rH)/2
             rHNew = rW*(mH/mW)
             rWNew = rW
-            
-        x = units.convert(value = x, fromUnit = 'meter', toUnit = 'inch')
-        y = units.convert(value = y, fromUnit = 'meter', toUnit = 'inch')
-        rHNew = units.convert(value = rHNew, fromUnit = 'meter', toUnit = 'inch')
-        rWNew = units.convert(value = rWNew, fromUnit = 'meter', toUnit = 'inch')
-        return scale, (x, y, rHNew, rWNew) #inch
-#        
-##                yView = rect.GetY() - (rW*(cH/cW) - rH)/2
-##                xView = rect.GetX()
-##                if self.mouse['use'] == 'zoomout':
-##                    x,y = rect.GetX()-(rW-(cW/cH)*rH)/2, rect.GetY()
-##                    xView, yView = -x, -y
-##            else:
-##                xView = rect.GetX() - (rH*(cW/cH) - rW)/2
-##                yView = rect.GetY()
-##                if self.mouse['use'] == 'zoomout':
-##                    x,y = rect.GetX(), rect.GetY() -(rH-(cH/cW)*rW)/2
-##                    xView, yView = -x, -y
+        return scale, (x, y, rWNew, rHNew) #inch
         
     def _layout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -367,11 +369,45 @@ class MapDialog(wx.Dialog):
         self.choice.Bind(wx.EVT_CHOICE, self.OnScaleChoice)
         
     def OnScaleChoice(self, event):
-        scale = self.choice.GetSelection()
-       # if scale == 0 # automatic
+        scaleType = self.choice.GetSelection()
+        if scaleType == 0: # automatic
+            self.textCtrl.Disable()
+            self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.scale))
+        elif scaleType == 1:
+            self.textCtrl.Enable()
+           
             
     def _update(self):
+        units = UnitConversion(self)
+        #raster
         self.mapDialogDict['raster'] = self.select.GetValue() 
+        #scale
+        scaleType = self.choice.GetSelection()
+        if scaleType == 0: # automatic
+            self.scale, self.rectAdjusted = self.AutoAdjust()
+            self.mapDialogDict['rect'] = Rect(*self.rectAdjusted) 
+            self.mapDialogDict['scaleType'] = 0
+            self.mapDialogDict['scale'] = self.scale            
+        elif scaleType == 1:
+            self.mapDialogDict['scaleType'] = 1
+            scaleNumber = float(self.textCtrl.GetValue().split(':')[1].strip())
+            print scaleNumber
+            self.mapDialogDict['scale'] = 1/scaleNumber
+            
+            rectHalfInch = ( self.mapDialogDict['rect'].width/2, self.mapDialogDict['rect'].height/2)
+            rectHalfMeter = ( units.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')*scaleNumber,
+                                units.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')*scaleNumber) 
+            currRegCentre = RunCommand('g.region', read = True, flags = 'c')
+            currRegCentreDict = {}
+            for item in currRegCentre.strip().split('\n'):
+                currRegCentreDict[item.split(':')[0].strip()] = float(item.split(':')[1].strip())
+                
+            grass.use_temp_region()
+            RunCommand('g.region',  n = currRegCentreDict['center northing'] + rectHalfMeter[1],
+                                    s = currRegCentreDict['center northing'] - rectHalfMeter[1],
+                                    e = currRegCentreDict['center easting'] + rectHalfMeter[0],
+                                    w = currRegCentreDict['center easting'] - rectHalfMeter[0])
+            
 
     def getInfo(self):
         return self.mapDialogDict
@@ -417,7 +453,7 @@ class PsMapFrame(wx.Frame):
     def SetDefault(self, **kwargs):
         self.pageSetupDict = dict(zip(PageSetupDialog(self, None).cat,
                                 ['inch','a4','Portrait',8.268, 11.693, 0.5, 0.5, 1, 1]))
-        self.mapDialogDict = dict(raster = None, rect = None) 
+        self.mapDialogDict = dict(raster = None, rect = None, scaleType = 0, scale = None) 
             
     def _layout(self):
         """!Do layout
@@ -430,8 +466,7 @@ class PsMapFrame(wx.Frame):
         
         self.SetSizer(mainSizer)
         mainSizer.Fit(self)
-            
-        pass
+
             
     def InstructionFile(self):
         instruction = []
@@ -451,7 +486,7 @@ class PsMapFrame(wx.Frame):
             rasterInstruction = "raster {raster}".format(**self.mapDialogDict)
         instruction.append(rasterInstruction)
         #maploc
-        maplocInstruction = "maploc {rect[x]} {rect[y]} {rect[w]} {rect[h]}".format(**self.mapDialogDict)
+        maplocInstruction = "maploc {rect.x} {rect.y} {rect.width} {rect.height}".format(**self.mapDialogDict)
         instruction.append(maplocInstruction)
         
         return '\n'.join(instruction)
@@ -530,12 +565,19 @@ class PsMapFrame(wx.Frame):
         self.canvas.mouse["use"] = "zoomall"
         self.canvas.ZoomAll()
     def OnAddMap(self, event):
-        for item in self.canvas.itemDict.values():
-            if item['type'] == 'map':
-                dlg = MapDialog(parent = self, mapDict = self.mapDialogDict)
-                val = dlg.ShowModal()
-                if val == wx.ID_OK:
-                    self.mapDialogDict = dlg.getInfo()
+        id = self.find_key(self.canvas.itemType, 'map')
+        if id:
+            assert len(id) == 1, 'Object map must be only one'
+            id = id[0]
+            dlg = MapDialog(parent = self, mapDict = self.mapDialogDict)
+            val = dlg.ShowModal()
+            if val == wx.ID_OK:
+                self.mapDialogDict = dlg.getInfo()
+                rectCanvas = self.canvas.CanvasPaperCoordinates(rect = self.mapDialogDict['rect'],
+                                                                    canvasToPaper = False)
+    
+                self.canvas.Draw(  pen = self.canvas.pen[self.canvas.itemType[id]], brush = self.canvas.brush[self.canvas.itemType[id]],
+                            pdc = self.canvas.pdcObj, drawid = id, pdctype = 'rect', bb = rectCanvas)
                 dlg.Destroy()
                 return
         self.canvas.mouse["use"] = "addMap"
@@ -544,6 +586,11 @@ class PsMapFrame(wx.Frame):
     def OnCloseWindow(self, event):
         """!Close window"""
         self.Destroy()
+
+    
+    def find_key(self, dic, val):
+        """!Return the key of dictionary given the value"""
+        return [k for k, v in dic.iteritems() if v == val]
 
 class PsMapBufferedWindow(wx.Window):
     """!A buffered window class.
@@ -596,12 +643,13 @@ class PsMapBufferedWindow(wx.Window):
         
         self.pageId = []
         self.objectId = []
-        self.itemDict = {}
-             
+        self.itemType = {}
+        
+
 
         self.idBoxTmp = 1000
         self.currScale = None
-        #self.SetupAttributes()
+  
         self.Clear()
         self.DrawObj(self.pdcObj)
         
@@ -612,23 +660,8 @@ class PsMapBufferedWindow(wx.Window):
         self.Bind(wx.EVT_IDLE,  self.OnIdle)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouse)
         
-##    def SetupAttributes(self):
-##        idPaper = wx.NewId()
-##        idMargins = wx.NewId()
-##        self.pageId = [idPaper, idMargins]
-##        self.itemDict[self.pageId[0]] = {   'type': 'paper',
-##                                            'drawRect': wx.Rect()}   
-##        self.itemDict[self.pageId[1]] = {   'type': 'margins',
-##                                            'drawRect': wx.Rect()} 
-##                                            
-##        idMap = wx.NewId()
-##        #self.objectId.append(idMap)
-##        self.itemDict[idMap] = {'name': 'map',
-##                                'drawRect': wx.Rect()}
-##        idFoo = wx.NewId()
-##        self.itemDict[idFoo] = {'name': 'foo',
-##                                'drawRect': wx.Rect()}
-##        
+
+
     def Clear(self):
         """!Clear canvas and set paper
         """
@@ -662,18 +695,28 @@ class PsMapBufferedWindow(wx.Window):
                                 pH - pageDict['Top']*ppi[1] * self.currScale - pageDict['Bottom']*ppi[1] * self.currScale)
         return paperRect, marginRect
     
-    def PaperCanvasCoordinates(self, rect):
-        """!Converts canvas to paper coordinates and size in inches"""
+    def CanvasPaperCoordinates(self, rect, canvasToPaper = True):
+        """!Converts canvas (pixel) -> paper (inch) coordinates and size and vice versa"""
+        
+        units = UnitConversion(self)
+        
+        fromU = 'pixel'
+        toU = 'inch'
+        scale = 1/self.currScale
         pRect = self.pdcPaper.GetIdBounds(self.pageId[0])
-        realWidth = UnitConversion().convert(value = rect.GetWidth()/self.currScale,
-                                fromUnit = 'point', toUnit = 'inch')
-        realHeight = UnitConversion().convert(value = rect.GetHeight()/self.currScale,
-                                fromUnit = 'point', toUnit = 'inch')
-        realX = UnitConversion().convert(value = (rect.GetX() - pRect.GetX())/self.currScale,
-                                fromUnit = 'point', toUnit = 'inch')
-        realY = UnitConversion().convert(value = (rect.GetY() - pRect.GetY())/self.currScale,
-                                fromUnit = 'point', toUnit = 'inch')
-        return {'x': realX, 'y': realY, 'w': realWidth, 'h': realHeight}
+        pRectx, pRecty = pRect.x, pRect.y 
+        if not canvasToPaper: # paper -> canvas
+            fromU = 'inch'
+            toU = 'pixel'
+            scale = self.currScale
+            pRectx = units.convert(value =  - pRect.x/scale, fromUnit = 'pixel', toUnit = 'inch' ) #inch, real, negative
+            pRecty = units.convert(value =  - pRect.y/scale, fromUnit = 'pixel', toUnit = 'inch' )
+
+        Width = units.convert(value = rect.width * scale, fromUnit = fromU, toUnit = toU)
+        Height = units.convert(value = rect.height * scale, fromUnit = fromU, toUnit = toU)
+        X = units.convert(value = (rect.x - pRectx) * scale, fromUnit = fromU, toUnit = toU)
+        Y = units.convert(value = (rect.y - pRecty) * scale, fromUnit = fromU, toUnit = toU)
+        return Rect(X, Y, Width, Height)
         
         
     def SetPage(self):
@@ -682,14 +725,11 @@ class PsMapBufferedWindow(wx.Window):
             idPaper = wx.NewId()
             idMargins = wx.NewId()
             self.pageId = [idPaper, idMargins]
-            self.itemDict[self.pageId[0]] = {   'type': 'paper',
-                                                'drawRect': wx.Rect()}   
-            self.itemDict[self.pageId[1]] = {   'type': 'margins',
-                                                'drawRect': wx.Rect()} 
+            self.itemType[self.pageId[0]] = 'paper'   
+            self.itemType[self.pageId[1]] = 'margins' 
         cW, cH = self.GetClientSize()
         rectangles = self.PageRect(pageDict = self.parent.pageSetupDict)
-        for id, rect, type in zip(self.pageId, rectangles, ['paper', 'margins']):
-            self.itemDict[id]['drawRect'] = rect  
+        for id, rect, type in zip(self.pageId, rectangles, ['paper', 'margins']): 
             self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
                     pdctype = 'rect', drawid = id, bb = rect)
 
@@ -700,11 +740,10 @@ class PsMapBufferedWindow(wx.Window):
         rect.OffsetXY(200,300)
               
         id = wx.NewId()
-        self.itemDict[id] = {   'type': 'foo',
-                                'drawRect': rect} 
-        type = self.itemDict[id]['type']
+        self.itemType[id] = 'foo'
+
         
-        self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
+        self.Draw(pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]], pdc = self.pdcObj,
                     pdctype = 'rect', drawid = id, bb = rect)
         self.objectId.append(id)
 
@@ -773,24 +812,29 @@ class PsMapBufferedWindow(wx.Window):
             # draw map frame    
             if self.mouse['use'] == 'addMap':
                 rectTmp = self.pdcTmp.GetIdBounds(self.idBoxTmp)
-                rectPaper = self.PaperCanvasCoordinates(rect = rectTmp)
-                self.pdcTmp.RemoveId(self.idBoxTmp)
-                self.Refresh()
+                rectPaper = self.CanvasPaperCoordinates(rect = rectTmp, canvasToPaper = True)
+                
                 self.parent.mapDialogDict['rect'] = rectPaper 
+
                 dlg = MapDialog(parent = self, mapDict = self.parent.mapDialogDict)
                 val = dlg.ShowModal()
                 if val == wx.ID_OK:
                     self.parent.mapDialogDict = dlg.getInfo()
-                    print self.parent.mapDialogDict
+                    rectCanvas = self.CanvasPaperCoordinates(rect = self.parent.mapDialogDict['rect'],
+                                                                canvasToPaper = False)
+                    id = wx.NewId()
+                    self.itemType[id] = 'map'
+                    self.pdcTmp.RemoveId(self.idBoxTmp)
+                    self.Draw(pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]], pdc = self.pdcObj,
+                                                drawid = id, pdctype = 'rect', bb = rectCanvas)
+                    self.objectId.append(id)
                 else:
-                    self.parent.mapDialogDict['rect'] = None    
+                    self.parent.mapDialogDict['rect'] = None 
+                    self.pdcTmp.RemoveId(self.idBoxTmp)
+                    self.Refresh()   
                 dlg.Destroy()
-                id = wx.NewId()
-                self.itemDict[id] = {'type': 'map', 'drawRect': rectTmp}
-                type = self.itemDict[id]['type']
-                self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
-                                                drawid = id, pdctype = 'rect', bb = rectTmp)
-                self.objectId.append(id)
+                
+                self.mouse['use'] = 'pointer'
         event.Skip()
             
     def ComputeZoom(self, rect):
@@ -838,7 +882,7 @@ class PsMapBufferedWindow(wx.Window):
             pRect = self.pdcPaper.GetIdBounds(self.pageId[i])
             pRect.OffsetXY(-view[0], -view[1])
             pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
-            type = self.itemDict[id]['type']
+            type = self.itemType[id]
             self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
                         drawid = id, pdctype = 'rect', bb = pRect)
 
@@ -848,7 +892,7 @@ class PsMapBufferedWindow(wx.Window):
             oRect = self.pdcObj.GetIdBounds(id)
             oRect.OffsetXY(-view[0] , -view[1])
             oRect = self.ScaleRect(rect = oRect, scale = zoomFactor)
-            type = self.itemDict[id]['type']
+            type = self.itemType[id]
             self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
                         drawid = id, pdctype = 'rect', bb = oRect)
         
