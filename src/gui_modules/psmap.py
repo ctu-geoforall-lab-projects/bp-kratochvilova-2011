@@ -22,6 +22,7 @@ This program is free software under the GNU General Public License
 import os
 import sys
 import tempfile
+from math import ceil
 from collections import namedtuple
 
 import grass.script as grass
@@ -41,6 +42,8 @@ from   gcmd       import RunCommand
 from grass.script import core as grass
 
 import wx
+import wx.lib.scrolledpanel as scrolled
+
 try:
     from agw import flatnotebook as fnb
 except ImportError: # if it's not there locally, try the wxPython lib.
@@ -67,7 +70,7 @@ class UnitConversion():
     def getPageUnits(self):
         return self._unitsPage.keys()
     def convert(self, value, fromUnit = None, toUnit = None):
-        return value/self._units[fromUnit]*self._units[toUnit]
+        return float(value)/self._units[fromUnit]*self._units[toUnit]
         
     
 class PsMapData(MenuData):
@@ -140,7 +143,7 @@ class PsMapToolbar(AbstractToolbar):
              self.parent.OnZoomAll),
             ("", "", "", "", "", "", ""),
             (self.addMap, 'add map', Icons['addrast'].GetBitmap(),
-             wx.ITEM_CHECK, "Raster map", "Place raster map",
+             wx.ITEM_CHECK, "Raster map", "Click and drag to place raster map",
              self.parent.OnAddMap),
             (self.dec, "overlay", Icons["overlay"].GetBitmap(),
              wx.ITEM_NORMAL, Icons["overlay"].GetLabel(), Icons["overlay"].GetDesc(),
@@ -448,10 +451,11 @@ class LegendDialog(wx.Dialog):
         self.parent = parent
         self.legendDict = legendDict
         self.mapsets = [grass.gisenv()['MAPSET'],]
+        self.units = UnitConversion(self)
         
         # notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
-        self._rasterLegend(notebook)
+        self.panelRaster = self._rasterLegend(notebook)
         self._vectorLegend(notebook)
 
         # buttons
@@ -482,17 +486,27 @@ class LegendDialog(wx.Dialog):
         mainSizer.Fit(self)
         
     def _rasterLegend(self, notebook):
-        panel = wx.Panel(parent = notebook, id = wx.ID_ANY)
+        panel = scrolled.ScrolledPanel(parent = notebook, id = wx.ID_ANY, size = (-1, 500), style = wx.TAB_TRAVERSAL)
+        panel.SetupScrolling(scroll_x = False, scroll_y = True)
         notebook.AddPage(page = panel, text = _("Raster legend"))
 
         border = wx.BoxSizer(wx.VERTICAL)
         # is legend
         self.isLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Add raster legend"))
         self.isLegend.SetValue(True)
-        border.Add(item = self.isLegend, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
-        
+        #units
+        box = wx.BoxSizer(wx.HORIZONTAL)
+        units = wx.StaticText(panel, id = wx.ID_ANY, label = _("Units:"))
+        choices = self.units.getPageUnits()
+        self.unitsChoice = wx.Choice(panel, id = wx.ID_ANY, choices = choices)
+        box.Add(self.isLegend, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        box.Add(units, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        box.Add(self.unitsChoice, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 5)
+        border.Add(item = box, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+
         # choose raster
-        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Source")))
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Source raster")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         flexSizer = wx.FlexGridSizer (cols = 2, hgap = 5, vgap = 5)
         flexSizer.AddGrowableCol(1)
@@ -500,40 +514,196 @@ class LegendDialog(wx.Dialog):
         self.rasterDefault = wx.RadioButton(panel, id = wx.ID_ANY, label = _("current raster"))
         self.rasterOther = wx.RadioButton(panel, id = wx.ID_ANY, label = _("select raster"))
         self.rasterCurrent = wx.StaticText(panel, id = wx.ID_ANY, label = _("{0}").format(self.parent.dialogDict['map']['raster']) )
-        self.rasterSelect = Select( panel, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
+        self.rasterSelect = Select( panel, id = wx.ID_ANY, size = globalvar.DIALOG_GSELECT_SIZE,
                                 type = 'raster', multiple = False, mapsets = self.mapsets,
                                 updateOnPopup = True, onPopup = None)
         flexSizer.Add(self.rasterDefault, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.rasterCurrent, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(self.rasterCurrent, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
         flexSizer.Add(self.rasterOther, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.rasterSelect, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(self.rasterSelect, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
         
         sizer.Add(item = flexSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
+        # size and position
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Size and position")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        
+        gridBagSizer = wx.GridBagSizer( hgap = 5, vgap = 5)
+        #gridBagSizer.AddGrowableCol(1)
+        #gridBagSizer.AddGrowableCol(3)
+        gridBagSizer.AddGrowableCol(5)
+        
+        commentPosition = wx.StaticText(panel, id = wx.ID_ANY,\
+                    label = _("Position of the top left corner from the top left edge of the paper:"))
+        x = wx.StaticText(panel, id = wx.ID_ANY, label = _("X:"))
+        y = wx.StaticText(panel, id = wx.ID_ANY, label = _("Y:"))
+        self.xCoord = wx.TextCtrl(panel, id = wx.ID_ANY, value = "0")
+        self.yCoord = wx.TextCtrl(panel, id = wx.ID_ANY, value = "0")
+        
+        self.defaultSize = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Use default size"))
+        width = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width:"))
+        self.widthCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "0")
+        height = wx.StaticText(panel, id = wx.ID_ANY, label = _("Height:"))
+        self.heightCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "0")
+        cols = wx.StaticText(panel, id = wx.ID_ANY, label = _("Columns:"))
+        self.colsCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, value = "", min = 1, max = 10, initial = 1)
+
+        gridBagSizer.Add(commentPosition, pos = (0,0), span = (1,6), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(x, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.xCoord, pos = (1,1), flag = wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(y, pos = (1,2), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.yCoord, pos = (1,3), flag = wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(self.defaultSize, pos = (2,0), span = (1, 3), flag = wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(width, pos = (3,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.widthCtrl, pos = (3,1), flag = wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(height, pos = (3,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.heightCtrl, pos = (3,3), flag = wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(cols, pos = (3,4), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.colsCtrl, pos = (3,5), flag = wx.ALIGN_LEFT, border = 0)
+       
+        sizer.Add(item = gridBagSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        # font settings
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        flexSizer = wx.FlexGridSizer (cols = 5, hgap = 5, vgap = 5)
+        flexSizer.AddGrowableCol(1)
+        
+        font = wx.StaticText(panel, id = wx.ID_ANY, label = _("Font:"))
+        fontSize = wx.StaticText(panel, id = wx.ID_ANY, label = _("Font size:"))
+        fontSizeUnit = wx.StaticText(panel, id = wx.ID_ANY, label = _("points"))
+        color = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color:"))
+        fontChoices = [ 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica',\
+                        'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier',\
+                        'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique']
+        colorChoices = [  'aqua', 'black', 'blue', 'brown', 'cyan', 'gray', 'green', 'indigo', 'magenta',\
+                        'orange', 'purple', 'red', 'violet', 'white', 'yellow']
+        self.fontCtrl = wx.Choice(panel, id = wx.ID_ANY, choices = fontChoices)
+        self.colorCtrl = wx.Choice(panel, id = wx.ID_ANY, choices = colorChoices)
+        self.fontSizeCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 99, initial = 10)
+        
+        flexSizer.Add(font, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(self.fontCtrl, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE, border = 0)
+        flexSizer.Add(fontSize, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(self.fontSizeCtrl, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(fontSizeUnit, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(color, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        flexSizer.Add(self.colorCtrl, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(item = flexSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        # FCELL settings
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Floating point raster settings")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        #tickbar
+        self.ticks = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw ticks across color table"))
+        # range
+        self.range = wx.CheckBox(panel, id = wx.ID_ANY, label = _("range"))
+        minText =  wx.StaticText(panel, id = wx.ID_ANY, label = _("min:"))
+        maxText =  wx.StaticText(panel, id = wx.ID_ANY, label = _("max:"))
+        self.min = wx.TextCtrl(panel, id = wx.ID_ANY, value = "0")
+        self.max = wx.TextCtrl(panel, id = wx.ID_ANY, value = "0")
+        self.discreteFcell = wx.CheckBox(panel, id = wx.ID_ANY, label = _("discrete range bands"))
+        
+        gridBagSizer.Add(self.discreteFcell, pos = (0,0), span = (1,5), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.ticks, pos = (1,0), span = (1,5), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.range, pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(minText, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.min, pos = (2,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(maxText, pos = (2,3), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.max, pos = (2,4), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        #CELL settings
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Categorical map settings")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        # no data
+        self.nodata = wx.CheckBox(panel, id = wx.ID_ANY, label = _('do not draw "no data" box'))
+        #discrete
+        self.discreteCell = wx.CheckBox(panel, id = wx.ID_ANY, label = _("discrete legend"))
+        
+        gridBagSizer.Add(self.discreteCell, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.nodata, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         panel.SetSizer(border)
         panel.Fit()
         
+        # bindings
         self.Bind(wx.EVT_RADIOBUTTON, self.OnRaster, self.rasterDefault)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnRaster, self.rasterOther)
+        self.Bind(wx.EVT_CHECKBOX, self.OnIsLegend, self.isLegend)
+        self.Bind(wx.EVT_CHECKBOX, self.OnDefaultSize, self.defaultSize)
+        self.Bind(wx.EVT_CHECKBOX, self.OnRange, self.range)
+        # no events from gselect!
         
         if not self.parent.dialogDict['map']['raster']:
             self.rasterOther.SetValue(True)
         else:
             self.rasterDefault.SetValue(True)
         self.OnRaster(None)
+        
         return panel
     
     def _vectorLegend(self, notebook):
         pass
-
+        
+        
+    #   some enable/disable methods  
+    
+    def OnIsLegend(self, event):
+        children = self.panelRaster.GetChildren()
+        if self.isLegend.GetValue():
+            for i,widget in enumerate(children):
+                    widget.Enable()
+        else:
+            for i,widget in enumerate(children):
+                if i != 0:
+                    widget.Disable()
+                    
     def OnRaster(self, event):
         if self.rasterDefault.GetValue():#default
             self.rasterSelect.Disable()
         else:#select raster
             self.rasterSelect.Enable()
             
+##    def OnChangeMap(self, event):
+##        map = self.rasterSelect.GetValue()
+##        rasterType = RunCommand('r.info', flags = 't', read = True, map = map)
+##        if not rasterType:
+##            return
+##        rasterType = rasterType.strip().split('=')[1]
+            
+    def OnDefaultSize(self, event):
+        if self.defaultSize.GetValue():
+            self.widthCtrl.Disable()
+            self.heightCtrl.Disable()            
+        else:    
+            self.widthCtrl.Enable()
+            self.heightCtrl.Enable()
+    
+    def OnRange(self, event):
+        if not self.range.GetValue():
+            self.min.Disable()        
+            self.max.Disable()
+        else:
+            self.min.Enable()        
+            self.max.Enable()            
+         
+           
     def OnOK(self, event):
         self.update()
         if self.legendDict['rLegend']:
@@ -549,20 +719,87 @@ class LegendDialog(wx.Dialog):
         event.Skip()
     
     def update(self):
-        #is legend
+        #is raster legend
         if not self.isLegend.GetValue():
             self.legendDict['rLegend'] = False
             return
         else:
             self.legendDict['rLegend'] = True
+        #units
+        currUnit = self.units.getPageUnits()[self.unitsChoice.GetSelection()]
+        self.legendDict['unit'] = currUnit
         # raster
         if self.rasterDefault.GetValue():
             self.legendDict['raster'] = self.parent.dialogDict['map']['raster']
         else:
             self.legendDict['raster'] = self.rasterSelect.GetValue()
+            
+        if self.legendDict['raster']:
+            # type and range of map
+            rasterType = RunCommand('r.info', flags = 't', read = True, map = self.legendDict['raster']).strip().split('=')[1]
+            self.legendDict['type'] = rasterType
+            
+            range = RunCommand('r.info', flags = 'r', read = True, map = self.legendDict['raster']).strip().split('\n')
+            minim, maxim = range[0].split('=')[1], range[1].split('=')[1]  
+            # font 
+            self.legendDict['fontsize'] = self.fontSizeCtrl.GetValue()
+            self.legendDict['font'] = self.fontCtrl.GetStringSelection()
+            self.legendDict['color'] = self.colorCtrl.GetStringSelection()
+            dc = wx.PaintDC(self)
+            dc.SetFont(wx.Font(   pointSize = self.legendDict['fontsize'], family = wx.FONTFAMILY_DEFAULT,
+                                                style = wx.NORMAL, weight = wx.FONTWEIGHT_NORMAL))
+            # position
+            x = self.units.convert(value = float(self.xCoord.GetValue()), fromUnit = currUnit, toUnit = 'inch')
+            y = self.units.convert(value = float(self.yCoord.GetValue()), fromUnit = currUnit, toUnit = 'inch')
+            self.legendDict['where'] = (x, y)
+            # estimated size
+            if not self.defaultSize.GetValue():
+                self.legendDict['defaultSize'] = False
+            
+                width = self.units.convert(value = float(self.widthCtrl.GetValue()), fromUnit = currUnit, toUnit = 'inch')
+                height = self.units.convert(value = float(self.heightCtrl.GetValue()), fromUnit = currUnit, toUnit = 'inch')
+            
+                if rasterType in ('FCELL', 'DCELL'):
+                    self.legendDict['width'] = width 
+                    self.legendDict['height'] = height
+                    textPart = self.units.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
+                    drawWidth = width + textPart
+                    drawHeight = height
+                    self.legendDict['drawRect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                else: #categorical map
+                    self.legendDict['cols'] = self.colsCtrl.GetValue() 
+                    cat = RunCommand(   'r.category', read = True, map = self.legendDict['raster'],
+                                        fs = ':').strip().split('\n')
+                    rows = ceil(float(len(cat))/self.legendDict['cols'])
 
+                    drawHeight = self.units.convert(value =  1.5 *rows * self.legendDict['fontsize'], fromUnit = 'point', toUnit = 'inch')
+                    self.legendDict['drawRect'] = Rect(x = x, y = y, width = width, height = drawHeight)
 
-
+            else:
+                self.legendDict['defaultSize'] = True
+                if rasterType in ('FCELL', 'DCELL'):
+                    textPart = self.units.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
+                    drawWidth = self.units.convert( value = self.legendDict['fontsize'] * 2, 
+                                                    fromUnit = 'point', toUnit = 'inch') + textpart
+                                
+                    drawHeight = self.units.convert(value = self.legendDict['fontsize'] * 10,
+                                                    fromUnit = 'point', toUnit = 'inch')
+                    self.legendDict['drawRect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    print self.legendDict['drawRect']
+                else:#categorical map
+                    self.legendDict['cols'] = self.colsCtrl.GetValue()
+                    cat = RunCommand(   'r.category', read = True, map = self.legendDict['raster'],
+                                        fs = ':').strip().split('\n')
+                    rows = ceil(float(len(cat))/self.legendDict['cols'])
+                    drawHeight = self.units.convert(value =  1.5 *rows * self.legendDict['fontsize'],
+                                                    fromUnit = 'point', toUnit = 'inch')
+                    paperWidth = self.parent.dialogDict['page']['Width']- self.parent.dialogDict['page']['Right']\
+                                                                        - self.parent.dialogDict['page']['Left']
+                    drawWidth = (paperWidth / self.legendDict['cols']) * (self.legendDict['cols'] - 1) + 1
+                    self.legendDict['drawRect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    print self.legendDict['drawRect']
+##                    labels = [each.split(':')[1] for each in cat]
+##                    idx = labels.index(max(labels, key = len))
             
     
 class PsMapFrame(wx.Frame):
@@ -680,8 +917,7 @@ class PsMapFrame(wx.Frame):
             paperInstruction = "paper\n    width {Width}\n    height {Height}\n".format(**self.dialogDict['page'])
         else:
             paperInstruction = "paper {Format}\n".format(**self.dialogDict['page'])
-        paperInstruction = paperInstruction +\
-                            "    left {Left}\n    right {Right}\n"    \
+        paperInstruction += "    left {Left}\n    right {Right}\n"    \
                             "    bottom {Bottom}\n    top {Top}\nend".format(**self.dialogDict['page'])
                         
         instruction.append(paperInstruction)
@@ -701,6 +937,15 @@ class PsMapFrame(wx.Frame):
                                 "# scale 1:{0:.0f}".format(1/self.dialogDict['map']['scale'])
             instruction.append(scaleInstruction)
         #colortable
+        if self.dialogDict['rasterLegend']:
+            rLegendInstruction = "colortable y\n"
+            rLegendInstruction += "    raster {raster}\n".format(**self.dialogDict['rasterLegend'])
+            rLegendInstruction += "    where {rect.x} {rect.y}\n".format(**self.dialogDict['rasterLegend'])
+            rLegendInstruction += "    width {rect.width}\n".format(**self.dialogDict['rasterLegend'])
+            if self.dialogDict['rasterLegend']['type'] in ("FCELL", "DCELL"):
+                rLegendInstruction += "    height {rect.height}\n".format(**self.dialogDict['rasterLegend'])
+            rLegendInstruction += "end"
+            instruction.append(rLegendInstruction)
         
         return '\n'.join(instruction) + '\nend' 
     
