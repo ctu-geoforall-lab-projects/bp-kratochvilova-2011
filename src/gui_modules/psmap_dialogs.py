@@ -1,4 +1,3 @@
-
 """!
 @package psmap_dialogs
 
@@ -32,8 +31,10 @@ else:
 import globalvar
 from   gselect    import Select
 from   gcmd       import RunCommand
-from grass.script import core as grass
 from psmap import *
+
+from grass.script import core as grass
+
 import wx
 import wx.lib.scrolledpanel as scrolled
 
@@ -312,7 +313,7 @@ class MapDialog(wx.Dialog):
             for item in currRegCentre.strip().split('\n'):
                 currRegCentreDict[item.split(':')[0].strip()] = float(item.split(':')[1].strip())
             
-            RunCommand('g.region',  flags = 'p', n = currRegCentreDict['center northing'] + rectHalfMeter[1],
+            RunCommand('g.region', n = currRegCentreDict['center northing'] + rectHalfMeter[1],
                        s = currRegCentreDict['center northing'] - rectHalfMeter[1],
                        e = currRegCentreDict['center easting'] + rectHalfMeter[0],
                        w = currRegCentreDict['center easting'] - rectHalfMeter[0],
