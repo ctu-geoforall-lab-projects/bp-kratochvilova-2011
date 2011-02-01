@@ -243,8 +243,8 @@ class MapDialog(wx.Dialog):
         hBox = wx.BoxSizer(wx.HORIZONTAL)
         text = wx.StaticText(self, id = wx.ID_ANY, label = "Choose raster map: ")
         self.select = Select(self, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
-                 type = 'raster', multiple = False, mapsets = self.mapsets,
-                 updateOnPopup = True, onPopup = None)
+                             type = 'raster', multiple = False,
+                             updateOnPopup = True, onPopup = None)
         hBox.Add(text, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 3)
         hBox.Add(self.select, proportion = 0, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
         mainSizer.Add(hBox, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
@@ -290,11 +290,15 @@ class MapDialog(wx.Dialog):
         self.mapDialogDict['raster'] = self.select.GetValue() 
         #scale
         scaleType = self.choice.GetSelection()
+        
+        grass.use_temp_region()
+        
         if scaleType == 0: # automatic
             self.scale, self.rectAdjusted = self.AutoAdjust()
             self.mapDialogDict['rect'] = Rect(*self.rectAdjusted) 
             self.mapDialogDict['scaleType'] = 0
-            self.mapDialogDict['scale'] = self.scale            
+            self.mapDialogDict['scale'] = self.scale
+            RunCommand('g.region', rast = self.mapDialogDict['raster'])
         elif scaleType == 1:
             self.mapDialogDict['scaleType'] = 1
             scaleNumber = float(self.textCtrl.GetValue().split(':')[1].strip())
@@ -303,18 +307,17 @@ class MapDialog(wx.Dialog):
             rectHalfInch = ( self.mapDialogDict['rect'].width/2, self.mapDialogDict['rect'].height/2)
             rectHalfMeter = ( units.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')*scaleNumber,
                                 units.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')*scaleNumber) 
-            currRegCentre = RunCommand('g.region', read = True, flags = 'c')
+            currRegCentre = RunCommand('g.region', read = True, flags = 'cu', rast = self.mapDialogDict['raster'])
             currRegCentreDict = {}
             for item in currRegCentre.strip().split('\n'):
                 currRegCentreDict[item.split(':')[0].strip()] = float(item.split(':')[1].strip())
-                
-            grass.use_temp_region()
-            RunCommand('g.region',  n = currRegCentreDict['center northing'] + rectHalfMeter[1],
-                                    s = currRegCentreDict['center northing'] - rectHalfMeter[1],
-                                    e = currRegCentreDict['center easting'] + rectHalfMeter[0],
-                                    w = currRegCentreDict['center easting'] - rectHalfMeter[0])
             
-
+            RunCommand('g.region',  flags = 'p', n = currRegCentreDict['center northing'] + rectHalfMeter[1],
+                       s = currRegCentreDict['center northing'] - rectHalfMeter[1],
+                       e = currRegCentreDict['center easting'] + rectHalfMeter[0],
+                       w = currRegCentreDict['center easting'] - rectHalfMeter[0],
+                       rast = self.mapDialogDict['raster'])
+        
     def getInfo(self):
         return self.mapDialogDict
     
@@ -396,8 +399,8 @@ class LegendDialog(wx.Dialog):
         rasterType = rasterType[1] if rasterType[0] else 'None'
         self.rasterCurrent = wx.StaticText(panel, id = wx.ID_ANY, label = _("{0}: type {1}").format(self.parent.dialogDict['map']['raster'], rasterType))
         self.rasterSelect = Select( panel, id = wx.ID_ANY, size = globalvar.DIALOG_GSELECT_SIZE,
-                                type = 'raster', multiple = False, mapsets = self.mapsets,
-                                updateOnPopup = True, onPopup = None)
+                                    type = 'raster', multiple = False,
+                                    updateOnPopup = True, onPopup = None)
         self.rasterSelect.SetValue(self.legendDict['raster'] if not self.legendDict['rasterDefault'] else '')
         flexSizer.Add(self.rasterDefault, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexSizer.Add(self.rasterCurrent, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 10)
@@ -565,6 +568,8 @@ class LegendDialog(wx.Dialog):
         self.Bind(wx.EVT_CHECKBOX, self.OnRange, self.range)
         self.Bind(wx.EVT_CHECKBOX, self.OnDiscrete, self.discreteCell)
         self.Bind(wx.EVT_CHECKBOX, self.OnDiscrete, self.discreteFcell)
+        self.rasterSelect.GetTextCtrl().Bind(wx.EVT_TEXT, self.OnSelect)
+        
         # no events from gselect!
         
         if not self.parent.dialogDict['map']['raster']:
@@ -580,7 +585,10 @@ class LegendDialog(wx.Dialog):
         
         
     #   some enable/disable methods  
-    
+
+    def OnSelect(self, event):
+        print 'x'
+        
     def OnIsLegend(self, event):
         children = self.panelRaster.GetChildren()
         if self.isLegend.GetValue():
