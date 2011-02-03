@@ -242,15 +242,23 @@ class PsMapFrame(wx.Frame):
         self.defaultDict['mapinfo'] = dict(isInfo = False, unit = 'inch', where = (page['Left'], page['Top']),
                                             font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
                                             border = 'none')
+        #text
+        self.defaultDict['text'] = dict(text = 'test', font = "Serif", fontsize = 10, color = 'black')
         
     def SetDefault(self, type = None):
         """!Set default values"""
         self.DefaultData()
         if type is not None:
-            self.dialogDict[type] = self.defaultDict[type]
+            if type in ('page', 'map', 'rasterLegend', 'mapinfo'):
+                self.dialogDict[type] = self.defaultDict[type]
+            else:
+                pass
         else:
             for key in self.defaultDict.keys():
-                self.dialogDict[key] = self.defaultDict[key]
+                if key in ('page', 'map', 'rasterLegend', 'mapinfo'):
+                    self.dialogDict[key] = self.defaultDict[key]
+                else:
+                    self.dialogDict[key] = [self.defaultDict[key]]
             
     def _layout(self):
         """!Do layout
@@ -457,15 +465,20 @@ class PsMapFrame(wx.Frame):
         """
         decmenu = wx.Menu()
         # legend
-        AddLegend = wx.MenuItem(decmenu, wx.ID_ANY, Icons["addlegend"].GetLabel())
+        AddLegend = wx.MenuItem(decmenu, wx.ID_ANY, "Show legend")##
         AddLegend.SetBitmap(Icons["addlegend"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddLegend)
         self.Bind(wx.EVT_MENU, self.OnAddLegend, AddLegend)
         # mapinfo
-        AddMapinfo = wx.MenuItem(decmenu, wx.ID_ANY, "Add mapinfo")
+        AddMapinfo = wx.MenuItem(decmenu, wx.ID_ANY, "Show mapinfo")
         AddMapinfo.SetBitmap(Icons["addlegend"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddMapinfo)
         self.Bind(wx.EVT_MENU, self.OnAddMapinfo, AddMapinfo) 
+        # text
+        AddText = wx.MenuItem(decmenu, wx.ID_ANY, "Add text")
+        AddText.SetBitmap(Icons["addtext"].GetBitmap(self.iconsize))
+        decmenu.AppendItem(AddText)
+        self.Bind(wx.EVT_MENU, self.OnAddText, AddText) 
         # Popup the menu.  If an item is selected then its handler
         # will be called before PopupMenu returns.
         self.PopupMenu(decmenu)
@@ -517,7 +530,23 @@ class PsMapFrame(wx.Frame):
                     self.canvas.pdcTmp.RemoveAll()
                     self.canvas.dragId = -1
         dlg.Destroy()
-            
+    def OnAddText(self, event):
+        id = (self.find_key(self.canvas.itemType, 'text')).sort()
+        #no text yet -> new id, if text -> last id + 1 
+        id = id[-1] + 1 if id else 1000
+        print id
+        dlg = TextDialog(self, order = 0, settings = self.dialogDict) 
+        if dlg.ShowModal() == wx.ID_OK:
+            self.dialogDict['text'].append(dlg.getInfo())
+            self.canvas.itemType[id] = 'text'
+            self.canvas.objectId.append(id)
+    
+            self.canvas.pdcObj.DrawRotatedText(self.dialogDict['text'][-1]['text'], 300,300,0)
+            self.canvas.Refresh()
+            self.canvas.pdcTmp.RemoveAll()
+            self.canvas.dragId = -1
+        dlg.Destroy()
+        
     def OnDelete(self, event):
         if self.canvas.dragId != -1:
             self.deleteObject(self.canvas.dragId)

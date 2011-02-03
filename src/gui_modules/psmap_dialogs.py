@@ -457,7 +457,7 @@ class LegendDialog(PsmapDialog):
 
         border = wx.BoxSizer(wx.VERTICAL)
         # is legend
-        self.isLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Add raster legend"))
+        self.isLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show raster legend"))
         self.isLegend.SetValue(self.legendDict['rLegend'])
         border.Add(item = self.isLegend, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
 
@@ -665,7 +665,7 @@ class LegendDialog(PsmapDialog):
         enabledSize = self.heightOrColumnsCtrl.IsEnabled()
         self.heightOrColumnsCtrl.Destroy()
         if self.discrete.GetValue():
-            self.heightOrColumnsLabel.SetLabel("Columns:")
+            self.heightOrColumnsLabel.SetLabel(_("Columns:"))
             self.heightOrColumnsCtrl = wx.SpinCtrl(self.panelRaster, id = wx.ID_ANY, value = "", min = 1, max = 10, initial = self.legendDict['cols'])
             self.heightOrColumnsCtrl.Enable(enabledSize)
             self.nodata.Enable()
@@ -676,7 +676,7 @@ class LegendDialog(PsmapDialog):
             self.maxText.Disable()
             self.ticks.Disable()
         else:
-            self.heightOrColumnsLabel.SetLabel("Height:")
+            self.heightOrColumnsLabel.SetLabel(_("Height:"))
             self.heightOrColumnsCtrl = wx.TextCtrl(self.panelRaster, id = wx.ID_ANY, value = str(self.legendDict['height']))
             self.heightOrColumnsCtrl.Enable(enabledSize)
             self.nodata.Disable()
@@ -871,7 +871,7 @@ class MapinfoDialog(PsmapDialog):
         
         
         # is info
-        self.isMapinfo = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Add mapinfo"))
+        self.isMapinfo = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show mapinfo"))
         self.isMapinfo.SetValue(self.mapinfoDict['isInfo'])
         border.Add(item = self.isMapinfo, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
@@ -1011,15 +1011,118 @@ class MapinfoDialog(PsmapDialog):
         return self.mapinfoDict 
         
         
-##class TextDialog(PsmapDialog):
-##    def __init__(self, parent, id, settings = None):
-##        PsmapDialog.__init__(self, parent = parent, title = "Text settings")
-##        self.parent = parent
-##        self.dialogDict = settings
-##        self.textDict = self.dialogDict['text'][id] 
-##             
-##        self.panel = self._textPanel()
-##     
-##        self._layout(self.panel)
-##        self.OnIsText(None)
-##        
+class TextDialog(PsmapDialog):
+    def __init__(self, parent, order, settings = None):
+        PsmapDialog.__init__(self, parent = parent, title = "Text settings")
+        self.parent = parent
+        self.dialogDict = settings
+        if order == 0: #default when adding (copy)
+            self.textDict = dict(self.dialogDict['text'][order] )
+        else:# when editing
+            self.textDict = self.dialogDict['text'][order]
+             
+        self.panel = self._textPanel()
+        self.OnBackground(None)
+        self.OnHighlight(None)
+        self.OnBorder(None)
+     
+        self._layout(self.panel)
+
+    def _textPanel(self):
+        panel = wx.Panel(self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        
+        border = wx.BoxSizer(wx.VERTICAL)
+        #font
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        flexGridSizer = wx.FlexGridSizer (rows = 2, cols = 2, hgap = 5, vgap = 5)
+        flexGridSizer.AddGrowableCol(1)
+        
+        self.AddFont(parent = panel, dialogDict = self.textDict)
+        
+        flexGridSizer.Add(self.font['fontLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexGridSizer.Add(self.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexGridSizer.Add(self.font['colorLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        flexGridSizer.Add(self.font['colorCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(item = flexGridSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        #text effects
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Text effects")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        
+        self.effect = {}
+        self.effect['backgroundCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("text background"))
+        self.effect['backgroundColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        
+        self.effect['highlightCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("highlight"))
+        self.effect['highlightColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        self.effect['highlightWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY,  value = 'pts',min = 0, max = 5, initial = 1)
+        self.effect['highlightWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
+        
+        self.effect['borderCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("text border"))
+        self.effect['borderColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        self.effect['borderWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY,  value = 'pts',min = 1, max = 25, initial = 1)
+        self.effect['borderWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
+        
+        
+        gridBagSizer.Add(self.effect['backgroundCtrl'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['backgroundColor'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['highlightCtrl'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['highlightColor'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['highlightWidthLabel'], pos = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['highlightWidth'], pos = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['borderCtrl'], pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['borderColor'], pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['borderWidthLabel'], pos = (2,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.effect['borderWidth'], pos = (2,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(item = gridBagSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnBackground, self.effect['backgroundCtrl'])
+        self.Bind(wx.EVT_CHECKBOX, self.OnHighlight, self.effect['highlightCtrl'])
+        self.Bind(wx.EVT_CHECKBOX, self.OnBorder, self.effect['borderCtrl'])
+        
+        panel.SetSizer(border)
+        return panel    
+    def OnBackground(self, event):
+        if self.effect['backgroundCtrl'].GetValue():
+            self.effect['backgroundColor'].Enable()
+        else:
+            self.effect['backgroundColor'].Disable()
+    
+    def OnHighlight(self, event):
+        if self.effect['highlightCtrl'].GetValue():
+            self.effect['highlightColor'].Enable()
+            self.effect['highlightWidth'].Enable()
+            self.effect['highlightWidthLabel'].Enable()
+        else:
+            self.effect['highlightColor'].Disable()
+            self.effect['highlightWidth'].Disable()
+            self.effect['highlightWidthLabel'].Disable()
+            
+    def OnBorder(self, event):
+        if self.effect['borderCtrl'].GetValue():
+            self.effect['borderColor'].Enable()
+            self.effect['borderWidth'].Enable()
+            self.effect['borderWidthLabel'].Enable()
+        else:
+            self.effect['borderColor'].Disable()
+            self.effect['borderWidth'].Disable()
+            self.effect['borderWidthLabel'].Disable()
+            
+    def update(self):    
+        #font
+        font = self.font['fontCtrl'].GetSelectedFont()
+        self.textDict['font'] = font.GetFaceName()
+        self.textDict['fontsize'] = font.GetPointSize()
+        
+    def OnOK(self, event):
+        self.update()
+        event.Skip()
+        
+    def getInfo(self):
+        return self.textDict 
