@@ -91,23 +91,31 @@ class PsmapDialog(wx.Dialog):
         
     def AddFont(self, parent, dialogDict):
         self.font = dict()
-        self.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font:"))
-        self.font['fontSizeLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font size:"))
-        self.font['fontSizeUnitLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("points"))
-        self.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Color:"))
-        fontChoices = [ 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica',\
-                        'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier',\
-                        'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique']
+        self.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Choose font:"))
+        self.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Choose color:"))
+        self.font['fontCtrl'] = wx.FontPickerCtrl(parent, id = wx.ID_ANY)
+        self.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY, style=wx.FNTP_FONTDESC_AS_LABEL)
+        self.font['fontCtrl'].SetSelectedFont(
+                        wx.FontFromNativeInfoString(dialogDict['font'] + " " + str(dialogDict['fontsize'])))
+        self.font['fontCtrl'].SetMaxPointSize(50)
+        self.font['colorCtrl'].SetColour(dialogDict['color'])    
+##        self.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font:"))
+##        self.font['fontSizeLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font size:"))
+##        self.font['fontSizeUnitLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("points"))
+##        self.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Color:"))
+##        fontChoices = [ 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica',\
+##                        'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier',\
+##                        'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique']
 ##        colorChoices = [  'aqua', 'black', 'blue', 'brown', 'cyan', 'gray', 'green', 'indigo', 'magenta',\
 ##                        'orange', 'purple', 'red', 'violet', 'white', 'yellow']
-        self.font['fontCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = fontChoices)
-        self.font['fontCtrl'].SetStringSelection(dialogDict['font'])
+##        self.font['fontCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = fontChoices)
+##        self.font['fontCtrl'].SetStringSelection(dialogDict['font'])
 ##        self.colorCtrl = wx.Choice(parent, id = wx.ID_ANY, choices = colorChoices)
 ##        self.colorCtrl.SetStringSelection(self.legendDict['color'])
-        self.font['fontSizeCtrl']= wx.SpinCtrl(parent, id = wx.ID_ANY, min = 1, max = 99, initial = 10)
-        self.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
-        self.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
-        self.font['colorCtrl'].SetColour(dialogDict['color'])    
+##        self.font['fontSizeCtrl']= wx.SpinCtrl(parent, id = wx.ID_ANY, min = 4, max = 50, initial = 10)
+##        self.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
+##        self.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
+##        self.font['colorCtrl'].SetColour(dialogDict['color'])    
         
     def OnOK(self, event):
         event.Skip()
@@ -142,16 +150,15 @@ class PsmapDialog(wx.Dialog):
         mainSizer.Layout()
         mainSizer.Fit(self) 
             
-class PageSetupDialog(wx.Dialog):
+class PageSetupDialog(PsmapDialog):
     def __init__(self, parent, settings = None):
-        wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
-                            title = "Page setup", size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
+        PsmapDialog.__init__(self, parent = parent, title = "Page setup")
+
         
         self.cat = ['Units', 'Format', 'Orientation', 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
         paperString = RunCommand('ps.map', flags = 'p', read = True)
         self.paperTable = self._toList(paperString) 
-        self.units = UnitConversion(self)
-        self.unitsList = self.units.getPageUnits()
+        self.unitsList = self.unitConv.getPageUnits()
         self.dialogDict = settings
         self.pageSetupDict = self.dialogDict['page']
 
@@ -284,10 +291,9 @@ class PageSetupDialog(wx.Dialog):
         sizeList.append(d)
         return sizeList
     
-class MapDialog(wx.Dialog):
+class MapDialog(PsmapDialog):
     def __init__(self, parent, settings = None):
-        wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, title = "Map settings",
-                            size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
+        PsmapDialog.__init__(self, parent = parent, title = "Map settings")
         
         self.parent = parent
         self.dialogDict = settings
@@ -313,7 +319,6 @@ class MapDialog(wx.Dialog):
         self.btnOk.Bind(wx.EVT_BUTTON, self.OnOK)
         
     def AutoAdjust(self):
-        grass.del_temp_region()
         currRegionDict = grass.region()
 
         rX = self.mapDialogDict['rect'].x
@@ -385,13 +390,11 @@ class MapDialog(wx.Dialog):
            
             
     def _update(self):
-        units = UnitConversion(self)
         #raster
         self.mapDialogDict['raster'] = self.select.GetValue() 
         #scale
         scaleType = self.choice.GetSelection()
         
-        grass.use_temp_region()
         originRegionName = os.environ['WIND_OVERRIDE']
         if scaleType == 0: # automatic
             self.scale, self.rectAdjusted = self.AutoAdjust()
@@ -412,10 +415,10 @@ class MapDialog(wx.Dialog):
             for item in currRegCentre.strip().split('\n'):
                 currRegCentreDict[item.split(':')[0].strip()] = float(item.split(':')[1].strip())
             
-            RunCommand('g.region', n = currRegCentreDict['center northing'] + rectHalfMeter[1],
-                       s = currRegCentreDict['center northing'] - rectHalfMeter[1],
-                       e = currRegCentreDict['center easting'] + rectHalfMeter[0],
-                       w = currRegCentreDict['center easting'] - rectHalfMeter[0],
+            RunCommand('g.region', n = int(currRegCentreDict['center northing'] + rectHalfMeter[1]),
+                       s = int(currRegCentreDict['center northing'] - rectHalfMeter[1]),
+                       e = int(currRegCentreDict['center easting'] + rectHalfMeter[0]),
+                       w = int(currRegCentreDict['center easting'] - rectHalfMeter[0]),
                        rast = self.mapDialogDict['raster'])
         
     def getInfo(self):
@@ -553,16 +556,13 @@ class LegendDialog(PsmapDialog):
         
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-        flexSizer = wx.FlexGridSizer (cols = 5, hgap = 5, vgap = 5)
+        flexSizer = wx.FlexGridSizer (cols = 2, hgap = 5, vgap = 5)
         flexSizer.AddGrowableCol(1)
         
         self.AddFont(parent = panel, dialogDict = self.legendDict)
         
         flexSizer.Add(self.font['fontLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE, border = 0)
-        flexSizer.Add(self.font['fontSizeLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['fontSizeCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['fontSizeUnitLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(self.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexSizer.Add(self.font['colorLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
         flexSizer.Add(self.font['colorCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         
@@ -760,12 +760,13 @@ class LegendDialog(PsmapDialog):
                 self.legendDict['discrete'] = 'n'   
                     
             # font 
-            self.legendDict['fontsize'] = self.font['fontSizeCtrl'].GetValue()
-            self.legendDict['font'] = self.font['fontCtrl'].GetStringSelection()
+            font = self.font['fontCtrl'].GetSelectedFont()
+            self.legendDict['font'] = font.GetFaceName()
+            self.legendDict['fontsize'] = font.GetPointSize()
             self.legendDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(flags = wx.C2S_NAME)
             dc = wx.PaintDC(self)
-            dc.SetFont(wx.Font(   pointSize = self.legendDict['fontsize'], family = wx.FONTFAMILY_DEFAULT,
-                                                style = wx.NORMAL, weight = wx.FONTWEIGHT_NORMAL))
+            dc.SetFont(wx.Font(   pointSize = self.legendDict['fontsize'], family = font.GetFamily(),
+                                                style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
             # position
             x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
             y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
@@ -860,6 +861,8 @@ class MapinfoDialog(PsmapDialog):
         self.panel = self._mapinfoPanel()
      
         self._layout(self.panel)
+        self.OnIsMapinfo(None)
+
 
     def _mapinfoPanel(self):
         panel = wx.Panel(parent = self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
@@ -895,20 +898,19 @@ class MapinfoDialog(PsmapDialog):
         # font
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-        flexSizer = wx.FlexGridSizer (cols = 5, hgap = 5, vgap = 5)
-        flexSizer.AddGrowableCol(1)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(1)
         
         self.AddFont(parent = panel, dialogDict = self.mapinfoDict)#creates font color too, used below
         
-        flexSizer.Add(self.font['fontLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE, border = 0)
-        flexSizer.Add(self.font['fontSizeLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['fontSizeCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['fontSizeUnitLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        flexSizer.Add(self.font['colorLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        flexSizer.Add(self.font['colorCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.font['fontLabel'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.font['fontCtrl'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.font['colorLabel'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        gridBagSizer.Add(self.font['colorCtrl'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+
+
         
-        sizer.Add(item = flexSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
+        sizer.Add(item = gridBagSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         # colors
@@ -939,9 +941,36 @@ class MapinfoDialog(PsmapDialog):
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         panel.SetSizer(border)
-  
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnIsMapinfo, self.isMapinfo)
+        self.Bind(wx.EVT_CHECKBOX, self.OnIsBorder, self.colors['borderCtrl'])
+        self.Bind(wx.EVT_CHECKBOX, self.OnIsBackground, self.colors['backgroundCtrl'])
+        
         return panel
-    
+    def OnIsBackground(self, event):
+        if self.colors['backgroundCtrl'].GetValue():
+            self.colors['backgroundColor'].Enable()
+        else:
+            self.colors['backgroundColor'].Disable()
+                        
+    def OnIsBorder(self, event):
+        if self.colors['borderCtrl'].GetValue():
+            self.colors['borderColor'].Enable()
+        else:
+            self.colors['borderColor'].Disable() 
+                           
+    def OnIsMapinfo(self, event):
+        children = self.panel.GetChildren()
+        if self.isMapinfo.GetValue():
+            for i,widget in enumerate(children):
+                    widget.Enable()
+            self.OnIsBackground(None)
+            self.OnIsBorder(None)
+        else:
+            for i,widget in enumerate(children):
+                if i != 0:
+                    widget.Disable()
+                    
     def OnOK(self, event):
         self.update()
         event.Skip()
@@ -961,19 +990,36 @@ class MapinfoDialog(PsmapDialog):
         y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
         self.mapinfoDict['where'] = (x, y)
         # font
-        self.mapinfoDict['fontsize'] = self.font['fontSizeCtrl'].GetValue()
-        self.mapinfoDict['font'] = self.font['fontCtrl'].GetStringSelection()
+        font = self.font['fontCtrl'].GetSelectedFont()
+        self.mapinfoDict['font'] = font.GetFaceName()
+        self.mapinfoDict['fontsize'] = font.GetPointSize()
         #colors
         self.mapinfoDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(flags = wx.C2S_NAME)
         self.mapinfoDict['background'] = (self.colors['backgroundColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
                                         if self.colors['backgroundCtrl'].GetValue() else 'none') 
         self.mapinfoDict['border'] = (self.colors['borderColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
                                         if self.colors['borderCtrl'].GetValue() else 'none')
-        print 'barvy ',self.mapinfoDict['background'], self.mapinfoDict['border'], 
         
-        dc = wx.PaintDC(self)
-        dc.SetFont(wx.Font(   pointSize = self.mapinfoDict['fontsize'], family = wx.FONTFAMILY_DEFAULT,
-                                                style = wx.NORMAL, weight = wx.FONTWEIGHT_NORMAL))
+        # estimation of size
+        w = self.mapinfoDict['fontsize'] * 15 
+        h = self.mapinfoDict['fontsize'] * 5
+        width = self.unitConv.convert(value = w, fromUnit = 'point', toUnit = 'inch')
+        height = self.unitConv.convert(value = h, fromUnit = 'point', toUnit = 'inch')
+        self.mapinfoDict['rect'] = Rect(x = x, y = y, width = width, height = height)
+        
     def getInfo(self):
         return self.mapinfoDict 
         
+        
+##class TextDialog(PsmapDialog):
+##    def __init__(self, parent, id, settings = None):
+##        PsmapDialog.__init__(self, parent = parent, title = "Text settings")
+##        self.parent = parent
+##        self.dialogDict = settings
+##        self.textDict = self.dialogDict['text'][id] 
+##             
+##        self.panel = self._textPanel()
+##     
+##        self._layout(self.panel)
+##        self.OnIsText(None)
+##        

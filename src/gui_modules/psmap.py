@@ -170,6 +170,10 @@ class PsMapFrame(wx.Frame):
         #satusbar
         self.statusbar = self.CreateStatusBar(number = 1)
         
+        
+        # save current region
+        grass.use_temp_region()
+        
         self.dialogDict = {}  
         self.SetDefault()
         
@@ -231,12 +235,12 @@ class PsMapFrame(wx.Frame):
         self.defaultDict['rasterLegend'] = dict(rLegend = False, unit = 'inch', rasterDefault = True, raster = None,
                                                 discrete = None, type = None,
                                                 where = (page['Left'], page['Top']), defaultSize = True,
-                                                width = 0, height = 0, cols = 1, font = 'Helvetica', fontsize = 10, 
+                                                width = 0, height = 0, cols = 1, font = "Serif", fontsize = 10,
                                                 color = 'black', tickbar = False, range = False, min = 0, max = 0,
                                                 nodata = False)
         #mapinfo
         self.defaultDict['mapinfo'] = dict(isInfo = False, unit = 'inch', where = (page['Left'], page['Top']),
-                                            font = 'Helvetica', fontsize = 10, color = 'black', background = 'none', 
+                                            font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
                                             border = 'none')
         
     def SetDefault(self, type = None):
@@ -285,13 +289,14 @@ class PsMapFrame(wx.Frame):
         instruction.append(rasterInstruction)
         #maploc
         if self.dialogDict['map']['rect'] is not None:
-            maplocInstruction = "maploc {rect.x} {rect.y} {rect.width} {rect.height}".format(**self.dialogDict['map'])
+            maplocInstruction = "maploc {rect.x} {rect.y}".format(**self.dialogDict['map'])
+            if self.dialogDict['map']['scaleType'] != 1:
+                maplocInstruction += "  {rect.width} {rect.height}".format(**self.dialogDict['map'])
             instruction.append(maplocInstruction)
         
         #scale
         if self.dialogDict['map']['scaleType'] == 1: #fixed scale
-            scaleInstruction =  "# not necessary to set scale because of new region settings\n"\
-                                "# scale 1:{0:.0f}".format(1/self.dialogDict['map']['scale'])
+            scaleInstruction = "scale 1:{0:.0f}".format(1/self.dialogDict['map']['scale'])
             instruction.append(scaleInstruction)
         #colortable
         if self.dialogDict['rasterLegend']['rLegend']:
@@ -314,7 +319,14 @@ class PsMapFrame(wx.Frame):
                                     .format(**self.dialogDict['rasterLegend'])
             rLegendInstruction += "end"
             instruction.append(rLegendInstruction)
-        
+        # mapinfo
+        if self.dialogDict['mapinfo']['isInfo']:
+            mapinfoInstruction = "mapinfo\n"
+            print 'where',self.dialogDict['mapinfo']['where']
+            mapinfoInstruction += "where {where[0]} {where[1]}\n".format(**self.dialogDict['mapinfo'])
+            mapinfoInstruction += "font {font}\nfontsize {fontsize}\ncolor {color}\n".format(**self.dialogDict['mapinfo'])            
+            mapinfoInstruction += "background {background}\nborder {border}".format(**self.dialogDict['mapinfo'])  
+            instruction.append(mapinfoInstruction)          
         return '\n'.join(instruction) + '\nend' 
     
     def PSFile(self, event):
@@ -776,40 +788,13 @@ class PsMapBufferedWindow(wx.Window):
                 if self.itemType[self.dragId] == 'map':
                     self.dialogDict['map']['rect'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(self.dragId),
                                                                 canvasToPaper = True)
-                if self.itemType[self.dragId] == 'rasterLegend':
+                elif self.itemType[self.dragId] == 'rasterLegend':                                               
                     self.dialogDict['rasterLegend']['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(self.dragId),
                                                                 canvasToPaper = True)[:2]
-
-        else:
-            pass
-##            if self.dragId != -1:
-##                vertex = []
-##                found = self.pdcObj.FindObjects(*event.GetPosition(), radius = 5)
-##                if found:
-##                    self.dragId = found[0]  
-##                    rectangle = self.pdcObj.GetIdBounds(self.dragId)
-##                    vertex.append(rectangle.GetTopLeft())
-##                    vertex.append(rectangle.GetTopRight())
-##                    vertex.append(rectangle.GetBottomRight())
-##                    vertex.append(rectangle.GetBottomLeft())
-##                if vertex:
-##                    if self.onLine(vertex[0], vertex[1], event.GetPosition()) or \
-##                        self.onLine(vertex[1], vertex[2], event.GetPosition()) or\
-##                        self.onLine(vertex[2], vertex[3], event.GetPosition()) or\
-##                        self.onLine(vertex[3], vertex[0], event.GetPosition()):
-##                        self.SetCursor(self.cursors['cross']) 
-##                    else:
-##                        self.SetCursor(self.parent.cursorOld)
-##                else:
-##                    self.SetCursor(self.parent.cursorOld) 
-##    def onLine(self, point1, point2, point):
-##        k = (point1.y - point2.y)/(point1.x - point2.x)
-##        y = k * point.x + point1.y - point1.x * k
-##        print y - point.y
-##        if abs(y - point.y) < 10:
-##            return True 
-##        else:
-##            return False 
+                elif self.itemType[self.dragId] == 'mapinfo':                                               
+                    self.dialogDict['mapinfo']['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(self.dragId),
+                                                                canvasToPaper = True)[:2]
+                                                                
                 
     def ComputeZoom(self, rect):
         """!Computes zoom factor and scroll view"""
