@@ -20,7 +20,7 @@ This program is free software under the GNU General Public License
 import os
 import sys
 import tempfile
-from math import ceil
+from math import ceil, sin, cos, pi
 from collections import namedtuple
 
 import grass.script as grass
@@ -243,7 +243,8 @@ class PsMapFrame(wx.Frame):
                                             font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
                                             border = 'none')
         #text
-        self.defaultDict['text'] = dict(text = 'test', font = "Serif", fontsize = 10, color = 'black')
+        self.defaultDict['text'] = dict(text = "", font = "Serif", fontsize = 10, color = 'black', background = 'none',
+                                        hcolor = 'none', hwidth = 1, border = 'none', width = '1' )
         
     def SetDefault(self, type = None):
         """!Set default values"""
@@ -251,7 +252,7 @@ class PsMapFrame(wx.Frame):
         if type is not None:
             if type in ('page', 'map', 'rasterLegend', 'mapinfo'):
                 self.dialogDict[type] = self.defaultDict[type]
-            else:
+            else:#text
                 pass
         else:
             for key in self.defaultDict.keys():
@@ -330,11 +331,22 @@ class PsMapFrame(wx.Frame):
         # mapinfo
         if self.dialogDict['mapinfo']['isInfo']:
             mapinfoInstruction = "mapinfo\n"
-            print 'where',self.dialogDict['mapinfo']['where']
             mapinfoInstruction += "where {where[0]} {where[1]}\n".format(**self.dialogDict['mapinfo'])
             mapinfoInstruction += "font {font}\nfontsize {fontsize}\ncolor {color}\n".format(**self.dialogDict['mapinfo'])            
             mapinfoInstruction += "background {background}\nborder {border}".format(**self.dialogDict['mapinfo'])  
-            instruction.append(mapinfoInstruction)          
+            instruction.append(mapinfoInstruction) 
+        # text
+        numberOfTexts = len(self.find_key(dic = self.itemType, val = 'text'))
+        for i in range(numberOfTexts):
+            textInstruction = "text {east} {north} {text}\n".format(**self.dialogDict['text'][i+1])
+            textInstruction += "font {font}\nfontsize {fontsize}\ncolor {color}".format(**self.dialogDict['text'][i+1])
+            textInstruction += "hcolor {hcolor}\n".format(**self.dialogDict['text'][i+1])
+            if self.dialogDict['text'][i+1]['hcolor'] != 'none':
+                textInstruction += "hwidth {hwidth}\n".format(**self.dialogDict['text'][i+1])
+            textInstruction += "border {border}\n".format(**self.dialogDict['text'][i+1])
+            if self.dialogDict['text'][i+1]['border'] != 'none':
+                textInstruction += "width {width}\n".format(**self.dialogDict['text'][i+1])
+            textInstruction += "background {background}\n".format(**self.dialogDict['text'][i+1])
         return '\n'.join(instruction) + '\nend' 
     
     def PSFile(self, event):
@@ -531,34 +543,64 @@ class PsMapFrame(wx.Frame):
                     self.canvas.dragId = -1
         dlg.Destroy()
     def OnAddText(self, event):
-        id = (self.find_key(self.canvas.itemType, 'text')).sort()
+        id = (self.find_key(self.canvas.itemType, 'text'))
+        id.sort()
         #no text yet -> new id, if text -> last id + 1 
-        id = id[-1] + 1 if id else 1000
-        print id
+        id = id[-1] + 1 if id else 1001
         dlg = TextDialog(self, order = 0, settings = self.dialogDict) 
         if dlg.ShowModal() == wx.ID_OK:
             self.dialogDict['text'].append(dlg.getInfo())
             self.canvas.itemType[id] = 'text'
             self.canvas.objectId.append(id)
-    
-            self.canvas.pdcObj.DrawRotatedText(self.dialogDict['text'][-1]['text'], 300,300,0)
-            self.canvas.Refresh()
+            rot = 0
+            coords = [200, 40]
+            self.dialogDict['text'][-1]['coords'] = coords
+            extent = self.getTextExtent(textDict = self.dialogDict['text'][-1])
+            bounds = self.getModifiedTextBounds(coords[0], coords[1], extent, rot)
+            self.canvas.DrawRotText(pdc = self.canvas.pdcObj, drawId = id, textDict = self.dialogDict['text'][-1],
+                                        coords = coords, bounds = bounds)
             self.canvas.pdcTmp.RemoveAll()
             self.canvas.dragId = -1
         dlg.Destroy()
-        
+    
+    def getModifiedTextBounds(self, x, y, textExtent, rotation):
+        """!computes bounding box of rotated text, not very precisely"""
+        w, h = textExtent
+        rotation = float(rotation)/180*pi
+        H = float(w) * sin(rotation)
+        W = float(w) * cos(rotation)
+        X, Y = x, y
+        if pi/2 < rotation <= 3*pi/2:
+            X = x + W 
+        if 0 < rotation < pi:
+            Y = y - H
+        return wx.Rect(X, Y, abs(W), abs(H)).Inflate(h,h) 
+       
+    def getTextExtent(self, textDict):
+        fontsize = textDict['fontsize'] * self.canvas.currScale
+        fontsize = str(fontsize if fontsize >= 4 else 4)
+        dc = wx.PaintDC(self) # dc created because of method GetTextExtent, which pseudoDC lacks
+        dc.SetFont(wx.FontFromNativeInfoString(textDict['font'] + " " + fontsize))
+        return dc.GetTextExtent(textDict['text'])
+    
     def OnDelete(self, event):
         if self.canvas.dragId != -1:
             self.deleteObject(self.canvas.dragId)
+            self.canvas.dragId = -1
     
     def deleteObject(self, id):
+        """!Deletes object, his id and redraws"""
         self.canvas.pdcObj.RemoveId(id)
         self.canvas.pdcTmp.RemoveAll()
         self.canvas.Refresh()
-        self.SetDefault(type = self.canvas.itemType[id])
+        if self.canvas.itemType[id] == 'text':
+            idx = self.canvas.getTextIndex(id)
+            self.dialogDict['text'].pop(idx)
+        else:
+            self.SetDefault(type = self.canvas.itemType[id])
         del self.canvas.itemType[id]
         self.canvas.objectId.remove(id) 
-               
+
     def OnCloseWindow(self, event):
         """!Close window"""
         self.Destroy()
@@ -882,7 +924,15 @@ class PsMapBufferedWindow(wx.Window):
             oRect.OffsetXY(-view[0] , -view[1])
             oRect = self.ScaleRect(rect = oRect, scale = zoomFactor)
             type = self.itemType[id]
-            self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
+            if type == 'text':
+                idx = self.getTextIndex(id)
+                coords = self.dialogDict['text'][idx]['coords']# recalculate coordinates, they are not equal to BB
+                self.dialogDict['text'][idx]['coords'] = coords = [(coord - view[i]) * zoomFactor
+                                                                    for i, coord in enumerate(coords)]
+                self.DrawRotText(pdc = self.pdcObj, drawId = id, textDict = self.dialogDict[type][idx],
+                 coords = coords, bounds = oRect )
+            else:
+                self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
                         drawid = id, pdctype = 'rect', bb = oRect)
         #redraw tmp objects
         for i, id in enumerate([self.idBoxTmp]):
@@ -916,6 +966,38 @@ class PsMapBufferedWindow(wx.Window):
         pdc.EndDrawing()
 
         return drawid
+    
+    def DrawRotText(self, pdc, drawId, textDict, coords, bounds):
+        coords = coords
+        rot = 0
+        fontsize = textDict['fontsize'] * self.currScale
+        fontsize = str(fontsize if fontsize >= 4 else 4) 
+        background = textDict['background'] if textDict['background'] != 'none' else None
+        
+        dc = wx.PaintDC(self) # dc created because of method GetTextExtent, which pseudoDC lacks
+        dc.SetFont(wx.FontFromNativeInfoString(textDict['font'] + " " + fontsize))
+        textExtent = dc.GetTextExtent(textDict['text'])
+        pdc.BeginDrawing()
+        pdc.ClearId(drawId)
+        pdc.SetId(drawId)
+        # doesn't work
+        if background:
+            pdc.SetBackgroundMode(wx.SOLID)
+            pdc.SetBackground(wx.Brush(background))
+        else:
+            pdc.SetBackgroundMode(wx.TRANSPARENT)
+        pdc.SetFont(wx.FontFromNativeInfoString(textDict['font'] + " " + fontsize))    
+        pdc.SetTextForeground(textDict['color'])        
+        pdc.DrawRotatedText(textDict['text'], coords[0], coords[1], rot)
+        pdc.SetIdBounds(drawId, bounds)
+        self.Refresh()
+        pdc.EndDrawing()
+        
+    def getTextIndex(self, id):
+        """!returns the index of text object with the given id"""
+        ids = sorted(self.parent.find_key(dic = self.itemType, val = 'text'))
+        idx = ids.index(id) + 1 #first is default, others are real objects
+        return idx
     
     def OnSize(self, event):
         """!Init image size to match window size

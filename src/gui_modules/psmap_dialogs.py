@@ -37,6 +37,7 @@ from grass.script import core as grass
 
 import wx
 import wx.lib.scrolledpanel as scrolled
+from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 try:
     from agw import flatnotebook as fnb
@@ -1032,7 +1033,21 @@ class TextDialog(PsmapDialog):
         panel = wx.Panel(self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
         
         border = wx.BoxSizer(wx.VERTICAL)
+        
+        # text entry
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Text")))
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        
+        textLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("Enter text:"))
+        self.textCtrl = ExpandoTextCtrl(panel, id = wx.ID_ANY, value = self.textDict['text'])
+        
+        sizer.Add(textLabel, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
+        sizer.Add(self.textCtrl, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
         #font
+        
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         flexGridSizer = wx.FlexGridSizer (rows = 2, cols = 2, hgap = 5, vgap = 5)
@@ -1049,6 +1064,7 @@ class TextDialog(PsmapDialog):
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         #text effects
+        
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Text effects")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
@@ -1066,7 +1082,18 @@ class TextDialog(PsmapDialog):
         self.effect['borderColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
         self.effect['borderWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY,  value = 'pts',min = 1, max = 25, initial = 1)
         self.effect['borderWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
-        
+        #set values
+        self.effect['backgroundCtrl'].SetValue(True if self.textDict['background'] != 'none' else False)
+        self.effect['backgroundColor'].SetColour(self.textDict['background'] 
+                                            if self.textDict['background'] != 'none' else 'white')
+        self.effect['highlightCtrl'].SetValue(True if self.textDict['hcolor'] != 'none' else False)
+        self.effect['highlightColor'].SetColour(self.textDict['hcolor'] 
+                                            if self.textDict['hcolor'] != 'none' else 'grey')
+        self.effect['highlightWidth'].SetValue(float(self.textDict['hwidth']))
+        self.effect['borderCtrl'].SetValue(True if self.textDict['border'] != 'none' else False)
+        self.effect['borderColor'].SetColour(self.textDict['border'] 
+                                            if self.textDict['border'] != 'none' else 'black')
+        self.effect['borderWidth'].SetValue(float(self.textDict['width']))
         
         gridBagSizer.Add(self.effect['backgroundCtrl'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.effect['backgroundColor'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -1082,12 +1109,17 @@ class TextDialog(PsmapDialog):
         sizer.Add(item = gridBagSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
+        self.Bind(EVT_ETC_LAYOUT_NEEDED, self.OnRefit, self.textCtrl)
         self.Bind(wx.EVT_CHECKBOX, self.OnBackground, self.effect['backgroundCtrl'])
         self.Bind(wx.EVT_CHECKBOX, self.OnHighlight, self.effect['highlightCtrl'])
         self.Bind(wx.EVT_CHECKBOX, self.OnBorder, self.effect['borderCtrl'])
         
         panel.SetSizer(border)
-        return panel    
+        return panel 
+     
+    def OnRefit(self, event):
+        self.Fit()
+          
     def OnBackground(self, event):
         if self.effect['backgroundCtrl'].GetValue():
             self.effect['backgroundColor'].Enable()
@@ -1114,11 +1146,23 @@ class TextDialog(PsmapDialog):
             self.effect['borderWidth'].Disable()
             self.effect['borderWidthLabel'].Disable()
             
-    def update(self):    
+    def update(self): 
+        #text
+        self.textDict['text'] = self.textCtrl.GetValue()
         #font
         font = self.font['fontCtrl'].GetSelectedFont()
         self.textDict['font'] = font.GetFaceName()
         self.textDict['fontsize'] = font.GetPointSize()
+        self.textDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        #effects
+        self.textDict['background'] = (self.effect['backgroundColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+                                        if self.effect['backgroundCtrl'].GetValue() else 'none') 
+        self.textDict['border'] = (self.effect['borderColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+                                        if self.effect['borderCtrl'].GetValue() else 'none')
+        self.textDict['width'] = self.effect['borderWidth'].GetValue()
+        self.textDict['hcolor'] = (self.effect['highlightColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+                                        if self.effect['highlightCtrl'].GetValue() else 'none')
+        self.textDict['hwidth'] = self.effect['highlightWidth'].GetValue()
         
     def OnOK(self, event):
         self.update()
