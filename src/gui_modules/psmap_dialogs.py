@@ -1021,16 +1021,21 @@ class TextDialog(PsmapDialog):
             self.textDict = dict(self.dialogDict['text'][order] )
         else:# when editing
             self.textDict = self.dialogDict['text'][order]
-             
-        self.panel = self._textPanel()
+        
+        notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)     
+        self.textPanel = self._textPanel(notebook)
+        self.positionPanel = self._positionPanel(notebook)
         self.OnBackground(None)
         self.OnHighlight(None)
         self.OnBorder(None)
+        self.OnPositionType(None)
+        self.OnRotate(None)
      
-        self._layout(self.panel)
+        self._layout(notebook)
 
-    def _textPanel(self):
-        panel = wx.Panel(self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+    def _textPanel(self, notebook):
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Text"))
         
         border = wx.BoxSizer(wx.VERTICAL)
         
@@ -1044,8 +1049,9 @@ class TextDialog(PsmapDialog):
         
         sizer.Add(textLabel, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
         sizer.Add(self.textCtrl, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
-        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)        
         
+
         #font
         
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
@@ -1115,11 +1121,125 @@ class TextDialog(PsmapDialog):
         self.Bind(wx.EVT_CHECKBOX, self.OnBorder, self.effect['borderCtrl'])
         
         panel.SetSizer(border)
+        panel.Fit()
         return panel 
+    def _positionPanel(self, notebook):
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Position"))
+
+        border = wx.BoxSizer(wx.VERTICAL) 
+
+        #Position
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Position")))
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        
+        self.positionLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("Position is given:"))
+        self.paperPositionCtrl = wx.RadioButton(panel, id = wx.ID_ANY, label = _("relatively to paper"), style = wx.RB_GROUP)
+        self.mapPositionCtrl = wx.RadioButton(panel, id = wx.ID_ANY, label = _("by map coordinates"))
+        
+        gridBagSizer.Add(self.positionLabel, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(self.paperPositionCtrl, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(self.mapPositionCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        
+        # first box - paper coordinates
+        box1   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = "")
+        sizerP = wx.StaticBoxSizer(box1, wx.VERTICAL)
+        self.gridBagSizerP = wx.GridBagSizer (hgap = 5, vgap = 5)
+        self.gridBagSizerP.AddGrowableCol(1)
+        self.gridBagSizerP.AddGrowableRow(3)
+        
+        self.AddPosition(parent = panel, dialogDict = self.textDict)
+        self.position['comment'].SetLabel(_("Position from the top left\nedge of the paper"))
+        self.AddUnits(parent = panel, dialogDict = self.textDict)
+        self.gridBagSizerP.Add(self.units['unitsLabel'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerP.Add(self.units['unitsCtrl'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerP.Add(self.position['xLabel'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerP.Add(self.position['xCtrl'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerP.Add(self.position['yLabel'], pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerP.Add(self.position['yCtrl'], pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerP.Add(self.position['comment'], pos = (3,0), span = (1,2), flag = wx.ALIGN_BOTTOM, border = 0)
+        
+        sizerP.Add(self.gridBagSizerP, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        gridBagSizer.Add(sizerP, pos = (2,0), flag = wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, border = 0)
+        
+        
+        # second box - map coordinates
+        box2   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = "")
+        sizerM = wx.StaticBoxSizer(box2, wx.VERTICAL)
+        self.gridBagSizerM = wx.GridBagSizer (hgap = 5, vgap = 5)
+        self.gridBagSizerM.AddGrowableCol(1)
+        
+        self.eastingLabel  = wx.StaticText(panel, id = wx.ID_ANY, label = "E:")
+        self.northingLabel  = wx.StaticText(panel, id = wx.ID_ANY, label = "N:")
+        self.eastingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
+        self.northingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
+        self.xoffLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("offset (pts):"))
+        self.yoffLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("offset (pts):"))
+        self.xoffCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, size = (50, -1), min = 0, max = 50, initial = 0)
+        self.yoffCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, size = (50, -1), min = 0, max = 50, initial = 0)
+
+        self.gridBagSizerM.Add(self.eastingLabel, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.northingLabel, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.eastingCtrl, pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.northingCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.xoffLabel, pos = (0,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.yoffLabel, pos = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.xoffCtrl, pos = (0,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerM.Add(self.yoffCtrl, pos = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        # anchor point
+        self.refPoint = wx.RadioBox(panel, id = wx.ID_ANY, label = (" {0} ").format(_("Anchor point")), choices = [' ']*9,
+                        majorDimension = 3, style = wx.RA_SPECIFY_COLS)
+        self.gridBagSizerM.Add(self.refPoint, pos = (2,0), span = (1,4), flag = wx.ALIGN_RIGHT, border = 0)
+        sizerM.Add(self.gridBagSizerM, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        gridBagSizer.Add(sizerM, pos = (2,1), flag = wx.ALIGN_CENTER_HORIZONTAL, border = 0)
+                
+        #rotation
+        self.rotCtrl = wx.CheckBox(panel, id = wx.ID_ANY, label = _("rotate text (CCW)"))
+        self.rotValue = wx.SpinCtrl(panel, wx.ID_ANY, size = (50, -1), min = 0, max = 360, initial = 0)
+        if self.textDict['rotate']:
+            self.rotValue.SetValue(int(self.textDict['rotate']))
+            self.rotCtrl.SetValue(True)
+        else:
+            self.rotValue.SetValue(0)
+            self.rotCtrl.SetValue(False)
+        gridBagSizer.Add(self.rotCtrl, pos = (3,0), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(self.rotValue, pos = (3,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        panel.SetSizer(border)
+        panel.FitInside()
+          
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnPositionType, self.paperPositionCtrl) 
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnPositionType, self.mapPositionCtrl)
+        self.Bind(wx.EVT_CHECKBOX, self.OnRotation, self.rotCtrl)
+        
+        return panel
      
     def OnRefit(self, event):
         self.Fit()
-          
+        
+    def OnRotation(self, event):
+        if self.rotCtrl.GetValue():
+            self.rotValue.Enable()
+        else: 
+            self.rotValue.Disable()
+            
+    def OnPositionType(self, event):
+        if self.paperPositionCtrl.GetValue():
+            for widget in self.gridBagSizerP.GetChildren():
+                widget.GetWindow().Enable()
+            for widget in self.gridBagSizerM.GetChildren():
+                widget.GetWindow().Disable()
+        else:
+            for widget in self.gridBagSizerM.GetChildren():
+                widget.GetWindow().Enable()
+            for widget in self.gridBagSizerP.GetChildren():
+                widget.GetWindow().Disable()
     def OnBackground(self, event):
         if self.effect['backgroundCtrl'].GetValue():
             self.effect['backgroundColor'].Enable()
@@ -1163,7 +1283,17 @@ class TextDialog(PsmapDialog):
         self.textDict['hcolor'] = (self.effect['highlightColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
                                         if self.effect['highlightCtrl'].GetValue() else 'none')
         self.textDict['hwidth'] = self.effect['highlightWidth'].GetValue()
+        #position
+        currUnit = self.units['unitsCtrl'].GetStringSelection()
+        x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+        y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+        self.textDict['where'] = x,y 
         
+        #rotation
+        if self.rotCtrl.GetValue():
+            self.textDict['rotate'] = self.rotValue.GetValue()
+        else:
+            self.textDict['rotate'] = None
     def OnOK(self, event):
         self.update()
         event.Skip()

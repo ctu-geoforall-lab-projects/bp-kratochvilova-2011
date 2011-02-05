@@ -244,7 +244,8 @@ class PsMapFrame(wx.Frame):
                                             border = 'none')
         #text
         self.defaultDict['text'] = dict(text = "", font = "Serif", fontsize = 10, color = 'black', background = 'none',
-                                        hcolor = 'none', hwidth = 1, border = 'none', width = '1' )
+                                        hcolor = 'none', hwidth = 1, border = 'none', width = '1',
+                                        where = (page['Left'], page['Top']), units = 'inch', rotate = None )
         
     def SetDefault(self, type = None):
         """!Set default values"""
