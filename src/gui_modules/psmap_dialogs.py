@@ -68,11 +68,13 @@ class UnitConversion():
     
     
 class PsmapDialog(wx.Dialog):
-    def __init__(self, parent, title, settings = None):
+    def __init__(self, parent, title, settings, itemType):
         wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
                             title = title, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
         self.dialogDict = settings
+        self.itemType = itemType
         self.unitConv = UnitConversion(self)
+        self.spinCtrlSize = (50, -1)
 
         
     def AddUnits(self, parent, dialogDict):
@@ -80,6 +82,7 @@ class PsmapDialog(wx.Dialog):
         self.units['unitsLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Units:"))
         choices = self.unitConv.getPageUnits()
         self.units['unitsCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = choices)  
+        self.units['unitsCtrl'].SetStringSelection(dialogDict['unit'])
           
     def AddPosition(self, parent, dialogDict):
         self.position = dict()
@@ -89,6 +92,11 @@ class PsmapDialog(wx.Dialog):
         self.position['yLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Y:"))
         self.position['xCtrl'] = wx.TextCtrl(parent, id = wx.ID_ANY, value = str(dialogDict['where'][0]))
         self.position['yCtrl'] = wx.TextCtrl(parent, id = wx.ID_ANY, value = str(dialogDict['where'][1]))
+        if dialogDict.has_key('unit'):
+            x = self.unitConv.convert(value = dialogDict['where'][0], fromUnit = 'inch', toUnit = dialogDict['unit'])
+            y = self.unitConv.convert(value = dialogDict['where'][1], fromUnit = 'inch', toUnit = dialogDict['unit'])
+            self.position['xCtrl'].SetValue("{0:5.3f}".format(x))
+            self.position['yCtrl'].SetValue("{0:5.3f}".format(y))
         
     def AddFont(self, parent, dialogDict):
         self.font = dict()
@@ -152,16 +160,16 @@ class PsmapDialog(wx.Dialog):
         mainSizer.Fit(self) 
             
 class PageSetupDialog(PsmapDialog):
-    def __init__(self, parent, settings = None):
-        PsmapDialog.__init__(self, parent = parent, title = "Page setup")
+    def __init__(self, parent, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, title = "Page setup",  settings = settings, itemType = itemType)
 
         
         self.cat = ['Units', 'Format', 'Orientation', 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
         paperString = RunCommand('ps.map', flags = 'p', read = True)
         self.paperTable = self._toList(paperString) 
         self.unitsList = self.unitConv.getPageUnits()
-        self.dialogDict = settings
-        self.pageSetupDict = self.dialogDict['page']
+        pageId = find_key(dic = self.itemType, val = 'paper')[0], find_key(dic = self.itemType, val = 'margins')[0]
+        self.pageSetupDict = self.dialogDict[pageId]
 
         self._layout()
         
@@ -293,13 +301,12 @@ class PageSetupDialog(PsmapDialog):
         return sizeList
     
 class MapDialog(PsmapDialog):
-    def __init__(self, parent, settings = None):
-        PsmapDialog.__init__(self, parent = parent, title = "Map settings")
+    def __init__(self, parent, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, title = "Map settings", settings = settings, itemType = itemType)
         
-        self.parent = parent
-        self.dialogDict = settings
-        self.mapDialogDict = self.dialogDict['map']
-        self.mapsets = [grass.gisenv()['MAPSET'],]
+        mapId = find_key(dic = self.itemType, val = 'map')
+        self.mapDialogDict = self.dialogDict[mapId]
+        #self.mapsets = [grass.gisenv()['MAPSET'],]
         self.scale, self.rectAdjusted = self.AutoAdjust()
         
         self._layout()
@@ -432,13 +439,16 @@ class MapDialog(PsmapDialog):
 
 
 class LegendDialog(PsmapDialog):
-    def __init__(self, parent, settings = None):
-        PsmapDialog.__init__(self, parent = parent, title = "Legend settings")
-        self.parent = parent
-        self.dialogDict = settings
-        self.legendDict = self.dialogDict['rasterLegend']
-        self.units = UnitConversion(self)
-        self.currRaster = self.dialogDict['map']['raster']
+    def __init__(self, parent, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, title = "Legend settings", settings = settings, itemType = itemType)
+        
+        self.mapId = find_key(dic = self.itemType, val = 'map')
+
+        self.pageId = find_key(dic = self.itemType, val = 'paper'), find_key(dic = self.itemType, val = 'margins')
+        rLegendId = find_key(dic = self.itemType, val = 'rasterLegend')
+        
+        self.legendDict = self.dialogDict[rLegendId]
+        self.currRaster = self.dialogDict[self.mapId]['raster'] if self.mapId else None
         
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
@@ -582,8 +592,8 @@ class LegendDialog(PsmapDialog):
         self.ticks = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw ticks across color table"))
         self.ticks.SetValue(True if self.legendDict['tickbar'] == 'y' else False)
         # range
-        if self.dialogDict['map']['raster']:
-            range = RunCommand('r.info', flags = 'r', read = True, map = self.dialogDict['map']['raster']).strip().split('\n')
+        if self.mapId and self.dialogDict[self.mapId]['raster']:
+            range = RunCommand('r.info', flags = 'r', read = True, map = self.dialogDict[self.mapId]['raster']).strip().split('\n')
             self.minim, self.maxim = range[0].split('=')[1], range[1].split('=')[1]
         else:
             self.minim, self.maxim = 0,0
@@ -815,8 +825,8 @@ class LegendDialog(PsmapDialog):
                         rows = ceil(float(len(cat))/self.legendDict['cols'])
                     drawHeight = self.unitConv.convert(value =  1.5 *rows * self.legendDict['fontsize'],
                                                     fromUnit = 'point', toUnit = 'inch')
-                    paperWidth = self.dialogDict['page']['Width']- self.dialogDict['page']['Right']\
-                                                                        - self.dialogDict['page']['Left']
+                    paperWidth = self.dialogDict[self.pageId]['Width']- self.dialogDict[self.pageId]['Right']\
+                                                                        - self.dialogDict[self.pageId]['Left']
                     drawWidth = (paperWidth / self.legendDict['cols']) * (self.legendDict['cols'] - 1) + 1
                     self.legendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
 
@@ -852,12 +862,10 @@ class LegendDialog(PsmapDialog):
         return self.legendDict   
              
 class MapinfoDialog(PsmapDialog):
-    def __init__(self, parent, settings = None):
-        PsmapDialog.__init__(self, parent = parent, title = "Mapinfo settings")
-        self.parent = parent
-        self.dialogDict = settings
-        self.mapinfoDict = self.dialogDict['mapinfo'] 
-        
+    def __init__(self, parent, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, title = "Mapinfo settings", settings = settings, itemType = itemType)
+        mapInfoId = find_key(dic = self.itemType, val = 'mapinfo')
+        self.mapinfoDict = self.dialogDict[mapInfoId] 
         
         self.panel = self._mapinfoPanel()
      
@@ -1013,14 +1021,12 @@ class MapinfoDialog(PsmapDialog):
         
         
 class TextDialog(PsmapDialog):
-    def __init__(self, parent, order, settings = None):
-        PsmapDialog.__init__(self, parent = parent, title = "Text settings")
-        self.parent = parent
-        self.dialogDict = settings
-        if order == 0: #default when adding (copy)
-            self.textDict = dict(self.dialogDict['text'][order] )
-        else:# when editing
-            self.textDict = self.dialogDict['text'][order]
+    def __init__(self, parent, settings, itemType, textId):
+        PsmapDialog.__init__(self, parent = parent, title = "Text settings", settings = settings, itemType = itemType)
+        self.mapId = find_key(dic = self.itemType, val = 'map')
+        self.textDict = self.dialogDict[textId]
+        self.textDict['east'], self.textDict['north'] = self.PaperMapCoordinates(x = self.textDict['where'][0],\
+                                                            y = self.textDict['where'][1], paperToMap = True)
         
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)     
         self.textPanel = self._textPanel(notebook)
@@ -1029,7 +1035,7 @@ class TextDialog(PsmapDialog):
         self.OnHighlight(None)
         self.OnBorder(None)
         self.OnPositionType(None)
-        self.OnRotate(None)
+        self.OnRotation(None)
      
         self._layout(notebook)
 
@@ -1081,12 +1087,12 @@ class TextDialog(PsmapDialog):
         
         self.effect['highlightCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("highlight"))
         self.effect['highlightColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
-        self.effect['highlightWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY,  value = 'pts',min = 0, max = 5, initial = 1)
+        self.effect['highlightWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY, size = self.spinCtrlSize, value = 'pts',min = 0, max = 5, initial = 1)
         self.effect['highlightWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
         
         self.effect['borderCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("text border"))
         self.effect['borderColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
-        self.effect['borderWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY,  value = 'pts',min = 1, max = 25, initial = 1)
+        self.effect['borderWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY, size = self.spinCtrlSize, value = 'pts',min = 1, max = 25, initial = 1)
         self.effect['borderWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
         #set values
         self.effect['backgroundCtrl'].SetValue(True if self.textDict['background'] != 'none' else False)
@@ -1133,14 +1139,18 @@ class TextDialog(PsmapDialog):
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Position")))
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
         gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(0)
+        gridBagSizer.AddGrowableCol(1)
         
         self.positionLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("Position is given:"))
         self.paperPositionCtrl = wx.RadioButton(panel, id = wx.ID_ANY, label = _("relatively to paper"), style = wx.RB_GROUP)
         self.mapPositionCtrl = wx.RadioButton(panel, id = wx.ID_ANY, label = _("by map coordinates"))
+        self.paperPositionCtrl.SetValue(self.textDict['XY'])
+        self.mapPositionCtrl.SetValue(not self.textDict['XY'])
         
-        gridBagSizer.Add(self.positionLabel, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(self.positionLabel, pos = (0,0), span = (1,3), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
         gridBagSizer.Add(self.paperPositionCtrl, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
-        gridBagSizer.Add(self.mapPositionCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        gridBagSizer.Add(self.mapPositionCtrl, pos = (1,1),flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
         
         # first box - paper coordinates
         box1   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = "")
@@ -1160,43 +1170,81 @@ class TextDialog(PsmapDialog):
         self.gridBagSizerP.Add(self.position['yCtrl'], pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         self.gridBagSizerP.Add(self.position['comment'], pos = (3,0), span = (1,2), flag = wx.ALIGN_BOTTOM, border = 0)
         
+        
         sizerP.Add(self.gridBagSizerP, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
-        gridBagSizer.Add(sizerP, pos = (2,0), flag = wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(sizerP, pos = (2,0),span = (1,1), flag = wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, border = 0)
         
         
         # second box - map coordinates
         box2   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = "")
         sizerM = wx.StaticBoxSizer(box2, wx.VERTICAL)
         self.gridBagSizerM = wx.GridBagSizer (hgap = 5, vgap = 5)
+        self.gridBagSizerM.AddGrowableCol(0)
         self.gridBagSizerM.AddGrowableCol(1)
         
         self.eastingLabel  = wx.StaticText(panel, id = wx.ID_ANY, label = "E:")
         self.northingLabel  = wx.StaticText(panel, id = wx.ID_ANY, label = "N:")
         self.eastingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
         self.northingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
-        self.xoffLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("offset (pts):"))
-        self.yoffLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("offset (pts):"))
-        self.xoffCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, size = (50, -1), min = 0, max = 50, initial = 0)
-        self.yoffCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, size = (50, -1), min = 0, max = 50, initial = 0)
+        east, north = self.PaperMapCoordinates(x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
+        self.eastingCtrl.SetValue(str(east))
+        self.northingCtrl.SetValue(str(north))
+        
 
         self.gridBagSizerM.Add(self.eastingLabel, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         self.gridBagSizerM.Add(self.northingLabel, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         self.gridBagSizerM.Add(self.eastingCtrl, pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         self.gridBagSizerM.Add(self.northingCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        self.gridBagSizerM.Add(self.xoffLabel, pos = (0,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        self.gridBagSizerM.Add(self.yoffLabel, pos = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        self.gridBagSizerM.Add(self.xoffCtrl, pos = (0,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        self.gridBagSizerM.Add(self.yoffCtrl, pos = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         
-        # anchor point
-        self.refPoint = wx.RadioBox(panel, id = wx.ID_ANY, label = (" {0} ").format(_("Anchor point")), choices = [' ']*9,
-                        majorDimension = 3, style = wx.RA_SPECIFY_COLS)
-        self.gridBagSizerM.Add(self.refPoint, pos = (2,0), span = (1,4), flag = wx.ALIGN_RIGHT, border = 0)
         sizerM.Add(self.gridBagSizerM, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
-        gridBagSizer.Add(sizerM, pos = (2,1), flag = wx.ALIGN_CENTER_HORIZONTAL, border = 0)
+        gridBagSizer.Add(sizerM, pos = (2,1), flag = wx.ALIGN_LEFT|wx.EXPAND, border = 0)
+        
+        #offset
+        box3   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Offset")))
+        sizerO = wx.StaticBoxSizer(box3, wx.VERTICAL)
+        gridBagSizerO = wx.GridBagSizer (hgap = 5, vgap = 5)
+        self.xoffLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("horizontal (pts):"))
+        self.yoffLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("vertical (pts):"))
+        self.xoffCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, size = (50, -1), min = -50, max = 50, initial = 0)
+        self.yoffCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, size = (50, -1), min = -50, max = 50, initial = 0) 
+        self.xoffCtrl.SetValue(self.textDict['xoffset'])       
+        self.yoffCtrl.SetValue(self.textDict['yoffset'])
+        gridBagSizerO.Add(self.xoffLabel, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizerO.Add(self.yoffLabel, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizerO.Add(self.xoffCtrl, pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizerO.Add(self.yoffCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizerO.Add(gridBagSizerO, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        gridBagSizer.Add(sizerO, pos = (3,0), flag = wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, border = 0)
+        # reference point
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_(" Reference point")))
+        sizerR = wx.StaticBoxSizer(box, wx.VERTICAL)
+        flexSizer = wx.FlexGridSizer(rows = 3, cols = 3, hgap = 5, vgap = 5)
+        flexSizer.AddGrowableCol(0)
+        flexSizer.AddGrowableCol(1)
+        flexSizer.AddGrowableCol(2)
+        ref = []
+        for row in ["upper", "center", "lower"]:
+            for col in ["left", "center", "right"]:
+                ref.append(row + " " + col)
+        self.radio = [wx.RadioButton(panel, id = wx.ID_ANY, label = '', style = wx.RB_GROUP, name = ref[0])]
+        flexSizer.Add(self.radio[0], proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
+        for i in range(1,9):
+            self.radio.append(wx.RadioButton(panel, id = wx.ID_ANY, label = '', name = ref[i]))
+            flexSizer.Add(self.radio[-1], proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
+        self.FindWindowByName(self.textDict['ref']).SetValue(True)
+        
+        sizerR.Add(flexSizer, proportion = 1, flag = wx.EXPAND, border = 0)
+        gridBagSizer.Add(sizerR, pos = (3,1), flag = wx.ALIGN_LEFT|wx.EXPAND, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
                 
         #rotation
-        self.rotCtrl = wx.CheckBox(panel, id = wx.ID_ANY, label = _("rotate text (CCW)"))
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Text rotation")))
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+
+        self.rotCtrl = wx.CheckBox(panel, id = wx.ID_ANY, label = _("rotate text (counterclockwise)"))
         self.rotValue = wx.SpinCtrl(panel, wx.ID_ANY, size = (50, -1), min = 0, max = 360, initial = 0)
         if self.textDict['rotate']:
             self.rotValue.SetValue(int(self.textDict['rotate']))
@@ -1204,15 +1252,13 @@ class TextDialog(PsmapDialog):
         else:
             self.rotValue.SetValue(0)
             self.rotCtrl.SetValue(False)
-        gridBagSizer.Add(self.rotCtrl, pos = (3,0), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
-        gridBagSizer.Add(self.rotValue, pos = (3,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, border = 0)
+        sizer.Add(self.rotCtrl, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL, border = 5)
+        sizer.Add(self.rotValue, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL, border = 5)
         
-        
-        sizer.Add(gridBagSizer, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         panel.SetSizer(border)
-        panel.FitInside()
+        panel.Fit()
           
         self.Bind(wx.EVT_RADIOBUTTON, self.OnPositionType, self.paperPositionCtrl) 
         self.Bind(wx.EVT_RADIOBUTTON, self.OnPositionType, self.mapPositionCtrl)
@@ -1283,20 +1329,76 @@ class TextDialog(PsmapDialog):
         self.textDict['hcolor'] = (self.effect['highlightColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
                                         if self.effect['highlightCtrl'].GetValue() else 'none')
         self.textDict['hwidth'] = self.effect['highlightWidth'].GetValue()
-        #position
-        currUnit = self.units['unitsCtrl'].GetStringSelection()
-        x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
-        y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
-        self.textDict['where'] = x,y 
         
+        #offset
+        self.textDict['xoffset'] = self.xoffCtrl.GetValue()
+        self.textDict['yoffset'] = self.yoffCtrl.GetValue()
+        #position
+        if self.paperPositionCtrl.GetValue():
+            self.textDict['XY'] = True
+            currUnit = self.units['unitsCtrl'].GetStringSelection()
+            self.textDict['unit'] = currUnit
+            x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+            y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+            self.textDict['where'] = x, y
+            self.textDict['east'], self.textDict['north'] = self.PaperMapCoordinates(x, y, paperToMap = True)
+        else:
+            self.textDict['XY'] = False
+            self.textDict['east'] = self.eastingCtrl.GetValue()
+            self.textDict['north'] = self.northingCtrl.GetValue()
+            self.textDict['where'] = self.PaperMapCoordinates(float(self.textDict['east']), float(self.textDict['north']), paperToMap = False)
+##        if self.textDict['xoffset'] != '0':
+##            self.unitConv.convert(value = self.textDict['xoffset'], fromUnit = 'point', toUnit = 'inch')
         #rotation
         if self.rotCtrl.GetValue():
             self.textDict['rotate'] = self.rotValue.GetValue()
         else:
             self.textDict['rotate'] = None
+        #reference point
+        for radio in self.radio:
+            if radio.GetValue() == True:
+                self.textDict['ref'] = radio.GetName()
+    
+    def PaperMapCoordinates(self, x, y, paperToMap = True):
+        """!Converts paper (inch) coordinates -> map coordinates"""
+        currRegionDict = grass.region()
+        cornerEasting, cornerNorthing = currRegionDict['w'], currRegionDict['n']
+        if self.mapId:
+            xMap = self.dialogDict[self.mapId]['rect'][0]
+            yMap = self.dialogDict[self.mapId]['rect'][1]
+            currScale = float(self.dialogDict[self.mapId]['scale'])
+        else:
+            return
+        
+        if not paperToMap:
+            textEasting, textNorthing = x, y
+            eastingDiff = textEasting - cornerEasting 
+            eastingDiff = - eastingDiff if currRegionDict['w'] > currRegionDict['e'] else eastingDiff
+            northingDiff = textNorthing - cornerNorthing
+            northingDiff = - northingDiff if currRegionDict['n'] > currRegionDict['s'] else northingDiff
+            xPaper = xMap + self.unitConv.convert(value = eastingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
+            yPaper = yMap + self.unitConv.convert(value = northingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
+            return xPaper, yPaper
+        else:
+            eastingDiff = (x - xMap) if currRegionDict['w'] < currRegionDict['e'] else (xMap - x)
+            northingDiff = (y - yMap) if currRegionDict['n'] < currRegionDict['s'] else (yMap - y)
+            textEasting = cornerEasting + self.unitConv.convert(value = eastingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
+            textNorthing = cornerNorthing + self.unitConv.convert(value = northingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
+            return int(textEasting), int(textNorthing)
+
     def OnOK(self, event):
         self.update()
         event.Skip()
         
     def getInfo(self):
         return self.textDict 
+    
+    
+    
+    
+def find_key(dic, val, multiple = False):
+    """!Return the key of dictionary given the value"""
+    result = [k for k, v in dic.iteritems() if v == val]
+    if len(result) == 0:
+        return None
+    return sorted(result) if multiple else result[0]
