@@ -19,6 +19,7 @@ This program is free software under the GNU General Public License
 
 import os
 import sys
+import string
 from math import ceil
 from collections import namedtuple
 
@@ -66,7 +67,41 @@ class UnitConversion():
         return float(value)/self._units[fromUnit]*self._units[toUnit]
     
     
-    
+class TCValidator(wx.PyValidator):
+    """!validates input in textctrls, took from wx demo"""
+    def __init__(self, flag = None):
+        wx.PyValidator.__init__(self)
+        self.flag = flag
+        self.Bind(wx.EVT_CHAR, self.OnChar)
+
+    def Clone(self):
+        return TCValidator(self.flag)
+
+    def Validate(self, win):
+        tc = self.GetWindow()
+        val = tc.GetValue()
+
+        if self.flag == 'DIGIT_ONLY':
+            for x in val:
+                if x not in string.digits:
+                    return False
+        return True
+
+    def OnChar(self, event):
+        key = event.GetKeyCode()
+        if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
+            event.Skip()
+            return
+        if self.flag == 'DIGIT_ONLY' and chr(key) in string.digits:
+            event.Skip()
+            return
+        if not wx.Validator_IsSilent():
+            wx.Bell()
+        # Returning without calling even.Skip eats the event before it
+        # gets to the text control
+        return  
+
+  
 class PsmapDialog(wx.Dialog):
     def __init__(self, parent, title, settings, itemType):
         wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
@@ -90,8 +125,8 @@ class PsmapDialog(wx.Dialog):
                     label = _("Position of the top left corner\nfrom the top left edge of the paper"))
         self.position['xLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("X:"))
         self.position['yLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Y:"))
-        self.position['xCtrl'] = wx.TextCtrl(parent, id = wx.ID_ANY, value = str(dialogDict['where'][0]))
-        self.position['yCtrl'] = wx.TextCtrl(parent, id = wx.ID_ANY, value = str(dialogDict['where'][1]))
+        self.position['xCtrl'] = wx.TextCtrl(parent, id = wx.ID_ANY, value = str(dialogDict['where'][0]), validator = TCValidator(flag = 'DIGIT_ONLY'))
+        self.position['yCtrl'] = wx.TextCtrl(parent, id = wx.ID_ANY, value = str(dialogDict['where'][1]), validator = TCValidator(flag = 'DIGIT_ONLY'))
         if dialogDict.has_key('unit'):
             x = self.unitConv.convert(value = dialogDict['where'][0], fromUnit = 'inch', toUnit = dialogDict['unit'])
             y = self.unitConv.convert(value = dialogDict['where'][1], fromUnit = 'inch', toUnit = dialogDict['unit'])
@@ -168,7 +203,7 @@ class PageSetupDialog(PsmapDialog):
         paperString = RunCommand('ps.map', flags = 'p', read = True)
         self.paperTable = self._toList(paperString) 
         self.unitsList = self.unitConv.getPageUnits()
-        pageId = find_key(dic = self.itemType, val = 'paper')[0], find_key(dic = self.itemType, val = 'margins')[0]
+        pageId = find_key(dic = self.itemType, val = 'paper'), find_key(dic = self.itemType, val = 'margins')
         self.pageSetupDict = self.dialogDict[pageId]
 
         self._layout()
@@ -306,7 +341,6 @@ class MapDialog(PsmapDialog):
         
         mapId = find_key(dic = self.itemType, val = 'map')
         self.mapDialogDict = self.dialogDict[mapId]
-        #self.mapsets = [grass.gisenv()['MAPSET'],]
         self.scale, self.rectAdjusted = self.AutoAdjust()
         
         self._layout()
@@ -328,6 +362,7 @@ class MapDialog(PsmapDialog):
         
     def AutoAdjust(self):
         currRegionDict = grass.region()
+        #RunCommand()
 
         rX = self.mapDialogDict['rect'].x
         rY = self.mapDialogDict['rect'].y
@@ -403,13 +438,15 @@ class MapDialog(PsmapDialog):
         #scale
         scaleType = self.choice.GetSelection()
         
-        originRegionName = os.environ['WIND_OVERRIDE']
         if scaleType == 0: # automatic
+##            originRegionName = os.environ['WIND_OVERRIDE']
+##            RunCommand('g.region', region = originRegionName)
+            RunCommand('g.region', rast = self.mapDialogDict['raster'])
             self.scale, self.rectAdjusted = self.AutoAdjust()
             self.mapDialogDict['rect'] = Rect(*self.rectAdjusted) 
             self.mapDialogDict['scaleType'] = 0
             self.mapDialogDict['scale'] = self.scale
-            RunCommand('g.region', rast = self.mapDialogDict['raster'])
+            
         elif scaleType == 1:
             self.mapDialogDict['scaleType'] = 1
             scaleNumber = float(self.textCtrl.GetValue().split(':')[1].strip())
@@ -995,6 +1032,8 @@ class MapinfoDialog(PsmapDialog):
         currUnit = self.units['unitsCtrl'].GetStringSelection()
         self.mapinfoDict['unit'] = currUnit
         # position
+        x = self.position['xCtrl'].GetValue() if self.position['xCtrl'].GetValue() else self.mapinfoDict['where'][0]
+        y = self.position['yCtrl'].GetValue() if self.position['yCtrl'].GetValue() else self.mapinfoDict['where'][1]
         x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
         y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
         self.mapinfoDict['where'] = (x, y)
@@ -1024,9 +1063,10 @@ class TextDialog(PsmapDialog):
     def __init__(self, parent, settings, itemType, textId):
         PsmapDialog.__init__(self, parent = parent, title = "Text settings", settings = settings, itemType = itemType)
         self.mapId = find_key(dic = self.itemType, val = 'map')
+        if self.mapId is None:
+            self.mapId = find_key(dic = self.itemType, val = 'initMap')
         self.textDict = self.dialogDict[textId]
-        self.textDict['east'], self.textDict['north'] = self.PaperMapCoordinates(x = self.textDict['where'][0],\
-                                                            y = self.textDict['where'][1], paperToMap = True)
+        self.textDict['east'], self.textDict['north'] = PaperMapCoordinates(self, mapId = self.mapId, x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
         
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)     
         self.textPanel = self._textPanel(notebook)
@@ -1186,7 +1226,7 @@ class TextDialog(PsmapDialog):
         self.northingLabel  = wx.StaticText(panel, id = wx.ID_ANY, label = "N:")
         self.eastingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
         self.northingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
-        east, north = self.PaperMapCoordinates(x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
+        east, north = PaperMapCoordinates(self, mapId = self.mapId, x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
         self.eastingCtrl.SetValue(str(east))
         self.northingCtrl.SetValue(str(north))
         
@@ -1228,11 +1268,14 @@ class TextDialog(PsmapDialog):
             for col in ["left", "center", "right"]:
                 ref.append(row + " " + col)
         self.radio = [wx.RadioButton(panel, id = wx.ID_ANY, label = '', style = wx.RB_GROUP, name = ref[0])]
+        self.radio[0].SetValue(False)
         flexSizer.Add(self.radio[0], proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
         for i in range(1,9):
             self.radio.append(wx.RadioButton(panel, id = wx.ID_ANY, label = '', name = ref[i]))
+            self.radio[-1].SetValue(False)
             flexSizer.Add(self.radio[-1], proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
         self.FindWindowByName(self.textDict['ref']).SetValue(True)
+        print self.textDict['ref'], self.FindWindowByName(self.textDict['ref'])
         
         sizerR.Add(flexSizer, proportion = 1, flag = wx.EXPAND, border = 0)
         gridBagSizer.Add(sizerR, pos = (3,1), flag = wx.ALIGN_LEFT|wx.EXPAND, border = 0)
@@ -1313,8 +1356,13 @@ class TextDialog(PsmapDialog):
             self.effect['borderWidthLabel'].Disable()
             
     def update(self): 
+        print 'update'
         #text
         self.textDict['text'] = self.textCtrl.GetValue()
+        if not self.textDict['text']:
+            wx.MessageBox(_("No text entered!"), _("Error"))
+            return False
+            
         #font
         font = self.font['fontCtrl'].GetSelectedFont()
         self.textDict['font'] = font.GetFaceName()
@@ -1338,17 +1386,18 @@ class TextDialog(PsmapDialog):
             self.textDict['XY'] = True
             currUnit = self.units['unitsCtrl'].GetStringSelection()
             self.textDict['unit'] = currUnit
-            x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
-            y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+            x = self.position['xCtrl'].GetValue() if self.position['xCtrl'].GetValue() else self.textDict['where'][0]
+            y = self.position['yCtrl'].GetValue() if self.position['yCtrl'].GetValue() else self.textDict['where'][1]
+            x = self.unitConv.convert(value = float(x), fromUnit = currUnit, toUnit = 'inch')
+            y = self.unitConv.convert(value = float(y), fromUnit = currUnit, toUnit = 'inch')
             self.textDict['where'] = x, y
-            self.textDict['east'], self.textDict['north'] = self.PaperMapCoordinates(x, y, paperToMap = True)
+            self.textDict['east'], self.textDict['north'] = PaperMapCoordinates(self, self.mapId, x, y, paperToMap = True)
         else:
             self.textDict['XY'] = False
-            self.textDict['east'] = self.eastingCtrl.GetValue()
-            self.textDict['north'] = self.northingCtrl.GetValue()
-            self.textDict['where'] = self.PaperMapCoordinates(float(self.textDict['east']), float(self.textDict['north']), paperToMap = False)
-##        if self.textDict['xoffset'] != '0':
-##            self.unitConv.convert(value = self.textDict['xoffset'], fromUnit = 'point', toUnit = 'inch')
+            self.textDict['east'] = self.eastingCtrl.GetValue() if self.eastingCtrl.GetValue() else self.textDict['east']
+            self.textDict['north'] = self.northingCtrl.GetValue() if self.northingCtrl.GetValue() else self.textDict['north']
+            self.textDict['where'] = PaperMapCoordinates(self, mapId = self.mapId, x = float(self.textDict['east']),
+                                                            y = float(self.textDict['north']), paperToMap = False)
         #rotation
         if self.rotCtrl.GetValue():
             self.textDict['rotate'] = self.rotValue.GetValue()
@@ -1358,37 +1407,12 @@ class TextDialog(PsmapDialog):
         for radio in self.radio:
             if radio.GetValue() == True:
                 self.textDict['ref'] = radio.GetName()
-    
-    def PaperMapCoordinates(self, x, y, paperToMap = True):
-        """!Converts paper (inch) coordinates -> map coordinates"""
-        currRegionDict = grass.region()
-        cornerEasting, cornerNorthing = currRegionDict['w'], currRegionDict['n']
-        if self.mapId:
-            xMap = self.dialogDict[self.mapId]['rect'][0]
-            yMap = self.dialogDict[self.mapId]['rect'][1]
-            currScale = float(self.dialogDict[self.mapId]['scale'])
-        else:
-            return
-        
-        if not paperToMap:
-            textEasting, textNorthing = x, y
-            eastingDiff = textEasting - cornerEasting 
-            eastingDiff = - eastingDiff if currRegionDict['w'] > currRegionDict['e'] else eastingDiff
-            northingDiff = textNorthing - cornerNorthing
-            northingDiff = - northingDiff if currRegionDict['n'] > currRegionDict['s'] else northingDiff
-            xPaper = xMap + self.unitConv.convert(value = eastingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
-            yPaper = yMap + self.unitConv.convert(value = northingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
-            return xPaper, yPaper
-        else:
-            eastingDiff = (x - xMap) if currRegionDict['w'] < currRegionDict['e'] else (xMap - x)
-            northingDiff = (y - yMap) if currRegionDict['n'] < currRegionDict['s'] else (yMap - y)
-            textEasting = cornerEasting + self.unitConv.convert(value = eastingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
-            textNorthing = cornerNorthing + self.unitConv.convert(value = northingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
-            return int(textEasting), int(textNorthing)
+        return True
 
     def OnOK(self, event):
-        self.update()
-        event.Skip()
+        ok = self.update()
+        if ok:
+            event.Skip()
         
     def getInfo(self):
         return self.textDict 
@@ -1399,6 +1423,33 @@ class TextDialog(PsmapDialog):
 def find_key(dic, val, multiple = False):
     """!Return the key of dictionary given the value"""
     result = [k for k, v in dic.iteritems() if v == val]
-    if len(result) == 0:
+    if len(result) == 0 and not multiple:
         return None
     return sorted(result) if multiple else result[0]
+
+def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
+    """!Converts paper (inch) coordinates -> map coordinates"""
+    unitConv = UnitConversion(self)
+    currRegionDict = grass.region()
+    cornerEasting, cornerNorthing = currRegionDict['w'], currRegionDict['n']
+    xMap = self.dialogDict[mapId]['rect'][0]
+    yMap = self.dialogDict[mapId]['rect'][1]
+    currScale = float(self.dialogDict[mapId]['scale'])
+
+    
+    if not paperToMap:
+        textEasting, textNorthing = x, y
+        eastingDiff = textEasting - cornerEasting 
+        eastingDiff = - eastingDiff if currRegionDict['w'] > currRegionDict['e'] else eastingDiff
+        northingDiff = textNorthing - cornerNorthing
+        northingDiff = - northingDiff if currRegionDict['n'] > currRegionDict['s'] else northingDiff
+        xPaper = xMap + unitConv.convert(value = eastingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
+        yPaper = yMap + unitConv.convert(value = northingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
+        return xPaper, yPaper
+    else:
+        print xMap, yMap, x, y, currScale
+        eastingDiff = (x - xMap) if currRegionDict['w'] < currRegionDict['e'] else (xMap - x)
+        northingDiff = (y - yMap) if currRegionDict['n'] < currRegionDict['s'] else (yMap - y)
+        textEasting = cornerEasting + unitConv.convert(value = eastingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
+        textNorthing = cornerNorthing + unitConv.convert(value = northingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
+        return int(textEasting), int(textNorthing)
