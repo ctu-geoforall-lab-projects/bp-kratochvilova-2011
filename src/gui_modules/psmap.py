@@ -91,6 +91,7 @@ class PsMapToolbar(AbstractToolbar):
         self.zoomOut = wx.NewId()
         self.zoomAll = wx.NewId()
         self.addMap = wx.NewId()
+        self.addVector = wx.NewId()
         self.dec = wx.NewId()
         self.delete = wx.NewId()
         self.instructionFile = wx.NewId()
@@ -122,6 +123,9 @@ class PsMapToolbar(AbstractToolbar):
             (self.addMap, 'add map', Icons['addrast'].GetBitmap(),
              wx.ITEM_CHECK, "Raster map", "Click and drag to place raster map",
              self.parent.OnAddMap),
+            (self.addVector, 'add vect', Icons['addvect'].GetBitmap(),
+             wx.ITEM_NORMAL, "Vector map", "Add vector layer",
+             self.parent.OnAddVect),
             (self.dec, "overlay", Icons["overlay"].GetBitmap(),
              wx.ITEM_NORMAL, Icons["overlay"].GetLabel(), Icons["overlay"].GetDesc(),
              self.parent.OnDecoration),
@@ -251,6 +255,8 @@ class PsMapFrame(wx.Frame):
                                         hcolor = 'none', hwidth = 1, border = 'none', width = '1', XY = True,
                                         where = (page['Left'], page['Top']), unit = 'inch', rotate = None, 
                                         ref = "center center", xoffset = 0, yoffset = 0, east = None, north = None)
+        #vector
+        self.defaultDict['vector'] = dict(list = None)
         
     def SetDefault(self, id, type):
         """!Set default values"""
@@ -279,6 +285,8 @@ class PsMapFrame(wx.Frame):
         
         rasterLegendId = find_key(dic = self.itemType, val = 'rasterLegend', multiple = False)
 
+        vectorId = find_key(dic = self.itemType, val = 'vector', multiple = False)
+        
         #change region
         if mapId and self.dialogDict[mapId]['scaleType'] == 1: #fixed scale
             region = grass.region()
@@ -362,6 +370,25 @@ class PsMapFrame(wx.Frame):
                 textInstruction += "    xoffset {xoffset}\n    yoffset {yoffset}\n".format(**self.dialogDict[i])
             textInstruction += "end"
             instruction.append(textInstruction) 
+            
+        #vector maps
+        if vectorId:
+            for map in self.dialogDict[vectorId]['list']:
+                if map[1] == 'points':
+                    vpointsInstruction = "vpoints {0}\n".format(map[0])
+                    #...
+                    vpointsInstruction += "end"
+                    instruction.append(vpointsInstruction)
+                if map[1] == 'lines':
+                    vlinesInstruction = "vlines {0}\n".format(map[0])
+                    #...
+                    vlinesInstruction += "end"
+                    instruction.append(vlinesInstruction)
+                if map[1] == 'areas':
+                    vareasInstruction = "vareas {0}\n".format(map[0])
+                    #...
+                    vareasInstruction += "end"
+                    instruction.append(vareasInstruction)
         return '\n'.join(instruction) + '\nend' 
     
     def PSFile(self, event):
@@ -490,6 +517,21 @@ class PsMapFrame(wx.Frame):
             self.mouse["use"] = "addMap"
             self.canvas.SetCursor(self.cursors["cross"])
             
+    def OnAddVect(self, event):
+        id = find_key(self.itemType, 'vector')
+        isNew = False
+        if not id:
+            id = self.createObject(type = 'vector', drawable = False)
+            isNew = True
+        dlg = MainVectorDialog(self, settings = self.dialogDict, itemType = self.itemType)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.dialogDict[id] = dlg.getInfo()
+            if len(self.dialogDict[id]['list']) == 0:
+                self.deleteObject(id)
+        elif isNew:
+            self.deleteObject(id)
+        dlg.Destroy()
+        
     def OnDecoration(self, event):
         """!Decorations overlay menu
         """
@@ -520,9 +562,9 @@ class PsMapFrame(wx.Frame):
             id = self.createObject(type = 'rasterLegend')
         dlg = LegendDialog(self, settings = self.dialogDict, itemType = self.itemType)
         if dlg.ShowModal() == wx.ID_OK:
-            self.dialogDict['rasterLegend'] = dlg.getInfo()
-            if self.dialogDict['rasterLegend']['rLegend']:
-                drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict['rasterLegend']['rect'], canvasToPaper = False)
+            self.dialogDict[id] = dlg.getInfo()
+            if self.dialogDict[id]['rLegend']:
+                drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'], canvasToPaper = False)
                 self.canvas.Draw( pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]],
                                 pdc = self.canvas.pdcObj, drawid = id, pdctype = 'rect', bb = drawRectangle)
                 self.canvas.pdcTmp.RemoveAll()
@@ -539,9 +581,9 @@ class PsMapFrame(wx.Frame):
             id = self.createObject(type = 'mapinfo')
         dlg = MapinfoDialog(self, settings = self.dialogDict, itemType = self.itemType)
         if dlg.ShowModal() == wx.ID_OK:
-            self.dialogDict['mapinfo'] = dlg.getInfo()
-            if self.dialogDict['mapinfo']['isInfo']:
-                drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict['mapinfo']['rect'], canvasToPaper = False)
+            self.dialogDict[id] = dlg.getInfo()
+            if self.dialogDict[id]['isInfo']:
+                drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'], canvasToPaper = False)
                 self.canvas.Draw( pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]],
                                 pdc = self.canvas.pdcObj, drawid = id, pdctype = 'rect', bb = drawRectangle)
                 self.canvas.pdcTmp.RemoveAll()
@@ -648,13 +690,13 @@ class PsMapFrame(wx.Frame):
         self.canvas.Refresh()
         del self.itemType[id]
         del self.dialogDict[id]
-        self.objectId.remove(id) 
+        self.objectId.remove(id) if id in self.objectId else None
         
-    def createObject(self, type, id = None):
+    def createObject(self, type, id = None, drawable = True):
         if not id:
             id = wx.NewId()
         self.itemType[id] = type
-        self.objectId.append(id)
+        self.objectId.append(id) if drawable else None
         self.SetDefault(id = id, type = type)
         return id
         
