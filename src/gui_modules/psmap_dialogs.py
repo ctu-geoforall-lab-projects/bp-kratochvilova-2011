@@ -604,9 +604,9 @@ class MainVectorDialog(PsmapDialog):
            
     def DefaultData(self, dataType):
         if dataType == 'points':
-            dd = {}
+            dd = dict(type = 'point or centroid', layer = '1', masked = 'n')
         elif dataType == 'lines':
-            dd = {}
+            dd = dict(type = 'line or boundary', layer = '1', masked = 'n')
         else:
             dd = {}
         return dd
@@ -642,26 +642,33 @@ class VPropertiesDialog(PsmapDialog):
             if id == item[2]:
                 self.vectorName = item[0]
                 self.type = item[1]
-        self.SetTitle(self.vectorName + _("properties"))
+        self.SetTitle(self.vectorName + " "+ _("properties"))
         
         #vector map info
         self.mapDBInfo = dbm_base.VectorDBInfo(self.vectorName)
         self.layers = self.mapDBInfo.layers.keys()
-        print self.mapDBInfo.layers
-        print self.mapDBInfo.tables
-        print self.mapDBInfo.GetColumns(self.mapDBInfo.layers[1]['table'])
-        res = RunCommand('v.db.select', read = True, flags = 'c', map = self.vectorName,
-                            layer = '1')
-        print 'res',res
-        self.catsNumber = max(item.split('|')[0] for item in res.strip().split('\n'))
-        print self.catsNumber
+        self.connection = True
+        if len(self.layers) == 0:
+            self.connection = False
+##        print self.mapDBInfo.layers
+##        print self.mapDBInfo.tables
+##        print self.mapDBInfo.GetColumns(self.mapDBInfo.layers[1]['table'])
+##        res = RunCommand('v.db.select', read = True, flags = 'c', map = self.vectorName,
+##                            layer = '1')
+##        self.catsNumber = max(item.split('|')[0] for item in res.strip().split('\n'))
 
 
 
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.DSpanel = self._DataSelectionPanel(notebook)
-     
+        self.EnableLayerSelection(enable = self.connection)
+        self.OnLayer(None)
+        selectPanel = dict(points = self._SymbologyPointPanel, lines = self._SymbologyLinePanel, areas = self._SymbologyAreaPanel)
+        self.SymbologyPanel = selectPanel[self.type](notebook)
+        
+        
+        
         self._layout(notebook)
         
     def _DataSelectionPanel(self, notebook):
@@ -670,35 +677,236 @@ class VPropertiesDialog(PsmapDialog):
         
         border = wx.BoxSizer(wx.VERTICAL)
         
+        # data type
+        self.checkType1 = self.checkType2 = None
+        if self.type in ('lines', 'points'):
+            box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Feature type")))        
+            sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+            gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+            
+            label = (_("points"), _("centroids")) if self.type == 'points' else (_("lines"), _("boundaries"))
+            name = ("point", "centroid") if self.type == 'points' else ("line", "boundary")
+            self.checkType1 = wx.CheckBox(panel, id = wx.ID_ANY, label = label[0], name = name[0])
+            self.checkType2 = wx.CheckBox(panel, id = wx.ID_ANY, label = label[1], name = name[1])
+            self.checkType1.SetValue(self.vPropertiesDict['type'].find(name[0]) >= 0)
+            self.checkType2.SetValue(self.vPropertiesDict['type'].find(name[1]) >= 0)
+            
+            gridBagSizer.Add(self.checkType1, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            gridBagSizer.Add(self.checkType2, pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+            border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
         # layer selection
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Layer selection")))        
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        self.gridBagSizerL = wx.GridBagSizer(hgap = 5, vgap = 5)
         
-        
+        self.warning =  wx.StaticText(panel, id = wx.ID_ANY, label = "")
+        if not self.connection:
+            self.warning = wx.StaticText(panel, id = wx.ID_ANY, label = _("Database connection is not defined in DB file."))
         text = wx.StaticText(panel, id = wx.ID_ANY, label = _("Select layer:"))
         self.layerChoice = wx.Choice(panel, id = wx.ID_ANY, choices = map(str, self.layers), size = self.spinCtrlSize)
+        self.layerChoice.SetStringSelection(self.vPropertiesDict['layer'])
+                
+        table = self.mapDBInfo.layers[int(self.vPropertiesDict['layer'])]['table'] if self.connection else ""
+        self.radioWhere = wx.RadioButton(panel, id = wx.ID_ANY, label = "SELECT * FROM {0} WHERE".format(table), style = wx.RB_GROUP)
+        self.textCtrlWhere = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
         
-        sizer.Add(text, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        sizer.Add(self.layerChoice, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.choiceColumns = wx.Choice(panel, id = wx.ID_ANY, choices = [])
         
+        self.radioCats = wx.RadioButton(panel, id = wx.ID_ANY, label = "Choose categories ".format(table))
+        self.textCtrlCats = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
+        self.textCtrlCats.SetToolTipString(_("list of categories (e.g. 1,3,5-7)"))
+        
+        if self.vPropertiesDict.has_key('cats'):
+            self.radioCats.SetValue(True)
+            self.textCtrlCats.SetValue(self.vPropertiesDict['cats'])
+        if self.vPropertiesDict.has_key('where'):
+            self.radioWhere.SetValue(True)
+            where = self.vPropertiesDict['where'].strip().split(" ",1)
+            self.choiceColumns.SetStringSelection(where[0])
+            self.textCtrlWhere.SetValue(where[1])
+            
+        row = 0
+        if not self.connection:
+            self.gridBagSizerL.Add(self.warning, pos = (0,0), span = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            row = 1
+        self.gridBagSizerL.Add(text, pos = (0 + row,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerL.Add(self.layerChoice, pos = (0 + row,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        self.gridBagSizerL.Add(self.radioWhere, pos = (1 + row,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerL.Add(self.choiceColumns, pos = (1 + row,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerL.Add(self.textCtrlWhere, pos = (1 + row,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerL.Add(self.radioCats, pos = (2 + row,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerL.Add(self.textCtrlCats, pos = (2 + row,1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
+        sizer.Add(self.gridBagSizerL, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
-        #category
-        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Layer selection")))        
+        #mask
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Mask")))        
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
-        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
         
-        table = self.mapDBInfo.layers[1]['table']
-        self.radioWhere = wx.RadioButton(panel, id = wx.ID_ANY, label = "SELECT * FROM {0} WHERE".format(table))
-        self.textCtrlWhere = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
-        self.radioCats = wx.RadioButton(panel, id = wx.ID_ANY, label = "Choose categories ".format(table))
+        self.mask = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Use current mask"))
+        self.mask.SetValue(True if self.vPropertiesDict['masked'] == 'y' else False)
+        
+        sizer.Add(self.mask, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+
+        self.Bind(wx.EVT_CHOICE, self.OnLayer, self.layerChoice)
+        
         panel.SetSizer(border)
         panel.Fit()
         return panel
     
-    def _update(self):
-        pass
+    def _SymbologyPointPanel(self, notebook):
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Symbology"))
         
+        border = wx.BoxSizer(wx.VERTICAL)
+        
+        #colors - outline
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Outline")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        self.gridBagSizerO = wx.GridBagSizer(hgap = 5, vgap = 2)
+        
+        
+        self.outlineCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw outline"))
+        widthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
+        self.widthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1, size = self.spinCtrlSize)
+        
+        colorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color:"))
+        self.colorPicker = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        
+        
+        self.gridBagSizerO.Add(self.outlineCheck, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerO.Add(widthText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerO.Add(self.widthSpin, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
+        self.gridBagSizerO.Add(colorText, pos = (2, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)                
+        self.gridBagSizerO.Add(self.colorPicker, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        
+        
+        sizer.Add(self.gridBagSizerO, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnOutline, self.outlineCheck)
+        
+        #colors - fill
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Fill")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        self.gridBagSizerF = wx.GridBagSizer(hgap = 5, vgap = 2)
+        self.gridBagSizerF.AddGrowableCol(1)
+        
+        self.fillCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("fill color"))
+        
+        colorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color:"))
+        self.colorPickerRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("choose color:"), style = wx.RB_GROUP)
+        self.fillColorPicker = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        
+        self.colorColRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("color from map table column:"))
+        self.colorColChoice = self.getColsChoice(parent = panel)
+        
+        self.gridBagSizerF.Add(self.fillCheck, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerF.Add(colorText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerF.Add(self.colorPickerRadio, pos = (1, 1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.fillColorPicker, pos = (1, 3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.colorColRadio, pos = (2, 1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.colorColChoice, pos = (2, 3), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
+        
+        sizer.Add(self.gridBagSizerF, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+
+        self.Bind(wx.EVT_CHECKBOX, self.OnFill, self.fillCheck)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnColor, self.colorColRadio)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnColor, self.colorPickerRadio)
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel
+    
+    def _SymbologyLinePanel(self, notebook):
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Symbology"))
+        
+        border = wx.BoxSizer(wx.VERTICAL)
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel
+    
+    def _SymbologyAreaPanel(self, notebook):
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Symbology"))
+        
+        border = wx.BoxSizer(wx.VERTICAL)
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel
+    
+    def OnLayer(self, event):
+        self.currLayer = self.layerChoice.GetStringSelection()
+        cols = self.mapDBInfo.GetColumns(self.mapDBInfo.layers[int(self.currLayer)]['table']) if self.connection else []
+        self.choiceColumns.SetItems(cols)
+        if self.vPropertiesDict.has_key('where'):
+            self.choiceColumns.SetStringSelection(self.vPropertiesDict['where'].split(' ',1)[0])
+        else:
+            self.choiceColumns.SetSelection(0)
+    
+    def OnOutline(self, event):
+        for widget in self.gridBagSizerO.GetChildren():
+            if widget.GetWindow() != self.outlineCheck:
+                widget.GetWindow().Enable(self.outlineCheck.GetValue())
+                
+    def OnFill(self, event):
+        for widget in self.gridBagSizerF.GetChildren():
+            if widget.GetWindow() != self.fillCheck:
+                widget.GetWindow().Enable(self.fillCheck.GetValue())
+                
+    def OnColor(self, event):
+        self.colorColChoice.Enable(self.colorColRadio.GetValue())
+        self.fillColorPicker.Enable(self.colorPickerRadio.GetValue())
+            
+                
+    def EnableLayerSelection(self, enable = True):
+        for widget in self.gridBagSizerL.GetChildren():
+            if widget.GetWindow() != self.warning:
+                widget.GetWindow().Enable(enable)
+                
+    def getColsChoice(self, parent):
+        """!Returns a wx.Choice with table columns"""
+        cols = self.mapDBInfo.GetColumns(self.mapDBInfo.layers[int(self.currLayer)]['table']) if self.connection else []
+        choice = wx.Choice(parent = parent, id = wx.ID_ANY, choices = cols)
+        return choice
+        
+    def _update(self):
+        #feature type
+        if self.type in ('lines', 'points'):
+            featureType = None
+            if self.checkType1.GetValue():
+                featureType = self.checkType1.GetName()
+                if self.checkType2.GetValue():
+                    featureType += " or " + self.checkType2.GetName()
+            elif self.checkType2.GetValue():
+                featureType = self.checkType2.GetName()
+            if featureType:
+                self.vPropertiesDict['type'] = featureType
+            
+        # is connection
+        self.vPropertiesDict['connection'] = self.connection
+        if self.connection:
+            self.vPropertiesDict['layer'] = self.layerChoice.GetStringSelection()
+            if self.radioCats.GetValue() and not self.textCtrlCats.IsEmpty():
+                self.vPropertiesDict['cats'] = self.textCtrlCats.GetValue()
+            elif self.radioWhere.GetValue() and not self.textCtrlWhere.IsEmpty():
+                self.vPropertiesDict['where'] = self.choiceColumns.GetStringSelection() + " " \
+                                                                + self.textCtrlWhere.GetValue()
+        #mask
+        self.vPropertiesDict['masked'] = 'y' if self.mask.GetValue() else 'n'
+        
+        #colors
+        if self.type == 'points':
+            pass#self.vPropertiesDict['color'] = 
+                
     def getInfo(self):
         return self.vPropertiesDict
     

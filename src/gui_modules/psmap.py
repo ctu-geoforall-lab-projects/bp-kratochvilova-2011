@@ -374,14 +374,33 @@ class PsMapFrame(wx.Frame):
         #vector maps
         if vectorId:
             for map in self.dialogDict[vectorId]['list']:
+                dic = self.dialogDict[map[2]]
                 if map[1] == 'points':
                     vpointsInstruction = "vpoints {0}\n".format(map[0])
-                    #...
+                    
+                    if any(dic['type']):
+                        vpointsInstruction += "    type {type}\n".format(**dic)
+                    if dic['connection']:
+                        vpointsInstruction += "    layer {layer}\n".format(**dic)
+                        if dic.has_key('cats'):
+                            vpointsInstruction += "    cats {cats}\n".format(**dic)
+                        elif dic.has_key('where'):
+                            vpointsInstruction += "    where {where}\n".format(**dic)
+                    vpointsInstruction += "    masked {masked}\n".format(**dic)
+                        
                     vpointsInstruction += "end"
                     instruction.append(vpointsInstruction)
                 if map[1] == 'lines':
                     vlinesInstruction = "vlines {0}\n".format(map[0])
-                    #...
+                    if any(dic['type']):
+                        vlinesInstruction += "    type {type}\n".format(**dic)
+                    if dic['connection']:
+                        vlinesInstruction += "    layer {layer}\n".format(**dic)
+                        if dic.has_key('cats'):
+                            vlinesInstruction += "    cats {cats}\n".format(**dic)
+                        elif dic.has_key('where'):
+                            vlinesInstruction += "    where {where}\n".format(**dic)
+                    vlinesInstruction += "    masked {masked}\n".format(**dic)
                     vlinesInstruction += "end"
                     instruction.append(vlinesInstruction)
                 if map[1] == 'areas':
