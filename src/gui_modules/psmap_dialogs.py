@@ -611,13 +611,14 @@ class MainVectorDialog(PsmapDialog):
            
     def DefaultData(self, dataType):
         if dataType == 'points':
-            dd = dict(type = 'point or centroid', layer = '1', masked = 'n', color = '0:0:0', width = 1,
-                        fcolor = '255:0:0', rgbcolumn = None)
+            dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
+                        fcolor = '255:0:0', rgbcolumn = None, symbol = 'basic/x', eps = None)
         elif dataType == 'lines':
-            dd = dict(type = 'line or boundary', layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
+            dd = dict(type = 'line or boundary', connection = False, layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
                         hcolor = 'none', rgbcolumn = None)
         else:
-            dd = {}
+            dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
+                        fcolor = '255:0:0', rgbcolumn = None)
         return dd
     
     def updateListBox(self, selected = None):
@@ -660,26 +661,31 @@ class VPropertiesDialog(PsmapDialog):
         if len(self.layers) == 0:
             self.connection = False
         self.currLayer = self.vPropertiesDict['layer']
-##        print self.mapDBInfo.layers
-##        print self.mapDBInfo.tables
-##        print self.mapDBInfo.GetColumns(self.mapDBInfo.layers[1]['table'])
-##        res = RunCommand('v.db.select', read = True, flags = 'c', map = self.vectorName,
-##                            layer = '1')
-##        self.catsNumber = max(item.split('|')[0] for item in res.strip().split('\n'))
-
+        
+        #path to symbols
+        gisbase = os.getenv("GISBASE")
+        self.symbolPath = os.path.join(gisbase, 'etc/symbol')
+        self.symbols = []
+        for dir in os.listdir(self.symbolPath):
+            for symbol in os.listdir(os.path.join(self.symbolPath, dir)):
+                self.symbols.append(os.path.join(dir, symbol))
 
 
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.DSpanel = self._DataSelectionPanel(notebook)
         self.EnableLayerSelection(enable = self.connection)
-        selectPanel = dict(points = self._ColorsPointPanel, lines = self._ColorsLinePanel, areas = self._ColorsAreaPanel)
-        self.ColorsPanel = selectPanel[self.type](notebook)
+        selectPanel = { 'points': [self._ColorsPointAreaPanel, self._StylePointPanel], 
+                        'lines': [self._ColorsLinePanel, self._StyleLinePanel], 
+                        'areas': [self._ColorsPointAreaPanel, self._StyleAreaPanel]}
+        self.ColorsPanel = selectPanel[self.type][0](notebook)
+        
         self.OnOutline(None)
-        if self.type == 'points':
+        if self.type in ('points', 'areas'):
             self.OnFill(None)
         self.OnColor(None)
         
+        self.StylePanel = selectPanel[self.type][1](notebook)
         
         
         self._layout(notebook)
@@ -774,7 +780,7 @@ class VPropertiesDialog(PsmapDialog):
         panel.Fit()
         return panel
     
-    def _ColorsPointPanel(self, notebook):
+    def _ColorsPointAreaPanel(self, notebook):
         panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
         notebook.AddPage(page = panel, text = _("Colors"))
         
@@ -940,16 +946,70 @@ class VPropertiesDialog(PsmapDialog):
         panel.Fit()
         return panel
     
-    def _ColorsAreaPanel(self, notebook):
+    def _StylePointPanel(self, notebook):
         panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
-        notebook.AddPage(page = panel, text = _("Colors"))
+        notebook.AddPage(page = panel, text = _("Size and style"))
         
         border = wx.BoxSizer(wx.VERTICAL)
+        
+        #symbology
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Symbology")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(1)
+    
+        self.symbolRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("symbol:"), style = wx.RB_GROUP)
+        self.symbolRadio.SetValue(bool(self.vPropertiesDict['symbol']))
+            
+         
+        self.symbolChoice = wx.Choice(panel, id = wx.ID_ANY, choices = self.symbols)
+        if self.vPropertiesDict['symbol']:
+            self.symbolChoice.SetStringSelection(self.vPropertiesDict['symbol'])
+        else:
+            self.symbolChoice.SetSelection(0)
+            
+        self.epsRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("eps file:"))
+        self.epsRadio.SetValue(bool(self.vPropertiesDict['eps']))
+        
+        self.epsFileCtrl = wx.FilePickerCtrl(panel, id = wx.ID_ANY, path  = "",
+                            message = wx.FileSelectorPromptStr,
+                            wildcard = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|*.*",
+                            style = wx.FLP_OPEN | wx.FLP_FILE_MUST_EXIST |wx.FLP_USE_TEXTCTRL | wx.FLP_CHANGE_DIR)
+        if self.vPropertiesDict['eps']:
+            self.epsFileCtrl.SetPath(self.vPropertiesDict['eps'])
+        else:
+            self.epsFileCtrl.SetPath('')
+            
+        gridBagSizer.Add(self.symbolRadio, pos = (0, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.symbolChoice, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.epsRadio, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.epsFileCtrl, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        #
         
         panel.SetSizer(border)
         panel.Fit()
         return panel
     
+    def _StyleLinePanel(self, notebook):
+        pass
+        
+    def _StyleAreaPanel(self, notebook):
+        pass
+        
+##    def getEpsFile(self):
+##        filename = ''
+##        dlg = wx.FileDialog(self, message = _("Select EPS file"), defaultDir = "", 
+##                            defaultFile = '', wildcard = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|(*.*)",
+##                            style = wx.CHANGE_DIR|wx.FD_OPEN|wx.FD_FILE_MUST_EXIST|wx.FD_PREVIEW)
+##        if dlg.ShowModal() == wx.ID_OK:
+##            filename = dlg.GetPath()
+##            
+##        dlg.Destroy()  
+##        return filename  
     def OnLayer(self, event):
         """!Change columns on layer change """
         if self.layerChoice.GetStringSelection() == self.currLayer:
@@ -1023,7 +1083,7 @@ class VPropertiesDialog(PsmapDialog):
         self.vPropertiesDict['masked'] = 'y' if self.mask.GetValue() else 'n'
         
         #colors
-        if self.type == 'points':
+        if self.type in ('points', 'areas'):
             if self.outlineCheck.GetValue():
                 self.vPropertiesDict['color'] = self.convertRGB(self.colorPicker.GetColour())
                 self.vPropertiesDict['width'] = self.widthSpin.GetValue()
@@ -1054,8 +1114,15 @@ class VPropertiesDialog(PsmapDialog):
             if self.colorColRadio.GetValue():
                 self.vPropertiesDict['color'] = 'none'# this color is taken in case of no record in rgb column
                 self.vPropertiesDict['rgbcolumn'] = self.colorColChoice.GetStringSelection()
-               
-                
+        #symbology
+        if self.type == 'points':
+            if self.symbolRadio.GetValue():
+                self.vPropertiesDict['symbol'] = self.symbolChoice.GetStringSelection()
+                self.vPropertiesDict['eps'] = None
+            else:
+                self.vPropertiesDict['eps'] = self.epsFileCtrl.GetPath()
+                self.vPropertiesDict['symbol'] = None
+   
     def getInfo(self):
         return self.vPropertiesDict
     
@@ -1860,7 +1927,7 @@ class TextDialog(PsmapDialog):
             self.radio[-1].SetValue(False)
             flexSizer.Add(self.radio[-1], proportion = 0, flag = wx.ALIGN_CENTER, border = 0)
         self.FindWindowByName(self.textDict['ref']).SetValue(True)
-        print self.textDict['ref'], self.FindWindowByName(self.textDict['ref'])
+
         
         sizerR.Add(flexSizer, proportion = 1, flag = wx.EXPAND, border = 0)
         gridBagSizer.Add(sizerR, pos = (3,1), flag = wx.ALIGN_LEFT|wx.EXPAND, border = 0)
@@ -1941,7 +2008,6 @@ class TextDialog(PsmapDialog):
             self.effect['borderWidthLabel'].Disable()
             
     def update(self): 
-        print 'update'
         #text
         self.textDict['text'] = self.textCtrl.GetValue()
         if not self.textDict['text']:
@@ -2032,7 +2098,6 @@ def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
         yPaper = yMap + unitConv.convert(value = northingDiff, fromUnit = 'meter', toUnit = 'inch') * currScale
         return xPaper, yPaper
     else:
-        print xMap, yMap, x, y, currScale
         eastingDiff = (x - xMap) if currRegionDict['w'] < currRegionDict['e'] else (xMap - x)
         northingDiff = (y - yMap) if currRegionDict['n'] < currRegionDict['s'] else (yMap - y)
         textEasting = cornerEasting + unitConv.convert(value = eastingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale

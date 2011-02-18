@@ -133,11 +133,11 @@ class PsMapToolbar(AbstractToolbar):
              wx.ITEM_NORMAL, "delete", "Delete selected object",
              self.parent.OnDelete),
             ("", "", "", "", "", "", ""),
-            (self.instructionFile, 'generate', Icons['savefile'].GetBitmap(),
-             wx.ITEM_NORMAL, "Generate file", "Generate mapping instruction file",
+            (self.instructionFile, 'psScript', Icons['psScript'].GetBitmap(),
+             wx.ITEM_NORMAL, Icons['psScript'].GetLabel(), Icons['psScript'].GetDesc(),
              self.parent.OnInstructionFile),
-            (self.generatePS, 'generatePS', Icons['modelToImage'].GetBitmap(),
-             wx.ITEM_NORMAL, "Create PS file", "Create PostScript file",
+            (self.generatePS, 'generatePS', Icons['psExport'].GetBitmap(),
+             wx.ITEM_NORMAL, Icons['psExport'].GetLabel(), Icons['psExport'].GetDesc(),
              self.parent.PSFile),
             ("", "", "", "", "", "", ""),
             (self.quit, 'quit', Icons['quit'].GetBitmap(),
@@ -375,55 +375,37 @@ class PsMapFrame(wx.Frame):
         if vectorId:
             for map in self.dialogDict[vectorId]['list']:
                 dic = self.dialogDict[map[2]]
-                if map[1] == 'points':
-                    vpointsInstruction = "vpoints {0}\n".format(map[0])
-                    
-                    if any(dic['type']):
-                        vpointsInstruction += "    type {type}\n".format(**dic)
-                    if dic['connection']:
-                        vpointsInstruction += "    layer {layer}\n".format(**dic)
-                        if dic.has_key('cats'):
-                            vpointsInstruction += "    cats {cats}\n".format(**dic)
-                        elif dic.has_key('where'):
-                            vpointsInstruction += "    where {where}\n".format(**dic)
-                    #colors
-                    vpointsInstruction += "    color {color}\n".format(**dic)
+                vInstruction = "v{0} {1}\n".format(map[1], map[0])
+                #data selection
+                if map[1] in ('points', 'lines'):
+                   vInstruction += "    type {type}\n".format(**dic) 
+                if dic['connection']:
+                    vInstruction += "    layer {layer}\n".format(**dic)
+                    if dic.has_key('cats'):
+                        vInstruction += "    cats {cats}\n".format(**dic)
+                    elif dic.has_key('where'):
+                            vInstruction += "    where {where}\n".format(**dic)
+                vInstruction += "    masked {masked}\n".format(**dic)
+                #colors
+                vInstruction += "    color {color}\n".format(**dic)
+                if map[1] in ('points', 'areas'):
                     if dic['color'] != 'none':
-                        vpointsInstruction += "    width {width}\n".format(**dic)
-                    vpointsInstruction += "    fcolor {fcolor}\n".format(**dic)
+                        vInstruction += "    width {width}\n".format(**dic)
                     if dic['rgbcolumn']:
-                        vpointsInstruction += "    rgbcolumn {rgbcolumn}\n".format(**dic)
-                        
-                    vpointsInstruction += "    masked {masked}\n".format(**dic)
-                        
-                    vpointsInstruction += "end"
-                    instruction.append(vpointsInstruction)
-                if map[1] == 'lines':
-                    vlinesInstruction = "vlines {0}\n".format(map[0])
-                    if any(dic['type']):
-                        vlinesInstruction += "    type {type}\n".format(**dic)
-                    if dic['connection']:
-                        vlinesInstruction += "    layer {layer}\n".format(**dic)
-                        if dic.has_key('cats'):
-                            vlinesInstruction += "    cats {cats}\n".format(**dic)
-                        elif dic.has_key('where'):
-                            vlinesInstruction += "    where {where}\n".format(**dic)
-                    #colors
-                    vlinesInstruction += "    color {color}\n".format(**dic)
+                        vInstruction += "    rgbcolumn {rgbcolumn}\n".format(**dic)
+                    vInstruction += "    fcolor {fcolor}\n".format(**dic)
+                else:
                     if dic['rgbcolumn']:
-                        vlinesInstruction += "    rgbcolumn {rgbcolumn}\n".format(**dic)
+                        vInstruction += "    rgbcolumn {rgbcolumn}\n".format(**dic)
                     elif dic['hcolor'] != 'none':
-                        vlinesInstruction += "    hwidth {hwidth}\n".format(**dic)
-                        vlinesInstruction += "    hcolor {hcolor}\n".format(**dic)
-                        
-                    vlinesInstruction += "    masked {masked}\n".format(**dic)
-                    vlinesInstruction += "end"
-                    instruction.append(vlinesInstruction)
-                if map[1] == 'areas':
-                    vareasInstruction = "vareas {0}\n".format(map[0])
-                    #...
-                    vareasInstruction += "end"
-                    instruction.append(vareasInstruction)
+                        vInstruction += "    hwidth {hwidth}\n".format(**dic)
+                        vInstruction += "    hcolor {hcolor}\n".format(**dic)
+                
+                
+                
+                vInstruction += "end"
+                instruction.append(vInstruction)
+                
         return '\n'.join(instruction) + '\nend' 
     
     def PSFile(self, event):
