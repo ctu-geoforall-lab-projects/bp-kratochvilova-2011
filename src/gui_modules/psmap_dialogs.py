@@ -161,6 +161,13 @@ class PsmapDialog(wx.Dialog):
 ##        self.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
 ##        self.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
 ##        self.font['colorCtrl'].SetColour(dialogDict['color'])    
+    def convertRGB(self, rgb):
+        """!Converts wx.Colour(255,255,255,255) and string '255:255:255',
+            depends on input"""    
+        if type(rgb) == wx.Colour:
+            return str(rgb.Red()) + ':' + str(rgb.Green()) + ':' + str(rgb.Blue())
+        elif type(rgb) == str:
+            return wx.Colour(*map(int, rgb.split(':')))
         
     def OnOK(self, event):
         event.Skip()
@@ -604,9 +611,11 @@ class MainVectorDialog(PsmapDialog):
            
     def DefaultData(self, dataType):
         if dataType == 'points':
-            dd = dict(type = 'point or centroid', layer = '1', masked = 'n')
+            dd = dict(type = 'point or centroid', layer = '1', masked = 'n', color = '0:0:0', width = 1,
+                        fcolor = '255:0:0', rgbcolumn = None)
         elif dataType == 'lines':
-            dd = dict(type = 'line or boundary', layer = '1', masked = 'n')
+            dd = dict(type = 'line or boundary', layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
+                        hcolor = 'none', rgbcolumn = None)
         else:
             dd = {}
         return dd
@@ -650,6 +659,7 @@ class VPropertiesDialog(PsmapDialog):
         self.connection = True
         if len(self.layers) == 0:
             self.connection = False
+        self.currLayer = self.vPropertiesDict['layer']
 ##        print self.mapDBInfo.layers
 ##        print self.mapDBInfo.tables
 ##        print self.mapDBInfo.GetColumns(self.mapDBInfo.layers[1]['table'])
@@ -663,9 +673,12 @@ class VPropertiesDialog(PsmapDialog):
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.DSpanel = self._DataSelectionPanel(notebook)
         self.EnableLayerSelection(enable = self.connection)
-        self.OnLayer(None)
-        selectPanel = dict(points = self._SymbologyPointPanel, lines = self._SymbologyLinePanel, areas = self._SymbologyAreaPanel)
-        self.SymbologyPanel = selectPanel[self.type](notebook)
+        selectPanel = dict(points = self._ColorsPointPanel, lines = self._ColorsLinePanel, areas = self._ColorsAreaPanel)
+        self.ColorsPanel = selectPanel[self.type](notebook)
+        self.OnOutline(None)
+        if self.type == 'points':
+            self.OnFill(None)
+        self.OnColor(None)
         
         
         
@@ -701,18 +714,21 @@ class VPropertiesDialog(PsmapDialog):
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
         self.gridBagSizerL = wx.GridBagSizer(hgap = 5, vgap = 5)
         
+        
         self.warning =  wx.StaticText(panel, id = wx.ID_ANY, label = "")
         if not self.connection:
             self.warning = wx.StaticText(panel, id = wx.ID_ANY, label = _("Database connection is not defined in DB file."))
         text = wx.StaticText(panel, id = wx.ID_ANY, label = _("Select layer:"))
         self.layerChoice = wx.Choice(panel, id = wx.ID_ANY, choices = map(str, self.layers), size = self.spinCtrlSize)
-        self.layerChoice.SetStringSelection(self.vPropertiesDict['layer'])
+        self.layerChoice.SetStringSelection(self.currLayer)
                 
-        table = self.mapDBInfo.layers[int(self.vPropertiesDict['layer'])]['table'] if self.connection else ""
+        table = self.mapDBInfo.layers[int(self.currLayer)]['table'] if self.connection else ""
         self.radioWhere = wx.RadioButton(panel, id = wx.ID_ANY, label = "SELECT * FROM {0} WHERE".format(table), style = wx.RB_GROUP)
         self.textCtrlWhere = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
         
-        self.choiceColumns = wx.Choice(panel, id = wx.ID_ANY, choices = [])
+        
+        cols = self.mapDBInfo.GetColumns(self.mapDBInfo.layers[int(self.currLayer)]['table']) if self.connection else []
+        self.choiceColumns = wx.Choice(panel, id = wx.ID_ANY, choices = cols)
         
         self.radioCats = wx.RadioButton(panel, id = wx.ID_ANY, label = "Choose categories ".format(table))
         self.textCtrlCats = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
@@ -758,9 +774,9 @@ class VPropertiesDialog(PsmapDialog):
         panel.Fit()
         return panel
     
-    def _SymbologyPointPanel(self, notebook):
+    def _ColorsPointPanel(self, notebook):
         panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
-        notebook.AddPage(page = panel, text = _("Symbology"))
+        notebook.AddPage(page = panel, text = _("Colors"))
         
         border = wx.BoxSizer(wx.VERTICAL)
         
@@ -771,18 +787,22 @@ class VPropertiesDialog(PsmapDialog):
         
         
         self.outlineCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw outline"))
+        self.outlineCheck.SetValue(self.vPropertiesDict['color'] != 'none')
+        
         widthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
         self.widthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1, size = self.spinCtrlSize)
+        self.widthSpin.SetValue(self.vPropertiesDict['width'] if self.vPropertiesDict['color'] != 'none' else 1)
         
         colorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color:"))
         self.colorPicker = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        self.colorPicker.SetColour(self.convertRGB(self.vPropertiesDict['color']) if self.vPropertiesDict['color'] != 'none' else 'black')
         
         
         self.gridBagSizerO.Add(self.outlineCheck, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        self.gridBagSizerO.Add(widthText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        self.gridBagSizerO.Add(self.widthSpin, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
-        self.gridBagSizerO.Add(colorText, pos = (2, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)                
-        self.gridBagSizerO.Add(self.colorPicker, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerO.Add(widthText, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerO.Add(self.widthSpin, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
+        self.gridBagSizerO.Add(colorText, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)                
+        self.gridBagSizerO.Add(self.colorPicker, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
         
         
         sizer.Add(self.gridBagSizerO, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
@@ -794,23 +814,38 @@ class VPropertiesDialog(PsmapDialog):
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Fill")))        
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
         self.gridBagSizerF = wx.GridBagSizer(hgap = 5, vgap = 2)
-        self.gridBagSizerF.AddGrowableCol(1)
-        
+       
         self.fillCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("fill color"))
+        self.fillCheck.SetValue(self.vPropertiesDict['fcolor'] != 'none' or self.vPropertiesDict['rgbcolumn'] is not None)
         
-        colorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color:"))
+
         self.colorPickerRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("choose color:"), style = wx.RB_GROUP)
+        #set choose color option if there is no db connection
+        if self.connection:
+            self.colorPickerRadio.SetValue(not self.vPropertiesDict['rgbcolumn'])
+        else:
+            self.colorPickerRadio.SetValue(False)            
         self.fillColorPicker = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        self.fillColorPicker.SetColour(self.convertRGB(self.vPropertiesDict['fcolor']) if self.vPropertiesDict['fcolor'] != 'none' else 'red')
+        
         
         self.colorColRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("color from map table column:"))
         self.colorColChoice = self.getColsChoice(parent = panel)
+        if self.connection:
+            if self.vPropertiesDict['rgbcolumn']:
+                self.colorColRadio.SetValue(True)
+                self.colorColChoice.SetStringSelection(self.vPropertiesDict['rgbcolumn'])
+            else:
+                self.colorColRadio.SetValue(False)
+                self.colorColChoice.SetSelection(0)
+        self.colorColChoice.Enable(self.connection)
+        self.colorColRadio.Enable(self.connection)
         
         self.gridBagSizerF.Add(self.fillCheck, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        self.gridBagSizerF.Add(colorText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        self.gridBagSizerF.Add(self.colorPickerRadio, pos = (1, 1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        self.gridBagSizerF.Add(self.fillColorPicker, pos = (1, 3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        self.gridBagSizerF.Add(self.colorColRadio, pos = (2, 1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        self.gridBagSizerF.Add(self.colorColChoice, pos = (2, 3), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
+        self.gridBagSizerF.Add(self.colorPickerRadio, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.fillColorPicker, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.colorColRadio, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.colorColChoice, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
         
         sizer.Add(self.gridBagSizerF, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
@@ -823,19 +858,91 @@ class VPropertiesDialog(PsmapDialog):
         panel.Fit()
         return panel
     
-    def _SymbologyLinePanel(self, notebook):
+    def _ColorsLinePanel(self, notebook):
         panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
-        notebook.AddPage(page = panel, text = _("Symbology"))
+        notebook.AddPage(page = panel, text = _("Colors"))
         
         border = wx.BoxSizer(wx.VERTICAL)
         
+        #colors - outline
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Outline")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        self.gridBagSizerO = wx.GridBagSizer(hgap = 5, vgap = 2)
+        
+        
+        self.outlineCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw outline"))
+        self.outlineCheck.SetValue(self.vPropertiesDict['hcolor'] != 'none')
+        self.outlineCheck.SetToolTipString(_("No effect for fill color from table column"))
+        
+        widthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
+        self.widthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1, size = self.spinCtrlSize)
+        self.widthSpin.SetValue(self.vPropertiesDict['hwidth'] if self.vPropertiesDict['hcolor'] != 'none' else 1)
+        
+        colorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color:"))
+        self.colorPicker = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        self.colorPicker.SetColour(self.convertRGB(self.vPropertiesDict['hcolor']) if self.vPropertiesDict['hcolor'] != 'none' else 'black')
+        
+        
+        self.gridBagSizerO.Add(self.outlineCheck, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerO.Add(widthText, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerO.Add(self.widthSpin, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
+        self.gridBagSizerO.Add(colorText, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)                
+        self.gridBagSizerO.Add(self.colorPicker, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        
+        
+        sizer.Add(self.gridBagSizerO, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnOutline, self.outlineCheck)
+        
+        #colors - fill
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Fill")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        self.gridBagSizerF = wx.GridBagSizer(hgap = 5, vgap = 2)
+       
+        fillText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Color of lines:"))
+        
+
+        self.colorPickerRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("choose color:"), style = wx.RB_GROUP)
+        #set choose color option if there is no db connection
+        if self.connection:
+            self.colorPickerRadio.SetValue(not self.vPropertiesDict['rgbcolumn'])
+        else:
+            self.colorPickerRadio.SetValue(False)            
+        self.fillColorPicker = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
+        self.fillColorPicker.SetColour(self.convertRGB(self.vPropertiesDict['color']) if self.vPropertiesDict['color'] != 'none' else 'black')
+        
+        
+        self.colorColRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("color from map table column:"))
+        self.colorColChoice = self.getColsChoice(parent = panel)
+        if self.connection:
+            if self.vPropertiesDict['rgbcolumn']:
+                self.colorColRadio.SetValue(True)
+                self.colorColChoice.SetStringSelection(self.vPropertiesDict['rgbcolumn'])
+            else:
+                self.colorColRadio.SetValue(False)
+                self.colorColChoice.SetSelection(0)
+        self.colorColChoice.Enable(self.connection)
+        self.colorColRadio.Enable(self.connection)
+        
+        self.gridBagSizerF.Add(fillText, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.gridBagSizerF.Add(self.colorPickerRadio, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.fillColorPicker, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.colorColRadio, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        self.gridBagSizerF.Add(self.colorColChoice, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)        
+        
+        sizer.Add(self.gridBagSizerF, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnColor, self.colorColRadio)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnColor, self.colorPickerRadio)
         panel.SetSizer(border)
         panel.Fit()
         return panel
     
-    def _SymbologyAreaPanel(self, notebook):
+    def _ColorsAreaPanel(self, notebook):
         panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
-        notebook.AddPage(page = panel, text = _("Symbology"))
+        notebook.AddPage(page = panel, text = _("Colors"))
         
         border = wx.BoxSizer(wx.VERTICAL)
         
@@ -844,24 +951,36 @@ class VPropertiesDialog(PsmapDialog):
         return panel
     
     def OnLayer(self, event):
+        """!Change columns on layer change """
+        if self.layerChoice.GetStringSelection() == self.currLayer:
+            return
         self.currLayer = self.layerChoice.GetStringSelection()
         cols = self.mapDBInfo.GetColumns(self.mapDBInfo.layers[int(self.currLayer)]['table']) if self.connection else []
         self.choiceColumns.SetItems(cols)
-        if self.vPropertiesDict.has_key('where'):
-            self.choiceColumns.SetStringSelection(self.vPropertiesDict['where'].split(' ',1)[0])
-        else:
-            self.choiceColumns.SetSelection(0)
-    
+
+        self.choiceColumns.SetSelection(0)
+        if self.type in ('points', 'lines'):
+            self.colorColChoice.SetItems(cols)
+            self.colorColChoice.SetSelection(0)
+            
     def OnOutline(self, event):
         for widget in self.gridBagSizerO.GetChildren():
             if widget.GetWindow() != self.outlineCheck:
                 widget.GetWindow().Enable(self.outlineCheck.GetValue())
                 
     def OnFill(self, event):
-        for widget in self.gridBagSizerF.GetChildren():
-            if widget.GetWindow() != self.fillCheck:
-                widget.GetWindow().Enable(self.fillCheck.GetValue())
-                
+        enable = self.fillCheck.GetValue()
+        
+        self.colorColChoice.Enable(enable)
+        self.colorColRadio.Enable(enable)
+        self.fillColorPicker.Enable(enable)
+        self.colorPickerRadio.Enable(enable)
+        if enable:
+            self.OnColor(None)
+        if not self.connection:
+            self.colorColChoice.Disable()
+            self.colorColRadio.Disable()
+            
     def OnColor(self, event):
         self.colorColChoice.Enable(self.colorColRadio.GetValue())
         self.fillColorPicker.Enable(self.colorPickerRadio.GetValue())
@@ -905,7 +1024,37 @@ class VPropertiesDialog(PsmapDialog):
         
         #colors
         if self.type == 'points':
-            pass#self.vPropertiesDict['color'] = 
+            if self.outlineCheck.GetValue():
+                self.vPropertiesDict['color'] = self.convertRGB(self.colorPicker.GetColour())
+                self.vPropertiesDict['width'] = self.widthSpin.GetValue()
+            else:
+                self.vPropertiesDict['color'] = 'none'
+                
+            if self.fillCheck.GetValue():
+                if self.colorPickerRadio.GetValue():
+                    self.vPropertiesDict['fcolor'] = self.convertRGB(self.fillColorPicker.GetColour())
+                    self.vPropertiesDict['rgbcolumn'] = None
+                if self.colorColRadio.GetValue():
+                    self.vPropertiesDict['fcolor'] = 'none'# this color is taken in case of no record in rgb column
+                    self.vPropertiesDict['rgbcolumn'] = self.colorColChoice.GetStringSelection()
+            else:
+                self.vPropertiesDict['fcolor'] = 'none'    
+                
+        if self.type == 'lines':
+                #hcolor only when no rgbcolumn
+            if self.outlineCheck.GetValue():# and self.fillCheck.GetValue() and self.colorColRadio.GetValue():
+                self.vPropertiesDict['hcolor'] = self.convertRGB(self.colorPicker.GetColour())
+                self.vPropertiesDict['hwidth'] = self.widthSpin.GetValue()
+            else:
+                self.vPropertiesDict['hcolor'] = 'none'
+                
+            if self.colorPickerRadio.GetValue():
+                self.vPropertiesDict['color'] = self.convertRGB(self.fillColorPicker.GetColour())
+                self.vPropertiesDict['rgbcolumn'] = None
+            if self.colorColRadio.GetValue():
+                self.vPropertiesDict['color'] = 'none'# this color is taken in case of no record in rgb column
+                self.vPropertiesDict['rgbcolumn'] = self.colorColChoice.GetStringSelection()
+               
                 
     def getInfo(self):
         return self.vPropertiesDict

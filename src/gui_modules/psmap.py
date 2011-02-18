@@ -386,6 +386,14 @@ class PsMapFrame(wx.Frame):
                             vpointsInstruction += "    cats {cats}\n".format(**dic)
                         elif dic.has_key('where'):
                             vpointsInstruction += "    where {where}\n".format(**dic)
+                    #colors
+                    vpointsInstruction += "    color {color}\n".format(**dic)
+                    if dic['color'] != 'none':
+                        vpointsInstruction += "    width {width}\n".format(**dic)
+                    vpointsInstruction += "    fcolor {fcolor}\n".format(**dic)
+                    if dic['rgbcolumn']:
+                        vpointsInstruction += "    rgbcolumn {rgbcolumn}\n".format(**dic)
+                        
                     vpointsInstruction += "    masked {masked}\n".format(**dic)
                         
                     vpointsInstruction += "end"
@@ -400,6 +408,14 @@ class PsMapFrame(wx.Frame):
                             vlinesInstruction += "    cats {cats}\n".format(**dic)
                         elif dic.has_key('where'):
                             vlinesInstruction += "    where {where}\n".format(**dic)
+                    #colors
+                    vlinesInstruction += "    color {color}\n".format(**dic)
+                    if dic['rgbcolumn']:
+                        vlinesInstruction += "    rgbcolumn {rgbcolumn}\n".format(**dic)
+                    elif dic['hcolor'] != 'none':
+                        vlinesInstruction += "    hwidth {hwidth}\n".format(**dic)
+                        vlinesInstruction += "    hcolor {hcolor}\n".format(**dic)
+                        
                     vlinesInstruction += "    masked {masked}\n".format(**dic)
                     vlinesInstruction += "end"
                     instruction.append(vlinesInstruction)
