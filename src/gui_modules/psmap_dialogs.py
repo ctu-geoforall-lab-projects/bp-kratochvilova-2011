@@ -39,6 +39,7 @@ from grass.script import core as grass
 
 import wx
 import wx.lib.scrolledpanel as scrolled
+import  wx.lib.filebrowsebutton as filebrowse
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 try:
@@ -69,7 +70,7 @@ class UnitConversion():
     
     
 class TCValidator(wx.PyValidator):
-    """!validates input in textctrls, took from wx demo"""
+    """!validates input in textctrls, combobox, took from wx demo"""
     def __init__(self, flag = None):
         wx.PyValidator.__init__(self)
         self.flag = flag
@@ -94,6 +95,9 @@ class TCValidator(wx.PyValidator):
             event.Skip()
             return
         if self.flag == 'DIGIT_ONLY' and chr(key) in string.digits:
+            event.Skip()
+            return
+        if self.flag == 'ZERO_AND_ONE_ONLY' and chr(key) in '01':
             event.Skip()
             return
         if not wx.Validator_IsSilent():
@@ -612,13 +616,18 @@ class MainVectorDialog(PsmapDialog):
     def DefaultData(self, dataType):
         if dataType == 'points':
             dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
-                        fcolor = '255:0:0', rgbcolumn = None, symbol = 'basic/x', eps = None)
+                        fcolor = '255:0:0', rgbcolumn = None, symbol = 'basic/x', eps = None,
+                        size = 5, sizecolumn = None, scale = None,
+                        rotation = False, rotate = 0, rotatecolumn = None)
         elif dataType == 'lines':
             dd = dict(type = 'line or boundary', connection = False, layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
-                        hcolor = 'none', rgbcolumn = None)
+                        hcolor = 'none', rgbcolumn = None,
+                        width = 1, cwidth = None,
+                        style = 'solid', linecap = 'butt')
         else:
             dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
-                        fcolor = '255:0:0', rgbcolumn = None)
+                        fcolor = '255:0:0', rgbcolumn = None,
+                        pat = None, pwidth = 1, scale = 1)
         return dd
     
     def updateListBox(self, selected = None):
@@ -662,14 +671,14 @@ class VPropertiesDialog(PsmapDialog):
             self.connection = False
         self.currLayer = self.vPropertiesDict['layer']
         
-        #path to symbols
+        #path to symbols, patterns
         gisbase = os.getenv("GISBASE")
         self.symbolPath = os.path.join(gisbase, 'etc/symbol')
         self.symbols = []
         for dir in os.listdir(self.symbolPath):
             for symbol in os.listdir(os.path.join(self.symbolPath, dir)):
                 self.symbols.append(os.path.join(dir, symbol))
-
+        self.patternPath = os.path.join(gisbase, 'etc/paint/patterns')
 
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
@@ -686,7 +695,11 @@ class VPropertiesDialog(PsmapDialog):
         self.OnColor(None)
         
         self.StylePanel = selectPanel[self.type][1](notebook)
-        
+        if self.type == 'points':
+            self.OnSize(None)
+            self.OnRotation(None)
+        if self.type == 'areas':
+            self.OnPattern(None)
         
         self._layout(notebook)
         
@@ -963,22 +976,20 @@ class VPropertiesDialog(PsmapDialog):
             
          
         self.symbolChoice = wx.Choice(panel, id = wx.ID_ANY, choices = self.symbols)
-        if self.vPropertiesDict['symbol']:
-            self.symbolChoice.SetStringSelection(self.vPropertiesDict['symbol'])
-        else:
-            self.symbolChoice.SetSelection(0)
             
         self.epsRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("eps file:"))
         self.epsRadio.SetValue(bool(self.vPropertiesDict['eps']))
         
-        self.epsFileCtrl = wx.FilePickerCtrl(panel, id = wx.ID_ANY, path  = "",
-                            message = wx.FileSelectorPromptStr,
-                            wildcard = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|*.*",
-                            style = wx.FLP_OPEN | wx.FLP_FILE_MUST_EXIST |wx.FLP_USE_TEXTCTRL | wx.FLP_CHANGE_DIR)
-        if self.vPropertiesDict['eps']:
-            self.epsFileCtrl.SetPath(self.vPropertiesDict['eps'])
-        else:
-            self.epsFileCtrl.SetPath('')
+        self.epsFileCtrl = filebrowse.FileBrowseButton(panel, id = wx.ID_ANY, labelText = '',
+                                buttonText =  _("Browse"), toolTip = _("Type filename or click browse to choose file"), 
+                                dialogTitle = _("Choose a file"), startDirectory = '', initialValue = '',
+                                fileMask = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|*.*", fileMode = wx.OPEN)
+        if self.vPropertiesDict['symbol']:
+            self.symbolChoice.SetStringSelection(self.vPropertiesDict['symbol'])
+            self.epsFileCtrl.SetValue('')
+        else: #eps chosen
+            self.epsFileCtrl.SetValue(self.vPropertiesDict['eps'])
+            self.symbolChoice.SetSelection(0)
             
         gridBagSizer.Add(self.symbolRadio, pos = (0, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.symbolChoice, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -988,28 +999,191 @@ class VPropertiesDialog(PsmapDialog):
         sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
-        #
+        #size
+        
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Size")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(0)
+        
+        self.sizeRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("size:"), style = wx.RB_GROUP)
+        self.sizeSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 50, initial = 1)
+        self.sizecolumnRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("size from map table column:"))
+        self.sizeColChoice = self.getColsChoice(panel)
+        self.scaleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("scale:"))
+        self.scaleSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
+        
+        self.sizeRadio.SetValue(self.vPropertiesDict['size'] is not None)
+        self.sizecolumnRadio.SetValue(bool(self.vPropertiesDict['sizecolumn']))
+        self.sizeSpin.SetValue(self.vPropertiesDict['size'] if self.vPropertiesDict['size'] else 5)
+        if self.vPropertiesDict['sizecolumn']:
+            self.scaleSpin.SetValue(self.vPropertiesDict['scale'])
+            self.sizeColChoice.SetStringSelection(self.vPropertiesDict['sizecolumn'])
+        else:
+            self.scaleSpin.SetValue(1)
+            self.sizeColChoice.SetSelection(0)
+        if not self.connection:   
+            for each in (self.sizecolumnRadio, self.sizeColChoice, self.scaleSpin, self.scaleText):
+                each.Disable()
+            
+        gridBagSizer.Add(self.sizeRadio, pos = (0, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.sizeSpin, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.sizecolumnRadio, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.sizeColChoice, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.scaleText, pos = (2, 0), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.scaleSpin, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnSize, self.sizeRadio)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnSize, self.sizecolumnRadio)
+        
+        #rotation
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Rotation")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(1)
+
+        
+        self.rotateCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("rotate symbols:"))
+        self.rotateRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("counterclockwise in degrees:"), style = wx.RB_GROUP)
+        self.rotateSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 0, max = 360, initial = 0)
+        self.rotatecolumnRadio = wx.RadioButton(panel, id = wx.ID_ANY, label = _("from map table column:"))
+        self.rotateColChoice = self.getColsChoice(panel)
+        
+        self.rotateCheck.SetValue(self.vPropertiesDict['rotation'])
+        self.rotateRadio.SetValue(self.vPropertiesDict['rotate'] is not None)
+        self.rotatecolumnRadio.SetValue(bool(self.vPropertiesDict['rotatecolumn']))
+        self.rotateSpin.SetValue(self.vPropertiesDict['rotate'] if self.vPropertiesDict['rotate'] else 0)
+        if self.vPropertiesDict['rotatecolumn']:
+            self.rotateColChoice.SetStringSelection(self.vPropertiesDict['rotatecolumn'])
+        else:
+            self.rotateColChoice.SetSelection(0)
+            
+        gridBagSizer.Add(self.rotateCheck, pos = (0, 0), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.rotateRadio, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.rotateSpin, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.rotatecolumnRadio, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.rotateColChoice, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnRotation, self.rotateCheck)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnRotationType, self.rotateRadio)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnRotationType, self.rotatecolumnRadio)
         
         panel.SetSizer(border)
         panel.Fit()
         return panel
     
     def _StyleLinePanel(self, notebook):
-        pass
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Size and style"))
+        
+        border = wx.BoxSizer(wx.VERTICAL)
+        
+        #width
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Width")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        
+        widthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Set width:"))
+        self.widthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
+        self.cwidthCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("multiply width by category value"))
+        
+        if self.vPropertiesDict['width']:
+            self.widthSpin.SetValue(self.vPropertiesDict['width'])
+            self.cwidthCheck.SetValue(False)
+        else:
+            self.widthSpin.SetValue(self.vPropertiesDict['cwidth'])
+            self.cwidthCheck.SetValue(True)
+        
+        gridBagSizer.Add(widthText, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.widthSpin, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.cwidthCheck, pos = (1, 0), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        #style
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Line style")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        
+        styleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose line style:"))
+        self.styleCombo = wx.ComboBox(panel, id = wx.ID_ANY,
+                            choices = ["solid", "dashed", "dotted", "dashdotted"],
+                            validator = TCValidator(flag = 'ZERO_AND_ONE_ONLY'))
+        self.styleCombo.SetToolTipString(_("It's possible to enter a series of 0's and 1's too. "\
+                                    "The first block of repeated zeros or ones represents 'draw', "\
+                                    "the second block represents 'blank'. An even number of blocks "\
+                                    "will repeat the pattern, an odd number of blocks will alternate the pattern."))
+        linecapText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose linecap:"))
+        self.linecapChoice = wx.Choice(panel, id = wx.ID_ANY, choices = ["butt", "round", "extended_butt"])
+        
+        self.styleCombo.SetValue(self.vPropertiesDict['style'])
+        self.linecapChoice.SetStringSelection(self.vPropertiesDict['linecap'])
+        
+        gridBagSizer.Add(styleText, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.styleCombo, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(linecapText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.linecapChoice, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel
         
     def _StyleAreaPanel(self, notebook):
-        pass
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Size and style"))
         
-##    def getEpsFile(self):
-##        filename = ''
-##        dlg = wx.FileDialog(self, message = _("Select EPS file"), defaultDir = "", 
-##                            defaultFile = '', wildcard = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|(*.*)",
-##                            style = wx.CHANGE_DIR|wx.FD_OPEN|wx.FD_FILE_MUST_EXIST|wx.FD_PREVIEW)
-##        if dlg.ShowModal() == wx.ID_OK:
-##            filename = dlg.GetPath()
-##            
-##        dlg.Destroy()  
-##        return filename  
+        border = wx.BoxSizer(wx.VERTICAL)
+        
+        #pattern
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Pattern")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(1)
+        
+        self.patternCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("use pattern:"))
+        self.patFileCtrl = filebrowse.FileBrowseButton(panel, id = wx.ID_ANY, labelText = _("Choose pattern file:"),
+                                buttonText =  _("Browse"), toolTip = _("Type filename or click browse to choose file"), 
+                                dialogTitle = _("Choose a file"), startDirectory = self.patternPath, initialValue = '',
+                                fileMask = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|*.*", fileMode = wx.OPEN)
+        self.patWidthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("pattern line width:"))
+        self.patWidthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
+        self.patScaleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("pattern scale factor:"))
+        self.patScaleSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
+        
+        self.patternCheck.SetValue(bool(self.vPropertiesDict['pat']))
+        if self.patternCheck.GetValue():
+            self.patFileCtrl.SetValue(self.vPropertiesDict['pat'])
+            self.patWidthSpin.SetValue(self.vPropertiesDict['pwidth'])
+            self.patScaleSpin.SetValue(self.vPropertiesDict['scale'])
+        
+        gridBagSizer.Add(self.patternCheck, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.patFileCtrl, pos = (1, 0), span = (1, 2),flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.patWidthText, pos = (2, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.patWidthSpin, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.patScaleText, pos = (3, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.patScaleSpin, pos = (3, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnPattern, self.patternCheck)
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel
+        
+
     def OnLayer(self, event):
         """!Change columns on layer change """
         if self.layerChoice.GetStringSelection() == self.currLayer:
@@ -1045,7 +1219,29 @@ class VPropertiesDialog(PsmapDialog):
         self.colorColChoice.Enable(self.colorColRadio.GetValue())
         self.fillColorPicker.Enable(self.colorPickerRadio.GetValue())
             
-                
+    def OnSize(self, event):
+        self.sizeSpin.Enable(self.sizeRadio.GetValue())
+        self.sizeColChoice.Enable(self.sizecolumnRadio.GetValue())
+        self.scaleText.Enable(self.sizecolumnRadio.GetValue())
+        self.scaleSpin.Enable(self.sizecolumnRadio.GetValue())
+        
+    def OnRotation(self, event):
+        for each in (self.rotateRadio, self.rotatecolumnRadio, self.rotateColChoice, self.rotateSpin):
+            if self.rotateCheck.GetValue():
+                each.Enable()
+                self.OnRotationType(event = None)     
+            else:
+                each.Disable()
+           
+        
+    def OnRotationType(self, event):
+        self.rotateSpin.Enable(self.rotateRadio.GetValue())
+        self.rotateColChoice.Enable(self.rotatecolumnRadio.GetValue())
+        
+    def OnPattern(self, event):
+        for each in (self.patFileCtrl, self.patWidthText, self.patWidthSpin, self.patScaleText, self.patScaleSpin):
+            each.Enable(self.patternCheck.GetValue())
+            
     def EnableLayerSelection(self, enable = True):
         for widget in self.gridBagSizerL.GetChildren():
             if widget.GetWindow() != self.warning:
@@ -1114,15 +1310,59 @@ class VPropertiesDialog(PsmapDialog):
             if self.colorColRadio.GetValue():
                 self.vPropertiesDict['color'] = 'none'# this color is taken in case of no record in rgb column
                 self.vPropertiesDict['rgbcolumn'] = self.colorColChoice.GetStringSelection()
-        #symbology
+        #
+        #size and style
+        #
+        
         if self.type == 'points':
+            #symbols
             if self.symbolRadio.GetValue():
                 self.vPropertiesDict['symbol'] = self.symbolChoice.GetStringSelection()
                 self.vPropertiesDict['eps'] = None
             else:
-                self.vPropertiesDict['eps'] = self.epsFileCtrl.GetPath()
+                self.vPropertiesDict['eps'] = self.epsFileCtrl.GetValue()
                 self.vPropertiesDict['symbol'] = None
-   
+            #size
+            if self.sizeRadio.GetValue():
+                self.vPropertiesDict['size'] = self.sizeSpin.GetValue()
+                self.vPropertiesDict['sizecolumn'] = None
+                self.vPropertiesDict['scale'] = None
+            else:
+                self.vPropertiesDict['sizecolumn'] = self.sizeColChoice.GetStringSelection()
+                self.vPropertiesDict['scale'] = self.scaleSpin.GetValue()
+                self.vPropertiesDict['size'] = None
+            
+            #rotation
+            self.vPropertiesDict['rotate'] = None
+            self.vPropertiesDict['rotatecolumn'] = None
+            self.vPropertiesDict['rotation'] = False
+            if self.rotateCheck.GetValue():
+                self.vPropertiesDict['rotation'] = True
+            if self.rotateRadio.GetValue():
+                self.vPropertiesDict['rotate'] = self.rotateSpin.GetValue()
+            else:
+                self.vPropertiesDict['rotatecolumn'] = self.rotateColChoice.GetStringSelection()
+                
+        if self.type == 'areas':
+            #pattern
+            self.vPropertiesDict['pat'] = None 
+            if self.patternCheck.GetValue() and bool(self.patFileCtrl.GetValue()):
+                self.vPropertiesDict['pat'] = self.patFileCtrl.GetValue()
+                self.vPropertiesDict['pwidth'] = self.patWidthSpin.GetValue()
+                self.vPropertiesDict['scale'] = self.patScaleSpin.GetValue()
+                
+        if self.type == 'lines':
+            #width
+            if self.cwidthCheck.GetValue():
+                self.vPropertiesDict['cwidth'] = self.widthSpin.GetValue()
+                self.vPropertiesDict['width'] = None
+            else:
+                self.vPropertiesDict['width'] = self.widthSpin.GetValue()
+                self.vPropertiesDict['cwidth'] = None
+            #line style
+            self.vPropertiesDict['style'] = self.styleCombo.GetValue() if self.styleCombo.GetValue() else 'solid'
+            self.vPropertiesDict['linecap'] = self.linecapChoice.GetStringSelection()
+            
     def getInfo(self):
         return self.vPropertiesDict
     

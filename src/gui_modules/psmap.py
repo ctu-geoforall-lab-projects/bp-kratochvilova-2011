@@ -401,8 +401,36 @@ class PsMapFrame(wx.Frame):
                         vInstruction += "    hwidth {hwidth}\n".format(**dic)
                         vInstruction += "    hcolor {hcolor}\n".format(**dic)
                 
-                
-                
+                # size and style
+                if map[1] == 'points':
+                    if dic['symbol']:
+                        vInstruction += "    symbol {symbol}\n".format(**dic)
+                    else: #eps
+                        vInstruction += "    eps {eps}\n".format(**dic)
+                    if dic['size']:
+                        vInstruction += "    size {size}\n".format(**dic)            
+                    else: # sizecolumn
+                        vInstruction += "    sizecolumn {sizecolumn}\n".format(**dic)
+                        vInstruction += "    scale {scale}\n".format(**dic)
+                    if dic['rotation']:
+                        if dic['rotate'] is not None:
+                            vInstruction += "    rotate {rotate}\n".format(**dic)
+                        else:
+                            vInstruction += "    rotatecolumn {rotatecolumn}\n".format(**dic)
+                            
+                if map[1] == 'areas':
+                    if dic['pat'] is not None:
+                        vInstruction += "    pat {pat}\n".format(**dic)
+                        vInstruction += "    pwidth {pwidth}\n".format(**dic)
+                        vInstruction += "    scale {scale}\n".format(**dic)
+                        
+                if map[1] == 'lines':
+                    if dic['width'] is not None:
+                        vInstruction += "    width {width}\n".format(**dic)
+                    else:
+                        vInstruction += "    cwidth {cwidth}\n".format(**dic)
+                    vInstruction += "    style {style}\n".format(**dic)
+                    vInstruction += "    linecap {linecap}\n".format(**dic)
                 vInstruction += "end"
                 instruction.append(vInstruction)
                 
