@@ -80,6 +80,7 @@ class TCValidator(wx.PyValidator):
         return TCValidator(self.flag)
 
     def Validate(self, win):
+        print 'validate'
         tc = self.GetWindow()
         val = tc.GetValue()
 
@@ -95,6 +96,9 @@ class TCValidator(wx.PyValidator):
             event.Skip()
             return
         if self.flag == 'DIGIT_ONLY' and chr(key) in string.digits:
+            event.Skip()
+            return
+        if self.flag == 'SCALE' and chr(key) in string.digits + ':':
             event.Skip()
             return
         if self.flag == 'ZERO_AND_ONE_ONLY' and chr(key) in '01':
@@ -349,33 +353,89 @@ class PageSetupDialog(PsmapDialog):
     
 class MapDialog(PsmapDialog):
     def __init__(self, parent, settings, itemType):
-        PsmapDialog.__init__(self, parent = parent, title = "Map settings", settings = settings, itemType = itemType)
+        PsmapDialog.__init__(self, parent = parent, title = "Raster map settings", settings = settings, itemType = itemType)
         
         mapId = find_key(dic = self.itemType, val = 'map')
         self.mapDialogDict = self.dialogDict[mapId]
-        self.scale, self.rectAdjusted = self.AutoAdjust()
+        self.currentRegionName = os.environ['WIND_OVERRIDE']
         
-        self._layout()
+        self.selectedRaster = self.mapDialogDict['raster']
+        self.scale = [None, None]
+        self.center = [None, None]
         
+        #notebook
+        notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
+        self.panel = self._rasterPanel(notebook)
+        
+        self._layout(notebook)
+            
+    
+    def _rasterPanel(self, notebook):
+        panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        notebook.AddPage(page = panel, text = _("Raster"))
+        
+        border = wx.BoxSizer(wx.VERTICAL)
+        
+        #pattern
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Raster")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(2,1)
+        gridBagSizer.AddGrowableCol(4,1)
+
+        rasterText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose raster:"))
+        self.select = Select(panel, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
+                             type = 'raster', multiple = False,
+                             updateOnPopup = True, onPopup = None)
+
+        scaleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Scale: "))
+        self.scaleChoice = wx.Choice(panel, id = wx.ID_ANY, choices = [_("Automatic - draw the entire raster"),
+                                                                _("Automatic - draw current region"),
+                                                                _("Fixed - the map centre given")])
+        self.scaleTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "", style = wx.TE_RIGHT, validator = TCValidator('SCALE'))
+        self.eastingText = wx.StaticText(panel, id = wx.ID_ANY, label = _("E: "))
+        self.northingText = wx.StaticText(panel, id = wx.ID_ANY, label = _("N: "))
+        self.eastingTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, style = wx.TE_RIGHT, validator = TCValidator(flag = 'DIGIT_ONLY'))
+        self.northingTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, style = wx.TE_RIGHT, validator = TCValidator(flag = 'DIGIT_ONLY'))
         
         if self.mapDialogDict['raster']:
             self.select.SetValue(self.mapDialogDict['raster'])
-            
-        if self.mapDialogDict['scaleType'] is not None: #0 - automatic, 1 - fixed
-            self.choice.SetSelection(self.mapDialogDict['scaleType'])
-            if self.mapDialogDict['scaleType'] == 0:
-                self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.scale))
-                self.textCtrl.Disable()
-            elif self.mapDialogDict['scaleType'] == 1:
-                self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.mapDialogDict['scale']))
-                self.textCtrl.Enable()
-            
-        self.btnOk.Bind(wx.EVT_BUTTON, self.OnOK)
-        
-    def AutoAdjust(self):
-        currRegionDict = grass.region()
-        #RunCommand()
+        self.scaleChoice.SetSelection(self.mapDialogDict['scaleType'])
 
+        if self.scale[self.mapDialogDict['scaleType']]: #automatic - region from map, current region
+            self.scaleTextCtrl.SetValue("1 : {0:.0f}".format(1/self.scale[self.mapDialogDict['scaleType']]))
+            
+        gridBagSizer.Add(rasterText, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.select, pos = (0, 1), span = (1, 5),flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(scaleText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.scaleChoice, pos = (1, 1), span = (1, 4), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.scaleTextCtrl, pos = (1, 5), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.eastingText, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.eastingTextCtrl, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.northingText, pos = (2, 3), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.northingTextCtrl, pos = (2, 4), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.scaleChoice.Bind(wx.EVT_CHOICE, self.OnScaleChoice)
+        self.select.GetTextCtrl().Bind(wx.EVT_TEXT, self.OnRaster)
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel  
+      
+    def AutoAdjust(self, scaleType):
+        if scaleType == 0 and self.selectedRaster: # automatic, region from raster
+            res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
+            currRegionDict = grass.parse_key_val(res, val_type = float)
+        elif scaleType == 1: # automatic, current region
+            res = grass.read_command("g.region", flags = 'gu', region = self.currentRegionName)
+            currRegionDict = grass.parse_key_val(res, val_type = float)
+        else:
+            return None, None
+        print currRegionDict
         rX = self.mapDialogDict['rect'].x
         rY = self.mapDialogDict['rect'].y
         rW = self.mapDialogDict['rect'].width
@@ -396,72 +456,69 @@ class MapDialog(PsmapDialog):
             rHNew = rW*(mH/mW)
             rWNew = rW
         return scale, (x, y, rWNew, rHNew) #inch
-        
-    def _layout(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-        
-        hBox = wx.BoxSizer(wx.HORIZONTAL)
-        text = wx.StaticText(self, id = wx.ID_ANY, label = "Choose raster map: ")
-        self.select = Select(self, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
-                             type = 'raster', multiple = False,
-                             updateOnPopup = True, onPopup = None)
-        hBox.Add(text, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 3)
-        hBox.Add(self.select, proportion = 0, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
-        mainSizer.Add(hBox, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
-        
-        hBox = wx.BoxSizer(wx.HORIZONTAL)
-        text = wx.StaticText(self, id = wx.ID_ANY, label = "Scale: ")
-        self.choice = wx.Choice(self, id = wx.ID_ANY, choices = ['Automatic', 'Fixed'])
-        self.textCtrl = wx.TextCtrl(self, id = wx.ID_ANY, value = '1:10000', style = wx.TE_RIGHT)
-        hBox.Add(text, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL|wx.ALL, border = 3)
-        hBox.Add(self.choice, proportion = 1, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
-        hBox.Add(self.textCtrl, proportion = 1, flag = wx.ALIGN_CENTRE|wx.ALL, border = 3)
-        mainSizer.Add(hBox, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
-        
-        #button OK
-        btnSizer = wx.StdDialogButtonSizer()
-        self.btnOk = wx.Button(self, wx.ID_OK)
-        self.btnOk.SetDefault()
-        btnSizer.AddButton(self.btnOk)
-        btn = wx.Button(self, wx.ID_CANCEL)
-        btnSizer.AddButton(btn)
-        btnSizer.Realize()
-        
-        
-         
-        mainSizer.Add(btnSizer, proportion = 0, flag = wx.GROW|wx.ALL, border = 10)
-        self.SetSizer(mainSizer)
-        mainSizer.Fit(self)
     
-        self.choice.Bind(wx.EVT_CHOICE, self.OnScaleChoice)
+    def RegionDict(self, scaleType):
+        """!Returns region dictionary according to selected type of scale"""
+        if scaleType == 0 and self.selectedRaster: # automatic, region from raster
+            res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
+            return grass.parse_key_val(res, val_type = float)
+        elif scaleType == 1: # automatic, current region
+            res = grass.read_command("g.region", flags = 'gu', region = self.currentRegionName)
+            return grass.parse_key_val(res, val_type = float)
+        return None
+
+    def RegionCenter(self, regionDict):
+        """!Returnes map center coordinates of given region dictionary"""
+        cE = (regionDict['w'] + regionDict['e'])/2
+        cN = (regionDict['n'] + regionDict['s'])/2
+        return cE, cN
         
+    def OnRaster(self, event):
+        """!Selected raster changing"""
+        self.selectedRaster = self.select.GetValue()
+        self.scale[0], foo = self.AutoAdjust(scaleType = 0)
+        self.scale[1], foo = self.AutoAdjust(scaleType = 1)
+        self.center[0] = self.RegionCenter(self.RegionDict(scaleType = 0))
+        self.center[1] = self.RegionCenter(self.RegionDict(scaleType = 1))
+        print self.center
+        self.OnScaleChoice(None)
+        
+            
     def OnScaleChoice(self, event):
-        scaleType = self.choice.GetSelection()
-        if scaleType == 0: # automatic
-            self.textCtrl.Disable()
-            self.textCtrl.SetValue("1 : {0:.0f}".format(1/self.scale))
-        elif scaleType == 1:
-            self.textCtrl.Enable()
+        """!Selected scale type changing"""
+        scaleType = self.scaleChoice.GetSelection()
+        if scaleType in (0, 1): # automatic - region from raster map, automatic - current region
+            self.scaleTextCtrl.Disable()
+            self.eastingTextCtrl.Disable()
+            self.northingTextCtrl.Disable()
+            self.scaleTextCtrl.SetValue("1 : {0:.0f}".format(1/self.scale[scaleType]))
+            self.eastingTextCtrl.SetValue(str(self.center[scaleType][0]))
+            self.northingTextCtrl.SetValue(str(self.center[scaleType][1]))
+        else: # fixed
+            self.scaleTextCtrl.Enable()
+            self.eastingTextCtrl.Enable()
+            self.northingTextCtrl.Enable()
            
             
     def _update(self):
         #raster
         self.mapDialogDict['raster'] = self.select.GetValue() 
         #scale
-        scaleType = self.choice.GetSelection()
+        scaleType = self.scaleChoice.GetSelection()
         
-        if scaleType == 0: # automatic
-##            originRegionName = os.environ['WIND_OVERRIDE']
-##            RunCommand('g.region', region = originRegionName)
-            RunCommand('g.region', rast = self.mapDialogDict['raster'])
-            self.scale, self.rectAdjusted = self.AutoAdjust()
+        if scaleType in (0, 1): # automatic - region from raster, current region
+            if scaleType == 0:
+                RunCommand('g.region', rast = self.mapDialogDict['raster'])
+            else:
+                RunCommand('g.region', region = self.currentRegionName)
+            self.scale, self.rectAdjusted = self.AutoAdjust(scaleType = scaleType)
             self.mapDialogDict['rect'] = Rect(*self.rectAdjusted) 
-            self.mapDialogDict['scaleType'] = 0
+            self.mapDialogDict['scaleType'] = scaleType
             self.mapDialogDict['scale'] = self.scale
             
-        elif scaleType == 1:
-            self.mapDialogDict['scaleType'] = 1
-            scaleNumber = float(self.textCtrl.GetValue().split(':')[1].strip())
+        elif scaleType == 2:
+            self.mapDialogDict['scaleType'] = scaleType
+            scaleNumber = float(self.scaleTextCtrl.GetValue().split(':')[1].strip())
             self.mapDialogDict['scale'] = 1/scaleNumber
             
             rectHalfInch = ( self.mapDialogDict['rect'].width/2, self.mapDialogDict['rect'].height/2)
@@ -482,8 +539,13 @@ class MapDialog(PsmapDialog):
         return self.mapDialogDict
     
     def OnOK(self, event):
-        self._update()
-        event.Skip()
+        try:
+            self._update()
+            event.Skip()
+        except IndexError:
+            wx.MessageBox(message = _("Invalid scale!"),
+                                    caption = _('Invalid scale'), style = wx.OK|wx.ICON_ERROR)
+        
   
 class MainVectorDialog(PsmapDialog):
     def __init__(self, parent, settings, itemType):
@@ -492,7 +554,6 @@ class MainVectorDialog(PsmapDialog):
         id = find_key(dic = self.itemType, val = 'vector')
         self.mainVectDict = self.dialogDict[id] 
         if self.mainVectDict['list']:
-##            self.vectorList = ["{0} - {1}".format(*item) for item in self.mainVectDict['list']]
             self.vectorList = self.mainVectDict['list']
         else:
             self.vectorList = []
@@ -616,7 +677,7 @@ class MainVectorDialog(PsmapDialog):
     def DefaultData(self, dataType):
         if dataType == 'points':
             dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
-                        fcolor = '255:0:0', rgbcolumn = None, symbol = 'basic/x', eps = None,
+                        fcolor = '255:0:0', rgbcolumn = None, symbol = os.path.join('basic', 'x'), eps = None,
                         size = 5, sizecolumn = None, scale = None,
                         rotation = False, rotate = 0, rotatecolumn = None)
         elif dataType == 'lines':
@@ -673,12 +734,12 @@ class VPropertiesDialog(PsmapDialog):
         
         #path to symbols, patterns
         gisbase = os.getenv("GISBASE")
-        self.symbolPath = os.path.join(gisbase, 'etc/symbol')
+        self.symbolPath = os.path.join(gisbase, 'etc', 'symbol')
         self.symbols = []
         for dir in os.listdir(self.symbolPath):
             for symbol in os.listdir(os.path.join(self.symbolPath, dir)):
                 self.symbols.append(os.path.join(dir, symbol))
-        self.patternPath = os.path.join(gisbase, 'etc/paint/patterns')
+        self.patternPath = os.path.join(gisbase, 'etc', 'paint', 'patterns')
 
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)

@@ -233,6 +233,7 @@ class PsMapFrame(wx.Frame):
         """! Default settings"""
         self.defaultDict = {}
         #page
+        
         self.defaultDict['page'] = dict(Units = 'inch', Format = 'a4', Orientation = 'Portrait',
                                         Width = 8.268, Height = 11.693, Left = 0.5, Right = 0.5, Top = 1, Bottom = 1)
 
