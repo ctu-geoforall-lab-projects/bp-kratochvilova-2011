@@ -352,24 +352,35 @@ class PageSetupDialog(PsmapDialog):
         return sizeList
     
 class MapDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType):
+    def __init__(self, parent, settings, itemType, region):
         PsmapDialog.__init__(self, parent = parent, title = "Raster map settings", settings = settings, itemType = itemType)
         
         mapId = find_key(dic = self.itemType, val = 'map')
         self.mapDialogDict = self.dialogDict[mapId]
-        self.currentRegionName = os.environ['WIND_OVERRIDE']
-        
-        self.selectedRaster = self.mapDialogDict['raster']
-        self.scale = [None, None]
-        self.center = [None, None]
+
+        # original region without resolution
+        self.currentRegionDict = region
+
+        self.scale = [None]*3
+        self.center = [None]*3
         
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.panel = self._rasterPanel(notebook)
         
         self._layout(notebook)
-            
-    
+        
+        
+        self.selectedRaster = self.mapDialogDict['raster']
+        if self.mapDialogDict['raster']:
+            self.select.SetValue(self.mapDialogDict['raster'])
+        self.scaleChoice.SetSelection(self.mapDialogDict['scaleType'])
+        
+        self.OnRaster(None)
+        self.scale[self.mapDialogDict['scaleType']] = self.mapDialogDict['scale']
+        self.center[self.mapDialogDict['scaleType']] = self.mapDialogDict['center']
+        self.OnScaleChoice(None)
+        
     def _rasterPanel(self, notebook):
         panel = wx.Panel(parent = notebook, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
         notebook.AddPage(page = panel, text = _("Raster"))
@@ -398,12 +409,7 @@ class MapDialog(PsmapDialog):
         self.eastingTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, style = wx.TE_RIGHT, validator = TCValidator(flag = 'DIGIT_ONLY'))
         self.northingTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, style = wx.TE_RIGHT, validator = TCValidator(flag = 'DIGIT_ONLY'))
         
-        if self.mapDialogDict['raster']:
-            self.select.SetValue(self.mapDialogDict['raster'])
-        self.scaleChoice.SetSelection(self.mapDialogDict['scaleType'])
-
-        if self.scale[self.mapDialogDict['scaleType']]: #automatic - region from map, current region
-            self.scaleTextCtrl.SetValue("1 : {0:.0f}".format(1/self.scale[self.mapDialogDict['scaleType']]))
+        
             
         gridBagSizer.Add(rasterText, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.select, pos = (0, 1), span = (1, 5),flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
@@ -426,78 +432,91 @@ class MapDialog(PsmapDialog):
         panel.Fit()
         return panel  
       
-    def AutoAdjust(self, scaleType):
-        if scaleType == 0 and self.selectedRaster: # automatic, region from raster
-            res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
-            currRegionDict = grass.parse_key_val(res, val_type = float)
-        elif scaleType == 1: # automatic, current region
-            res = grass.read_command("g.region", flags = 'gu', region = self.currentRegionName)
-            currRegionDict = grass.parse_key_val(res, val_type = float)
-        else:
-            return None, None
-        print currRegionDict
-        rX = self.mapDialogDict['rect'].x
-        rY = self.mapDialogDict['rect'].y
-        rW = self.mapDialogDict['rect'].width
-        rH = self.mapDialogDict['rect'].height
-        
-        mW = self.unitConv.convert(value = currRegionDict['e'] - currRegionDict['w'], fromUnit = 'meter', toUnit = 'inch')
-        mH = self.unitConv.convert(value = currRegionDict['n'] - currRegionDict['s'], fromUnit = 'meter', toUnit = 'inch')
-        scale = min(rW/mW, rH/mH)
-
-        if rW/rH > mW/mH:
-            x = rX - (rH*(mW/mH) - rW)/2
-            y = rY
-            rWNew = rH*(mW/mH)
-            rHNew = rH
-        else:
-            x = rX
-            y = rY - (rW*(mH/mW) - rH)/2
-            rHNew = rW*(mH/mW)
-            rWNew = rW
-        return scale, (x, y, rWNew, rHNew) #inch
+##    def AutoAdjust(self, scaleType, raster = self.selectedRaster):
+##        if scaleType == 0 and self.selectedRaster: # automatic, region from raster
+##            res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
+##            currRegionDict = grass.parse_key_val(res, val_type = float)
+##        elif scaleType == 1 and self.selectedRaster: # automatic, current region
+##            currRegionDict = self.currentRegionDict
+##        else:
+##            return None, None
+##
+##        rX = self.mapDialogDict['rect'].x
+##        rY = self.mapDialogDict['rect'].y
+##        rW = self.mapDialogDict['rect'].width
+##        rH = self.mapDialogDict['rect'].height
+##        
+##        mW = self.unitConv.convert(value = currRegionDict['e'] - currRegionDict['w'], fromUnit = 'meter', toUnit = 'inch')
+##        mH = self.unitConv.convert(value = currRegionDict['n'] - currRegionDict['s'], fromUnit = 'meter', toUnit = 'inch')
+##        scale = min(rW/mW, rH/mH)
+##
+##        if rW/rH > mW/mH:
+##            x = rX - (rH*(mW/mH) - rW)/2
+##            y = rY
+##            rWNew = rH*(mW/mH)
+##            rHNew = rH
+##        else:
+##            x = rX
+##            y = rY - (rW*(mH/mW) - rH)/2
+##            rHNew = rW*(mH/mW)
+##            rWNew = rW
+##        return scale, (x, y, rWNew, rHNew) #inch
     
     def RegionDict(self, scaleType):
         """!Returns region dictionary according to selected type of scale"""
         if scaleType == 0 and self.selectedRaster: # automatic, region from raster
             res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
             return grass.parse_key_val(res, val_type = float)
-        elif scaleType == 1: # automatic, current region
-            res = grass.read_command("g.region", flags = 'gu', region = self.currentRegionName)
-            return grass.parse_key_val(res, val_type = float)
+        elif scaleType == 1 and self.selectedRaster: # automatic, current region
+##            res = grass.read_command("g.region", flags = 'gu', region = self.currentRegionName)
+            return self.currentRegionDict#grass.parse_key_val(res, val_type = float)
         return None
 
     def RegionCenter(self, regionDict):
         """!Returnes map center coordinates of given region dictionary"""
-        cE = (regionDict['w'] + regionDict['e'])/2
-        cN = (regionDict['n'] + regionDict['s'])/2
-        return cE, cN
         
+        if regionDict:
+            cE = (regionDict['w'] + regionDict['e'])/2
+            cN = (regionDict['n'] + regionDict['s'])/2
+            return cE, cN
+        return None
+    
     def OnRaster(self, event):
         """!Selected raster changing"""
-        self.selectedRaster = self.select.GetValue()
-        self.scale[0], foo = self.AutoAdjust(scaleType = 0)
-        self.scale[1], foo = self.AutoAdjust(scaleType = 1)
+        
+        self.selectedRaster = self.select.GetValue() if self.select.GetValue() else None
+        self.scale[0], foo = AutoAdjust(self, scaleType = 0, raster = self.selectedRaster)
+        self.scale[1], foo = AutoAdjust(self, scaleType = 1, raster = self.selectedRaster)
+        self.scale[2] = None
         self.center[0] = self.RegionCenter(self.RegionDict(scaleType = 0))
         self.center[1] = self.RegionCenter(self.RegionDict(scaleType = 1))
-        print self.center
+        self.center[2] = None
         self.OnScaleChoice(None)
         
             
     def OnScaleChoice(self, event):
         """!Selected scale type changing"""
+        
         scaleType = self.scaleChoice.GetSelection()
         if scaleType in (0, 1): # automatic - region from raster map, automatic - current region
             self.scaleTextCtrl.Disable()
             self.eastingTextCtrl.Disable()
             self.northingTextCtrl.Disable()
-            self.scaleTextCtrl.SetValue("1 : {0:.0f}".format(1/self.scale[scaleType]))
-            self.eastingTextCtrl.SetValue(str(self.center[scaleType][0]))
-            self.northingTextCtrl.SetValue(str(self.center[scaleType][1]))
+            if self.scale[scaleType]:
+                self.scaleTextCtrl.SetValue("1 : {0:.0f}".format(1/self.scale[scaleType]))
+            if self.center[scaleType]:
+                self.eastingTextCtrl.SetValue(str(self.center[scaleType][0]))
+                self.northingTextCtrl.SetValue(str(self.center[scaleType][1]))
         else: # fixed
             self.scaleTextCtrl.Enable()
             self.eastingTextCtrl.Enable()
             self.northingTextCtrl.Enable()
+            if self.scale[scaleType]:
+                self.scaleTextCtrl.SetValue("1 : {0:.0f}".format(1/self.scale[scaleType]))
+            if self.center[scaleType]:
+                self.eastingTextCtrl.SetValue(str(self.center[scaleType][0]))
+                self.northingTextCtrl.SetValue(str(self.center[scaleType][1]))
+            
            
             
     def _update(self):
@@ -510,30 +529,34 @@ class MapDialog(PsmapDialog):
             if scaleType == 0:
                 RunCommand('g.region', rast = self.mapDialogDict['raster'])
             else:
-                RunCommand('g.region', region = self.currentRegionName)
-            self.scale, self.rectAdjusted = self.AutoAdjust(scaleType = scaleType)
-            self.mapDialogDict['rect'] = Rect(*self.rectAdjusted) 
+                RunCommand('g.region', rast = self.mapDialogDict['raster'], **self.currentRegionDict)
+
+            self.scale, self.rectAdjusted = AutoAdjust(self, scaleType = scaleType, raster = self.selectedRaster)
+            self.mapDialogDict['rect'] = self.rectAdjusted
             self.mapDialogDict['scaleType'] = scaleType
             self.mapDialogDict['scale'] = self.scale
+            self.mapDialogDict['center'] = self.center[scaleType]
             
         elif scaleType == 2:
             self.mapDialogDict['scaleType'] = scaleType
             scaleNumber = float(self.scaleTextCtrl.GetValue().split(':')[1].strip())
             self.mapDialogDict['scale'] = 1/scaleNumber
+            centerE = float(self.eastingTextCtrl.GetValue()) if not self.eastingTextCtrl.IsEmpty() else self.center[0][0]
+            centerN = float(self.northingTextCtrl.GetValue()) if not self.northingTextCtrl.IsEmpty() else self.center[0][1]
+            self.mapDialogDict['center'] = centerE, centerN
             
-            rectHalfInch = ( self.mapDialogDict['rect'].width/2, self.mapDialogDict['rect'].height/2)
-            rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')*scaleNumber,
-                                self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')*scaleNumber) 
-            currRegCentre = RunCommand('g.region', read = True, flags = 'cu', rast = self.mapDialogDict['raster'])
-            currRegCentreDict = {}
-            for item in currRegCentre.strip().split('\n'):
-                currRegCentreDict[item.split(':')[0].strip()] = float(item.split(':')[1].strip())
-            
-            RunCommand('g.region', n = int(currRegCentreDict['center northing'] + rectHalfMeter[1]),
-                       s = int(currRegCentreDict['center northing'] - rectHalfMeter[1]),
-                       e = int(currRegCentreDict['center easting'] + rectHalfMeter[0]),
-                       w = int(currRegCentreDict['center easting'] - rectHalfMeter[0]),
-                       rast = self.mapDialogDict['raster'])
+            ComputeSetRegion(self)
+##            rectHalfInch = ( self.mapDialogDict['rect'].width/2, self.mapDialogDict['rect'].height/2)
+##            rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')*scaleNumber,
+##                                self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')*scaleNumber) 
+##
+##           
+##
+##            RunCommand('g.region', n = int(centerN + rectHalfMeter[1]),
+##                       s = int(centerN - rectHalfMeter[1]),
+##                       e = int(centerE + rectHalfMeter[0]),
+##                       w = int(centerE - rectHalfMeter[0]),
+##                       rast = self.mapDialogDict['raster'])
         
     def getInfo(self):
         return self.mapDialogDict
@@ -1860,7 +1883,7 @@ class MapinfoDialog(PsmapDialog):
         self.panel = self._mapinfoPanel()
      
         self._layout(self.panel)
-        self.OnIsMapinfo(None)
+
 
 
     def _mapinfoPanel(self):
@@ -1868,11 +1891,6 @@ class MapinfoDialog(PsmapDialog):
         #panel.SetupScrolling(scroll_x = False, scroll_y = True)
         border = wx.BoxSizer(wx.VERTICAL)
         
-        
-        # is info
-        self.isMapinfo = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show mapinfo"))
-        self.isMapinfo.SetValue(self.mapinfoDict['isInfo'])
-        border.Add(item = self.isMapinfo, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         # position
         
@@ -1926,9 +1944,9 @@ class MapinfoDialog(PsmapDialog):
         
         self.colors['borderCtrl'].SetValue(True if self.mapinfoDict['border'] != 'none' else False)
         self.colors['backgroundCtrl'].SetValue(True if self.mapinfoDict['background'] != 'none' else False)
-        self.colors['borderColor'].SetColour(self.mapinfoDict['border'] 
+        self.colors['borderColor'].SetColour(self.convertRGB(self.mapinfoDict['border']) 
                                             if self.mapinfoDict['border'] != 'none' else 'black')
-        self.colors['backgroundColor'].SetColour(self.mapinfoDict['background'] 
+        self.colors['backgroundColor'].SetColour(self.convertRGB(self.mapinfoDict['background']) 
                                             if self.mapinfoDict['background'] != 'none' else 'black')
         
         flexSizer.Add(self.colors['borderCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -1941,7 +1959,7 @@ class MapinfoDialog(PsmapDialog):
         
         panel.SetSizer(border)
         
-        self.Bind(wx.EVT_CHECKBOX, self.OnIsMapinfo, self.isMapinfo)
+
         self.Bind(wx.EVT_CHECKBOX, self.OnIsBorder, self.colors['borderCtrl'])
         self.Bind(wx.EVT_CHECKBOX, self.OnIsBackground, self.colors['backgroundCtrl'])
         
@@ -1958,29 +1976,13 @@ class MapinfoDialog(PsmapDialog):
         else:
             self.colors['borderColor'].Disable() 
                            
-    def OnIsMapinfo(self, event):
-        children = self.panel.GetChildren()
-        if self.isMapinfo.GetValue():
-            for i,widget in enumerate(children):
-                    widget.Enable()
-            self.OnIsBackground(None)
-            self.OnIsBorder(None)
-        else:
-            for i,widget in enumerate(children):
-                if i != 0:
-                    widget.Disable()
                     
     def OnOK(self, event):
         self.update()
         event.Skip()
         
     def update(self):
-        #is mapinfo
-        if not self.isMapinfo.GetValue():
-            self.mapinfoDict['isInfo'] = False
-            return
-        else:
-            self.mapinfoDict['isInfo'] = True
+
         #units
         currUnit = self.units['unitsCtrl'].GetStringSelection()
         self.mapinfoDict['unit'] = currUnit
@@ -1995,10 +1997,10 @@ class MapinfoDialog(PsmapDialog):
         self.mapinfoDict['font'] = font.GetFaceName()
         self.mapinfoDict['fontsize'] = font.GetPointSize()
         #colors
-        self.mapinfoDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(flags = wx.C2S_NAME)
-        self.mapinfoDict['background'] = (self.colors['backgroundColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        self.mapinfoDict['color'] = self.convertRGB(self.font['colorCtrl'].GetColour())
+        self.mapinfoDict['background'] = (self.convertRGB(self.colors['backgroundColor'].GetColour())
                                         if self.colors['backgroundCtrl'].GetValue() else 'none') 
-        self.mapinfoDict['border'] = (self.colors['borderColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        self.mapinfoDict['border'] = (self.convertRGB(self.colors['borderColor'].GetColour())
                                         if self.colors['borderCtrl'].GetValue() else 'none')
         
         # estimation of size
@@ -2089,14 +2091,14 @@ class TextDialog(PsmapDialog):
         self.effect['borderWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
         #set values
         self.effect['backgroundCtrl'].SetValue(True if self.textDict['background'] != 'none' else False)
-        self.effect['backgroundColor'].SetColour(self.textDict['background'] 
+        self.effect['backgroundColor'].SetColour(self.convertRGB(self.textDict['background']) 
                                             if self.textDict['background'] != 'none' else 'white')
         self.effect['highlightCtrl'].SetValue(True if self.textDict['hcolor'] != 'none' else False)
-        self.effect['highlightColor'].SetColour(self.textDict['hcolor'] 
+        self.effect['highlightColor'].SetColour(self.convertRGB(self.textDict['hcolor']) 
                                             if self.textDict['hcolor'] != 'none' else 'grey')
         self.effect['highlightWidth'].SetValue(float(self.textDict['hwidth']))
         self.effect['borderCtrl'].SetValue(True if self.textDict['border'] != 'none' else False)
-        self.effect['borderColor'].SetColour(self.textDict['border'] 
+        self.effect['borderColor'].SetColour(self.convertRGB(self.textDict['border']) 
                                             if self.textDict['border'] != 'none' else 'black')
         self.effect['borderWidth'].SetValue(float(self.textDict['width']))
         
@@ -2319,14 +2321,14 @@ class TextDialog(PsmapDialog):
         font = self.font['fontCtrl'].GetSelectedFont()
         self.textDict['font'] = font.GetFaceName()
         self.textDict['fontsize'] = font.GetPointSize()
-        self.textDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        self.textDict['color'] = self.convertRGB(self.font['colorCtrl'].GetColour())
         #effects
-        self.textDict['background'] = (self.effect['backgroundColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        self.textDict['background'] = (self.convertRGB(self.effect['backgroundColor'].GetColour())
                                         if self.effect['backgroundCtrl'].GetValue() else 'none') 
-        self.textDict['border'] = (self.effect['borderColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        self.textDict['border'] = (self.convertRGB(self.effect['borderColor'].GetColour())
                                         if self.effect['borderCtrl'].GetValue() else 'none')
         self.textDict['width'] = self.effect['borderWidth'].GetValue()
-        self.textDict['hcolor'] = (self.effect['highlightColor'].GetColour().GetAsString(flags = wx.C2S_NAME)
+        self.textDict['hcolor'] = (self.convertRGB(self.effect['highlightColor'].GetColour())
                                         if self.effect['highlightCtrl'].GetValue() else 'none')
         self.textDict['hwidth'] = self.effect['highlightWidth'].GetValue()
         
@@ -2404,3 +2406,64 @@ def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
         textEasting = cornerEasting + unitConv.convert(value = eastingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
         textNorthing = cornerNorthing + unitConv.convert(value = northingDiff, fromUnit = 'inch', toUnit = 'meter') / currScale
         return int(textEasting), int(textNorthing)
+    
+    
+def AutoAdjust(self, scaleType, raster):
+    """!Computes map scale and map frame rectangle to fit region (scale is not fixed)"""
+    
+    mapId = find_key(dic = self.itemType, val = 'map', multiple = False)
+    if not mapId:
+        return None, None
+    
+    if scaleType == 0 and raster: # automatic, region from raster
+        res = grass.read_command("g.region", flags = 'gu', rast = raster)
+        currRegionDict = grass.parse_key_val(res, val_type = float)
+    elif scaleType == 1 and self.selectedRaster: # automatic, current region
+        currRegionDict = self.currentRegionDict
+    else:
+        return None, None
+    
+    rX = self.dialogDict[mapId]['rect'].x
+    rY = self.dialogDict[mapId]['rect'].y
+    rW = self.dialogDict[mapId]['rect'].width
+    rH = self.dialogDict[mapId]['rect'].height
+    if not hasattr(self, 'unitConv'):
+        self.unitConv = UnitConversion(self)
+    mW = self.unitConv.convert(value = currRegionDict['e'] - currRegionDict['w'], fromUnit = 'meter', toUnit = 'inch')
+    mH = self.unitConv.convert(value = currRegionDict['n'] - currRegionDict['s'], fromUnit = 'meter', toUnit = 'inch')
+    scale = min(rW/mW, rH/mH)
+
+    if rW/rH > mW/mH:
+        x = rX - (rH*(mW/mH) - rW)/2
+        y = rY
+        rWNew = rH*(mW/mH)
+        rHNew = rH
+    else:
+        x = rX
+        y = rY - (rW*(mH/mW) - rH)/2
+        rHNew = rW*(mH/mW)
+        rWNew = rW
+    return scale, Rect(x, y, rWNew, rHNew) #inch
+
+def ComputeSetRegion(self):
+    """!Computes and sets region from current scale, map center coordinates and map rectangle"""
+    mapId = find_key(dic = self.itemType, val = 'map', multiple = False)
+    if mapId and self.dialogDict[mapId]['scaleType'] == 2: # fixed scale
+        mapDict = self.dialogDict[mapId]
+        scale = mapDict['scale']
+            
+        if not hasattr(self, 'unitConv'):
+            self.unitConv = UnitConversion(self)
+        
+        rectHalfInch = ( mapDict['rect'].width/2, mapDict['rect'].height/2)
+        rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')/scale,
+                                self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')/scale) 
+
+        centerE = mapDict['center'][0]
+        centerN = mapDict['center'][1]
+
+        RunCommand('g.region', n = int(centerN + rectHalfMeter[1]),
+                       s = int(centerN - rectHalfMeter[1]),
+                       e = int(centerE + rectHalfMeter[0]),
+                       w = int(centerE - rectHalfMeter[0]),
+                       rast = mapDict['raster'])
