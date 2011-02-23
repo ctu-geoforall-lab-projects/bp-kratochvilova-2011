@@ -140,7 +140,7 @@ class PsMapToolbar(AbstractToolbar):
              self.parent.OnInstructionFile),
             (self.generatePS, 'generatePS', Icons['psExport'].GetBitmap(),
              wx.ITEM_NORMAL, Icons['psExport'].GetLabel(), Icons['psExport'].GetDesc(),
-             self.parent.PSFile),
+             self.parent.OnPSFile),
             ("", "", "", "", "", "", ""),
             (self.quit, 'quit', Icons['quit'].GetBitmap(),
              wx.ITEM_NORMAL, Icons['quit'].GetLabel(), Icons['quit'].GetDesc(),
@@ -189,15 +189,15 @@ class PsMapFrame(wx.Frame):
             "cross"   : wx.StockCursor(wx.CURSOR_CROSS),
             "hand"    : wx.StockCursor(wx.CURSOR_HAND),
             #"pencil"  : wx.StockCursor(wx.CURSOR_PENCIL),
-            #"sizenwse": wx.StockCursor(wx.CURSOR_SIZENWSE)
+            "sizenwse": wx.StockCursor(wx.CURSOR_SIZENWSE)
             }
         # pen and brush
         self.pen = {
             'paper': wx.Pen(colour = "BLACK", width = 1),
             'margins': wx.Pen(colour = "GREY", width = 1),
-            'map': wx.Pen(colour = "GREEN", width = 1),
-            'rasterLegend': wx.Pen(colour = "YELLOW", width = 1),
-            'mapinfo': wx.Pen(colour = "YELLOW", width = 1),
+            'map': wx.Pen(colour = wx.Color(86, 122, 17), width = 2),
+            'rasterLegend': wx.Pen(colour = wx.Color(219, 216, 4), width = 2),
+            'mapinfo': wx.Pen(colour = wx.Color(5, 184, 249), width = 2),
             'box': wx.Pen(colour = 'RED', width = 2, style = wx.SHORT_DASH),
             'select': wx.Pen(colour = 'BLACK', width = 1, style = wx.SHORT_DASH),
             'resize': wx.Pen(colour = 'BLACK', width = 1)
@@ -205,9 +205,9 @@ class PsMapFrame(wx.Frame):
         self.brush = {
             'paper': wx.WHITE_BRUSH,
             'margins': wx.TRANSPARENT_BRUSH,            
-            'map': wx.CYAN_BRUSH,
-            'rasterLegend': wx.GREEN_BRUSH,
-            'mapinfo': wx.RED_BRUSH,
+            'map': wx.Brush(wx.Color(151, 214, 90)),
+            'rasterLegend': wx.Brush(wx.Color(250, 247, 112)),
+            'mapinfo': wx.Brush(wx.Color(127, 222, 252)),
             'box': wx.TRANSPARENT_BRUSH,
             'select':wx.TRANSPARENT_BRUSH,
             'resize': wx.BLACK_BRUSH
@@ -233,15 +233,15 @@ class PsMapFrame(wx.Frame):
         del self.currentRegionDict['cols']
         grass.use_temp_region()
         
-        #
-        # create queues
-        #
-        self.requestQ = Queue.Queue()
-        self.resultQ = Queue.Queue()
-        #
-        # thread
-        #
-        self.cmdThread = CmdThread(self, self.requestQ, self.resultQ)
+##        #
+##        # create queues
+##        #
+##        self.requestQ = Queue.Queue()
+##        self.resultQ = Queue.Queue()
+##        #
+##        # thread
+##        #
+##        self.cmdThread = CmdThread(self, self.requestQ, self.resultQ)
         
         
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
@@ -266,14 +266,16 @@ class PsMapFrame(wx.Frame):
                                                 discrete = None, type = None,
                                                 where = (page['Left'], page['Top']), defaultSize = True,
                                                 width = 0, height = 0, cols = 1, font = "Serif", fontsize = 10,
+                                                #color = '0:0:0', tickbar = False, range = False, min = 0, max = 0,
                                                 color = 'black', tickbar = False, range = False, min = 0, max = 0,
                                                 nodata = False)
         #mapinfo
         self.defaultDict['mapinfo'] = dict( unit = 'inch', where = (page['Left'], page['Top']),
                                             font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
+##                                            font = 'Sans', fontsize = 10, color = '0:0:0', background = 'none', 
                                             border = 'none')
         #text
-        self.defaultDict['text'] = dict(text = "", font = "Serif", fontsize = 10, color = 'black', background = 'none',
+        self.defaultDict['text'] = dict(text = "", font = "Serif", fontsize = 10, color = '0:0:0', background = 'none',
                                         hcolor = 'none', hwidth = 1, border = 'none', width = '1', XY = True,
                                         where = (page['Left'], page['Top']), unit = 'inch', rotate = None, 
                                         ref = "center center", xoffset = 0, yoffset = 0, east = None, north = None)
@@ -363,9 +365,9 @@ class PsMapFrame(wx.Frame):
         # mapinfo
         if mapinfoId:
             mapinfoInstruction = "mapinfo\n"
-            mapinfoInstruction += "where {where[0]} {where[1]}\n".format(**self.dialogDict[mapinfoId])
-            mapinfoInstruction += "font {font}\nfontsize {fontsize}\ncolor {color}\n".format(**self.dialogDict[mapinfoId])            
-            mapinfoInstruction += "background {background}\nborder {border}\n".format(**self.dialogDict[mapinfoId])  
+            mapinfoInstruction += "    where {where[0]} {where[1]}\n".format(**self.dialogDict[mapinfoId])
+            mapinfoInstruction += "    font {font}\n    fontsize {fontsize}\n    color {color}\n".format(**self.dialogDict[mapinfoId])            
+            mapinfoInstruction += "    background {background}\n    border {border}\n".format(**self.dialogDict[mapinfoId])  
             mapinfoInstruction += "end"
             instruction.append(mapinfoInstruction) 
         # text
@@ -458,7 +460,7 @@ class PsMapFrame(wx.Frame):
                 
         return '\n'.join(instruction) + '\nend' 
 
-    def PSFile(self, event):
+    def OnPSFile(self, event):
         filename = self.getFile(wildcard = "PostScript (*.ps)|*.ps|Encapsulated PostScript (*.eps)|*.eps")
         if filename:
             instrFile = tempfile.NamedTemporaryFile(mode = 'w')
@@ -574,8 +576,7 @@ class PsMapFrame(wx.Frame):
                 rectCanvas = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[mapId]['rect'],
                                                                     canvasToPaper = False)
                 self.canvas.RecalculateEN()
-                self.canvas.itemLabels['map'] = self.canvas.itemLabels['map'].rpartition(':')[0]\
-                                                + ': ' + self.dialogDict[mapId]['raster'].split('@')[0]
+                self.canvas.itemLabels['map'][1] = "raster:" + self.dialogDict[mapId]['raster'].split('@')[0]
                 self.canvas.Draw( pen = self.pen[self.itemType[mapId]], brush = self.brush[self.itemType[mapId]],
                                 pdc = self.canvas.pdcObj, drawid = mapId, pdctype = 'rectText', bb = rectCanvas)
                 # redraw select box if necessary  
@@ -811,9 +812,9 @@ class PsMapBufferedWindow(wx.Window):
         self.objectId = kwargs['objectId']
         
         #labels
-        self.itemLabels = { 'map': 'MAP FRAME',
-                            'rasterLegend': 'RASTER LEGEND',
-                            'mapinfo': 'MAPINFO'}
+        self.itemLabels = { 'map': ['MAP FRAME'],
+                            'rasterLegend': ['RASTER LEGEND'],
+                            'mapinfo': ['MAPINFO']}
         
         # define PseudoDC
         self.pdcObj = wx.PseudoDC()
@@ -956,7 +957,28 @@ class PsMapBufferedWindow(wx.Window):
         self.pdcTmp.DrawToDCClipped(dc, rgn.GetBox())
     
     def OnMouse(self, event):
-        if event.LeftDown():
+        if event.GetWheelRotation():
+            zoom = event.GetWheelRotation()
+            use = self.mouse['use']
+            self.mouse['begin'] = event.GetPosition()
+            if zoom > 0:
+                self.mouse['use'] = 'zoomin'
+            else:
+                self.mouse['use'] = 'zoomout'
+                
+            zoomFactor, view = self.ComputeZoom(wx.Rect(0,0,0,0))
+            self.Zoom(zoomFactor, view)
+            self.mouse['use'] = use
+            
+        if event.Moving():
+            if self.mouse['use'] in ('pointer', 'resize'):
+                pos = event.GetPosition()
+                foundResize = self.pdcTmp.FindObjects(pos[0], pos[1])
+                if foundResize and foundResize[0] == self.idResizeBoxTmp: 
+                    self.SetCursor(self.cursors["sizenwse"])
+                else:
+                    self.SetCursor(self.cursors["default"])
+        elif event.LeftDown():
             self.mouse['begin'] = event.GetPosition()
             if self.mouse['use'] in ('pan', 'zoomin', 'zoomout', 'addMap'):
                 pass
@@ -1055,7 +1077,7 @@ class PsMapBufferedWindow(wx.Window):
                     self.RecalculateEN()
                     self.pdcTmp.RemoveId(self.idZoomBoxTmp)
                     self.pdcTmp.RemoveId(self.idResizeBoxTmp)
-                    self.itemLabels['map'] += '\nraster: ' + self.dialogDict[mapId]['raster'].split('@')[0]
+                    self.itemLabels['map'].append('raster: ' + self.dialogDict[mapId]['raster'].split('@')[0])
                     self.Draw(pen = self.pen[self.itemType[mapId]], brush = self.brush[self.itemType[mapId]],
                             pdc = self.pdcObj, drawid = mapId, pdctype = 'rectText', bb = rectCanvas)
                     
@@ -1155,7 +1177,7 @@ class PsMapBufferedWindow(wx.Window):
         cW, cH = self.GetClientSize()
         cW = float(cW)
         if rect.IsEmpty(): # clicked on canvas
-            zoomFactor = 2
+            zoomFactor = 1.5
             if self.mouse['use'] == 'zoomout':
                 zoomFactor = 1./zoomFactor
             x,y = self.mouse['begin']
@@ -1226,7 +1248,8 @@ class PsMapBufferedWindow(wx.Window):
         
     def ZoomAll(self):
         """! Zoom to full extent"""  
-        zoomP = self.pdcPaper.GetIdBounds(self.pageId[0])
+        bounds = self.pdcPaper.GetIdBounds(self.pageId[0])
+        zoomP = bounds.Inflate(bounds.width/20, bounds.height/20)
         zoomFactor, view = self.ComputeZoom(zoomP)
         self.Zoom(zoomFactor, view)
                     
@@ -1250,7 +1273,8 @@ class PsMapBufferedWindow(wx.Window):
             font.SetStyle(wx.ITALIC)
             dc.SetFont(font)
             pdc.SetFont(font)
-            textExtent = dc.GetTextExtent(self.itemLabels[self.itemType[drawid]])
+            text = '\n'.join(self.itemLabels[self.itemType[drawid]])
+            textExtent = dc.GetTextExtent(text)
             textRect = wx.Rect(0, 0, *textExtent).CenterIn(bb)
             r = map(int, bb)
             while not wx.Rect(*r).ContainsRect(textRect) and size >= 8:
@@ -1258,11 +1282,11 @@ class PsMapBufferedWindow(wx.Window):
                 font.SetPointSize(size)
                 dc.SetFont(font)
                 pdc.SetFont(font)
-                textExtent = dc.GetTextExtent(self.itemLabels[self.itemType[drawid]])
+                textExtent = dc.GetTextExtent(text)
                 textRect = wx.Rect(0, 0, *textExtent).CenterIn(bb)
             pdc.SetTextForeground(wx.Color(100,100,100,200)) 
 
-            pdc.DrawText(text = self.itemLabels[self.itemType[drawid]], x = textRect.x, y = textRect.y)
+            pdc.DrawText(text = text, x = textRect.x, y = textRect.y)
             
         pdc.SetIdBounds(drawid, bb)
         self.Refresh()
@@ -1289,7 +1313,7 @@ class PsMapBufferedWindow(wx.Window):
             pdc.SetBackground(wx.TRANSPARENT_BRUSH)
             pdc.SetBackgroundMode(wx.TRANSPARENT)
         pdc.SetFont(wx.FontFromNativeInfoString(textDict['font'] + " " + fontsize))    
-        pdc.SetTextForeground(textDict['color'])        
+        pdc.SetTextForeground(convertRGB(textDict['color']))        
         pdc.DrawRotatedText(textDict['text'], coords[0], coords[1], rot)
         pdc.SetIdBounds(drawId, bounds)
         self.Refresh()
