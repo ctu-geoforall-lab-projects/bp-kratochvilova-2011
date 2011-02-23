@@ -80,7 +80,7 @@ class TCValidator(wx.PyValidator):
         return TCValidator(self.flag)
 
     def Validate(self, win):
-        print 'validate'
+       
         tc = self.GetWindow()
         val = tc.GetValue()
 
@@ -348,9 +348,11 @@ class PageSetupDialog(PsmapDialog):
         return sizeList
     
 class MapDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType, region):
+    def __init__(self, parent, settings, itemType, region, notebook = False):
         PsmapDialog.__init__(self, parent = parent, title = "Raster map settings", settings = settings, itemType = itemType)
         
+        self.parent = parent
+        self.isNotebook = notebook
         mapId = find_key(dic = self.itemType, val = 'map')
         self.mapDialogDict = self.dialogDict[mapId]
 
@@ -363,7 +365,8 @@ class MapDialog(PsmapDialog):
         #notebook
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.panel = self._rasterPanel(notebook)
-        
+        if self.isNotebook:
+            self.vectorPanel = VectorDialog(parent = notebook, settings = self.dialogDict, itemType = self.itemType)
         self._layout(notebook)
         
         
@@ -390,32 +393,37 @@ class MapDialog(PsmapDialog):
         gridBagSizer.AddGrowableCol(2,1)
         gridBagSizer.AddGrowableCol(4,1)
 
-        rasterText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose raster:"))
+        self.rasterCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw raster map"))
+        self.rasterCheck.SetValue(self.mapDialogDict['isRaster'])
+        self.rasterCheck.SetToolTipString(_("do not check in case you want to draw only vector maps"))
+        rasterText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Raster:"))
         self.select = Select(panel, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
                              type = 'raster', multiple = False,
                              updateOnPopup = True, onPopup = None)
 
-        scaleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Scale: "))
+        scaleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Scale:"))
         self.scaleChoice = wx.Choice(panel, id = wx.ID_ANY, choices = [_("Automatic - draw the entire raster"),
                                                                 _("Automatic - draw current region"),
                                                                 _("Fixed - the map centre given")])
         self.scaleTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "", style = wx.TE_RIGHT, validator = TCValidator('SCALE'))
-        self.eastingText = wx.StaticText(panel, id = wx.ID_ANY, label = _("E: "))
-        self.northingText = wx.StaticText(panel, id = wx.ID_ANY, label = _("N: "))
+        centerText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Center:"))
+        self.eastingText = wx.StaticText(panel, id = wx.ID_ANY, label = _("E:"))
+        self.northingText = wx.StaticText(panel, id = wx.ID_ANY, label = _("N:"))
         self.eastingTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, style = wx.TE_RIGHT, validator = TCValidator(flag = 'DIGIT_ONLY'))
         self.northingTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, style = wx.TE_RIGHT, validator = TCValidator(flag = 'DIGIT_ONLY'))
         
         
-            
-        gridBagSizer.Add(rasterText, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(self.select, pos = (0, 1), span = (1, 5),flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
-        gridBagSizer.Add(scaleText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(self.scaleChoice, pos = (1, 1), span = (1, 4), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
-        gridBagSizer.Add(self.scaleTextCtrl, pos = (1, 5), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
-        gridBagSizer.Add(self.eastingText, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
-        gridBagSizer.Add(self.eastingTextCtrl, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
-        gridBagSizer.Add(self.northingText, pos = (2, 3), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
-        gridBagSizer.Add(self.northingTextCtrl, pos = (2, 4), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.rasterCheck, pos = (0, 0), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)            
+        gridBagSizer.Add(rasterText, pos = (1, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.select, pos = (1, 1), span = (1, 5),flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(scaleText, pos = (2, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.scaleChoice, pos = (2, 1), span = (1, 4), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.scaleTextCtrl, pos = (2, 5), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(centerText, pos = (3, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.eastingText, pos = (3, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.eastingTextCtrl, pos = (3, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.northingText, pos = (3, 3), flag = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, border = 0)
+        gridBagSizer.Add(self.northingTextCtrl, pos = (3, 4), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
         
         
         sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
@@ -428,43 +436,13 @@ class MapDialog(PsmapDialog):
         panel.Fit()
         return panel  
       
-##    def AutoAdjust(self, scaleType, raster = self.selectedRaster):
-##        if scaleType == 0 and self.selectedRaster: # automatic, region from raster
-##            res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
-##            currRegionDict = grass.parse_key_val(res, val_type = float)
-##        elif scaleType == 1 and self.selectedRaster: # automatic, current region
-##            currRegionDict = self.currentRegionDict
-##        else:
-##            return None, None
-##
-##        rX = self.mapDialogDict['rect'].x
-##        rY = self.mapDialogDict['rect'].y
-##        rW = self.mapDialogDict['rect'].width
-##        rH = self.mapDialogDict['rect'].height
-##        
-##        mW = self.unitConv.convert(value = currRegionDict['e'] - currRegionDict['w'], fromUnit = 'meter', toUnit = 'inch')
-##        mH = self.unitConv.convert(value = currRegionDict['n'] - currRegionDict['s'], fromUnit = 'meter', toUnit = 'inch')
-##        scale = min(rW/mW, rH/mH)
-##
-##        if rW/rH > mW/mH:
-##            x = rX - (rH*(mW/mH) - rW)/2
-##            y = rY
-##            rWNew = rH*(mW/mH)
-##            rHNew = rH
-##        else:
-##            x = rX
-##            y = rY - (rW*(mH/mW) - rH)/2
-##            rHNew = rW*(mH/mW)
-##            rWNew = rW
-##        return scale, (x, y, rWNew, rHNew) #inch
     
     def RegionDict(self, scaleType):
         """!Returns region dictionary according to selected type of scale"""
         if scaleType == 0 and self.selectedRaster: # automatic, region from raster
             res = grass.read_command("g.region", flags = 'gu', rast = self.selectedRaster)
             return grass.parse_key_val(res, val_type = float)
-        elif scaleType == 1 and self.selectedRaster: # automatic, current region
-##            res = grass.read_command("g.region", flags = 'gu', region = self.currentRegionName)
+        elif scaleType == 1 : # automatic, current region
             return self.currentRegionDict#grass.parse_key_val(res, val_type = float)
         return None
 
@@ -481,6 +459,7 @@ class MapDialog(PsmapDialog):
         """!Selected raster changing"""
         
         self.selectedRaster = self.select.GetValue() if self.select.GetValue() else None
+
         self.scale[0], foo = AutoAdjust(self, scaleType = 0, raster = self.selectedRaster)
         self.scale[1], foo = AutoAdjust(self, scaleType = 1, raster = self.selectedRaster)
         self.scale[2] = None
@@ -516,11 +495,20 @@ class MapDialog(PsmapDialog):
            
             
     def _update(self):
+        #draw raster
+        self.mapDialogDict['isRaster'] = self.rasterCheck.GetValue()
         #raster
-        self.mapDialogDict['raster'] = self.select.GetValue() 
+        self.mapDialogDict['raster'] = self.select.GetValue() \
+                            if self.select.GetValue() else None
         #scale
         scaleType = self.scaleChoice.GetSelection()
+        self.mapDialogDict['scaleType'] = scaleType
         
+        if self.mapDialogDict['scaleType'] == 0 and not self.mapDialogDict['raster']:
+                wx.MessageBox(message = _("No raster selected!"),
+                                    caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
+                return False    
+                            
         if scaleType in (0, 1): # automatic - region from raster, current region
             if scaleType == 0:
                 RunCommand('g.region', rast = self.mapDialogDict['raster'])
@@ -528,48 +516,57 @@ class MapDialog(PsmapDialog):
                 RunCommand('g.region', rast = self.mapDialogDict['raster'], **self.currentRegionDict)
 
             self.scale, self.rectAdjusted = AutoAdjust(self, scaleType = scaleType, raster = self.selectedRaster)
-            self.mapDialogDict['rect'] = self.rectAdjusted
-            self.mapDialogDict['scaleType'] = scaleType
+            self.mapDialogDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapDialogDict['rect']
             self.mapDialogDict['scale'] = self.scale
             self.mapDialogDict['center'] = self.center[scaleType]
             
+
+            
         elif scaleType == 2:
-            self.mapDialogDict['scaleType'] = scaleType
+            
             scaleNumber = float(self.scaleTextCtrl.GetValue().split(':')[1].strip())
             self.mapDialogDict['scale'] = 1/scaleNumber
-            centerE = float(self.eastingTextCtrl.GetValue()) if not self.eastingTextCtrl.IsEmpty() else self.center[0][0]
-            centerN = float(self.northingTextCtrl.GetValue()) if not self.northingTextCtrl.IsEmpty() else self.center[0][1]
-            self.mapDialogDict['center'] = centerE, centerN
+            try:
+                centerE = float(self.eastingTextCtrl.GetValue()) 
+                centerN = float(self.northingTextCtrl.GetValue())
+                self.mapDialogDict['center'] = centerE, centerN
+            except ValueError:
+                self.mapDialogDict['center'] = None 
             
-            ComputeSetRegion(self)
-##            rectHalfInch = ( self.mapDialogDict['rect'].width/2, self.mapDialogDict['rect'].height/2)
-##            rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')*scaleNumber,
-##                                self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')*scaleNumber) 
-##
-##           
-##
-##            RunCommand('g.region', n = int(centerN + rectHalfMeter[1]),
-##                       s = int(centerN - rectHalfMeter[1]),
-##                       e = int(centerE + rectHalfMeter[0]),
-##                       w = int(centerE - rectHalfMeter[0]),
-##                       rast = self.mapDialogDict['raster'])
+        if self.mapDialogDict['scaleType'] == 2 and \
+                                (not self.mapDialogDict['center'] or not self.mapDialogDict['scale']):
+            wx.MessageBox(message = _("No map center given!"),
+                                    caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
+            return False  
+        
+        ComputeSetRegion(self)
+          
+        return True
         
     def getInfo(self):
-        return self.mapDialogDict
+        if self.isNotebook:
+            return self.mapDialogDict, self.vectorPanel.getInfo()
+        else:
+            return self.mapDialogDict
     
     def OnOK(self, event):
+        if self.isNotebook:
+            self.vectorPanel._update()
         try:
-            self._update()
-            event.Skip()
+            ok = self._update()
+            if ok:                        
+                event.Skip()
         except IndexError:
             wx.MessageBox(message = _("Invalid scale!"),
                                     caption = _('Invalid scale'), style = wx.OK|wx.ICON_ERROR)
-        
+       
   
-class MainVectorDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType):
-        PsmapDialog.__init__(self, parent = parent, title = "Choose vector maps", settings = settings, itemType = itemType)
+class VectorDialog(wx.Panel):
+    def __init__(self, parent, settings, itemType, notebook = True):
+        wx.Panel.__init__(self, parent, id = wx.ID_ANY, style = wx.TAB_TRAVERSAL)
 
+        self.itemType = itemType
+        self.dialogDict = settings
         id = find_key(dic = self.itemType, val = 'vector')
         self.mainVectDict = self.dialogDict[id] 
         if self.mainVectDict['list']:
@@ -577,28 +574,28 @@ class MainVectorDialog(PsmapDialog):
         else:
             self.vectorList = []
         self.mainVectDict['list'] = self.vectorList
-        self.panel = self._vectorPanel()
-     
-        self._layout(self.panel)
-        
-    def _vectorPanel(self):
-        panel = wx.Panel(parent = self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+        self.parent = parent
+        self._layout()
+        if notebook:
+            self.parent.AddPage(page = self, text = _("Vector maps"))
+            
+    def _layout(self):
         border = wx.BoxSizer(wx.VERTICAL)
         
         # choose vector map
         
-        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Choose map")))
+        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " {0} ".format(_("Choose map")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
         
-        text = wx.StaticText(panel, id = wx.ID_ANY, label = _("Map:"))
-        self.select = Select(panel, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
+        text = wx.StaticText(self, id = wx.ID_ANY, label = _("Map:"))
+        self.select = Select(self, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
                              type = 'vector', multiple = False,
                              updateOnPopup = True, onPopup = None)
         topologyType = [_("points"), _("lines"), _("areas")]
-        self.vectorType = wx.RadioBox(panel, id = wx.ID_ANY, label = " {0} ".format(_("Data Type")), choices = topologyType,
+        self.vectorType = wx.RadioBox(self, id = wx.ID_ANY, label = " {0} ".format(_("Data Type")), choices = topologyType,
                                         majorDimension = 3, style = wx.RA_SPECIFY_COLS)
-        self.AddVector = wx.Button(panel, id = wx.ID_ANY, label = _("Add"))
+        self.AddVector = wx.Button(self, id = wx.ID_ANY, label = _("Add"))
         
         gridBagSizer.Add(text, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.select, pos = (0,1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -610,7 +607,7 @@ class MainVectorDialog(PsmapDialog):
         
         # manage vector layers
         
-        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Vector maps order")))
+        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " {0} ".format(_("Vector maps order")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
         gridBagSizer.AddGrowableCol(0,2)
@@ -618,12 +615,12 @@ class MainVectorDialog(PsmapDialog):
 
         
         
-        text = wx.StaticText(panel, id = wx.ID_ANY, label = _("The topmost vector map overlaps the others"))
-        self.listbox = wx.ListBox(panel, id = wx.ID_ANY, choices = [], style = wx.LB_SINGLE|wx.LB_NEEDED_SB)
-        self.btnUp = wx.Button(panel, id = wx.ID_ANY, label = _("Up"))
-        self.btnDown = wx.Button(panel, id = wx.ID_ANY, label = _("Down"))
-        self.btnDel = wx.Button(panel, id = wx.ID_ANY, label = _("Delete"))
-        self.btnProp = wx.Button(panel, id = wx.ID_ANY, label = _("Properties"))
+        text = wx.StaticText(self, id = wx.ID_ANY, label = _("The topmost vector map overlaps the others"))
+        self.listbox = wx.ListBox(self, id = wx.ID_ANY, choices = [], style = wx.LB_SINGLE|wx.LB_NEEDED_SB)
+        self.btnUp = wx.Button(self, id = wx.ID_ANY, label = _("Up"))
+        self.btnDown = wx.Button(self, id = wx.ID_ANY, label = _("Down"))
+        self.btnDel = wx.Button(self, id = wx.ID_ANY, label = _("Delete"))
+        self.btnProp = wx.Button(self, id = wx.ID_ANY, label = _("Properties"))
         
         self.updateListBox()
         
@@ -644,9 +641,9 @@ class MainVectorDialog(PsmapDialog):
         self.Bind(wx.EVT_BUTTON, self.OnDown, self.btnDown)
         self.Bind(wx.EVT_BUTTON, self.OnProperties, self.btnProp)
         
-        panel.SetSizer(border)
-        panel.Fit()
-        return panel
+        self.SetSizer(border)
+        self.Fit()
+
     
     def OnAddVector(self, event):
         vmap = self.select.GetValue()
@@ -723,11 +720,184 @@ class MainVectorDialog(PsmapDialog):
 
     def getInfo(self):
         return self.mainVectDict
+
+ 
+class MainVectorDialog(PsmapDialog):
+    def __init__(self, parent, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, title = "Choose vector maps", settings = settings, itemType = itemType)
+
+       
+        self.panel = VectorDialog(parent = self, settings = self.dialogDict, itemType = self.itemType, notebook = False)
+     
+        self._layout(self.panel)
     
+    def getInfo(self):
+        return self.panel.getInfo() 
     def OnOK(self, event):
-        self._update()
-        event.Skip()
-    
+        self.panel._update()
+        event.Skip()   
+        
+##class MainVectorDialog(PsmapDialog):
+##    def __init__(self, parent, settings, itemType):
+##        PsmapDialog.__init__(self, parent = parent, title = "Choose vector maps", settings = settings, itemType = itemType)
+##
+##        id = find_key(dic = self.itemType, val = 'vector')
+##        self.mainVectDict = self.dialogDict[id] 
+##        if self.mainVectDict['list']:
+##            self.vectorList = self.mainVectDict['list']
+##        else:
+##            self.vectorList = []
+##        self.mainVectDict['list'] = self.vectorList
+##        self.panel = self._vectorPanel()
+##     
+##        self._layout(self.panel)
+##        
+##    def _vectorPanel(self):
+##        panel = wx.Panel(parent = self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
+##        border = wx.BoxSizer(wx.VERTICAL)
+##        
+##        # choose vector map
+##        
+##        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Choose map")))
+##        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+##        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+##        
+##        text = wx.StaticText(panel, id = wx.ID_ANY, label = _("Map:"))
+##        self.select = Select(panel, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
+##                             type = 'vector', multiple = False,
+##                             updateOnPopup = True, onPopup = None)
+##        topologyType = [_("points"), _("lines"), _("areas")]
+##        self.vectorType = wx.RadioBox(panel, id = wx.ID_ANY, label = " {0} ".format(_("Data Type")), choices = topologyType,
+##                                        majorDimension = 3, style = wx.RA_SPECIFY_COLS)
+##        self.AddVector = wx.Button(panel, id = wx.ID_ANY, label = _("Add"))
+##        
+##        gridBagSizer.Add(text, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(self.select, pos = (0,1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(self.vectorType, pos = (1,1), flag = wx.ALIGN_CENTER, border = 0)
+##        gridBagSizer.Add(self.AddVector, pos = (1,2), flag = wx.ALIGN_BOTTOM|wx.ALIGN_RIGHT, border = 0)
+##        
+##        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+##        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+##        
+##        # manage vector layers
+##        
+##        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Vector maps order")))
+##        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+##        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+##        gridBagSizer.AddGrowableCol(0,2)
+##        gridBagSizer.AddGrowableCol(1,1)
+##
+##        
+##        
+##        text = wx.StaticText(panel, id = wx.ID_ANY, label = _("The topmost vector map overlaps the others"))
+##        self.listbox = wx.ListBox(panel, id = wx.ID_ANY, choices = [], style = wx.LB_SINGLE|wx.LB_NEEDED_SB)
+##        self.btnUp = wx.Button(panel, id = wx.ID_ANY, label = _("Up"))
+##        self.btnDown = wx.Button(panel, id = wx.ID_ANY, label = _("Down"))
+##        self.btnDel = wx.Button(panel, id = wx.ID_ANY, label = _("Delete"))
+##        self.btnProp = wx.Button(panel, id = wx.ID_ANY, label = _("Properties"))
+##        
+##        self.updateListBox()
+##        
+##        
+##        gridBagSizer.Add(text, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(self.listbox, pos = (1,0), span = (4, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+##        gridBagSizer.Add(self.btnUp, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(self.btnDown, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(self.btnDel, pos = (3,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(self.btnProp, pos = (4,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        
+##        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+##        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+##        
+##        self.Bind(wx.EVT_BUTTON, self.OnAddVector, self.AddVector)
+##        self.Bind(wx.EVT_BUTTON, self.OnDelete, self.btnDel)
+##        self.Bind(wx.EVT_BUTTON, self.OnUp, self.btnUp)
+##        self.Bind(wx.EVT_BUTTON, self.OnDown, self.btnDown)
+##        self.Bind(wx.EVT_BUTTON, self.OnProperties, self.btnProp)
+##        
+##        panel.SetSizer(border)
+##        panel.Fit()
+##        return panel
+##    
+##    def OnAddVector(self, event):
+##        vmap = self.select.GetValue()
+##        if vmap:
+##            type = self.vectorType.GetStringSelection()
+##            record = "{0} - {1}".format(vmap,type)
+##            id = wx.NewId()
+##            self.vectorList.insert(0, [vmap, type, id])
+##            self.listbox.InsertItems([record], 0)
+##            self.itemType[id] = 'vProperties'
+##            self.dialogDict[id] = self.DefaultData(dataType = self.vectorList[0][1])
+##            
+##    def OnDelete(self, event):
+##        if self.listbox.GetSelections():
+##            pos = self.listbox.GetSelection()
+##            id = self.vectorList[pos][2]
+##            del self.vectorList[pos]
+##            del self.itemType[id]
+##            del self.dialogDict[id]
+##            self.updateListBox(selected = pos if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
+##            
+##    def OnUp(self, event):
+##        if self.listbox.GetSelections():
+##            pos = self.listbox.GetSelection()
+##            if pos:
+##                self.vectorList.insert(pos - 1, self.vectorList.pop(pos))
+##            self.updateListBox(selected = (pos - 1) if pos > 0 else 0)
+##            
+##    def OnDown(self, event):
+##        if self.listbox.GetSelections():
+##            pos = self.listbox.GetSelection()
+##            if pos != len(self.vectorList) - 1:
+##                self.vectorList.insert(pos + 1, self.vectorList.pop(pos))
+##            self.updateListBox(selected = (pos + 1) if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
+##    
+##    def OnProperties(self, event):
+##        if self.listbox.GetSelections():
+##            pos = self.listbox.GetSelection()
+##            id = self.vectorList[pos][2]
+##
+##            dlg = VPropertiesDialog(self, settings = self.dialogDict, itemType = self.itemType, id = id)
+##            if dlg.ShowModal() == wx.ID_OK:
+##                self.dialogDict[id] = dlg.getInfo()
+##
+##            dlg.Destroy()
+##           
+##    def DefaultData(self, dataType):
+##        if dataType == 'points':
+##            dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
+##                        fcolor = '255:0:0', rgbcolumn = None, symbol = os.path.join('basic', 'x'), eps = None,
+##                        size = 5, sizecolumn = None, scale = None,
+##                        rotation = False, rotate = 0, rotatecolumn = None)
+##        elif dataType == 'lines':
+##            dd = dict(type = 'line or boundary', connection = False, layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
+##                        hcolor = 'none', rgbcolumn = None,
+##                        width = 1, cwidth = None,
+##                        style = 'solid', linecap = 'butt')
+##        else:
+##            dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
+##                        fcolor = '255:0:0', rgbcolumn = None,
+##                        pat = None, pwidth = 1, scale = 1)
+##        return dd
+##    
+##    def updateListBox(self, selected = None):
+##        mapList = ["{0} - {1}".format(*item) for item in self.vectorList]
+##        self.listbox.Set(mapList)
+##        if selected is not None:
+##            self.listbox.SetSelection(selected)  
+##            self.listbox.EnsureVisible(selected)    
+##        
+##    def _update(self):
+##        self.mainVectDict['list'] = self.vectorList
+##        
+##
+##    def getInfo(self):
+##        return self.mainVectDict
+##    
+##    def OnOK(self, event):
+##        self._update()
+##        event.Skip()   
 class VPropertiesDialog(PsmapDialog):
     def __init__(self, parent, settings, itemType, id):
         PsmapDialog.__init__(self, parent = parent, title = "", settings = settings, itemType = itemType)
@@ -1806,6 +1976,7 @@ class LegendDialog(PsmapDialog):
                     drawHeight = height
                     self.legendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
                 else: #categorical map
+                    self.legendDict['width'] = width 
                     self.legendDict['cols'] = self.heightOrColumnsCtrl.GetValue() 
                     cat = RunCommand(   'r.category', read = True, map = self.legendDict['raster'],
                                         fs = ':').strip().split('\n')
@@ -2431,11 +2602,11 @@ def AutoAdjust(self, scaleType, raster):
     if scaleType == 0 and raster: # automatic, region from raster
         res = grass.read_command("g.region", flags = 'gu', rast = raster)
         currRegionDict = grass.parse_key_val(res, val_type = float)
-    elif scaleType == 1 and self.selectedRaster: # automatic, current region
+    elif scaleType == 1 : # automatic, current region
         currRegionDict = self.currentRegionDict
     else:
         return None, None
-    
+
     rX = self.dialogDict[mapId]['rect'].x
     rY = self.dialogDict[mapId]['rect'].y
     rW = self.dialogDict[mapId]['rect'].width
@@ -2456,6 +2627,7 @@ def AutoAdjust(self, scaleType, raster):
         y = rY - (rW*(mH/mW) - rH)/2
         rHNew = rW*(mH/mW)
         rWNew = rW
+
     return scale, Rect(x, y, rWNew, rHNew) #inch
 
 def ComputeSetRegion(self):
