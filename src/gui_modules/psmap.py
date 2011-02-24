@@ -97,6 +97,7 @@ class PsMapToolbar(AbstractToolbar):
         self.addVector = wx.NewId()
         self.dec = wx.NewId()
         self.delete = wx.NewId()
+        self.preview = wx.NewId()
         self.instructionFile = wx.NewId()
         self.generatePS = wx.NewId()
         self.pan = wx.NewId()
@@ -136,6 +137,9 @@ class PsMapToolbar(AbstractToolbar):
              wx.ITEM_NORMAL, "delete", "Delete selected object",
              self.parent.OnDelete),
             ("", "", "", "", "", "", ""),
+            (self.preview, "preview", Icons["modelRun"].GetBitmap(),
+             wx.ITEM_NORMAL, "Preview", "Show preview",
+             self.parent.OnPreview),
             (self.instructionFile, 'psScript', Icons['psScript'].GetBitmap(),
              wx.ITEM_NORMAL, Icons['psScript'].GetLabel(), Icons['psScript'].GetDesc(),
              self.parent.OnInstructionFile),
@@ -235,10 +239,8 @@ class PsMapFrame(wx.Frame):
         self.imgName = os.path.join( gisdbase, loc, mapset, '.tmp', 'tmpImage.png')
         
         #canvas for preview
-        self.previewCanvas = PsMapBufferedWindow(parent = self, mouse = self.mouse, pen = self.pen,
-                                            brush = self.brush, cursors = self.cursors, settings = self.dialogDict,
-                                            itemType = self.itemType, pageId = self.pageId, objectId = self.objectId,
-                                            preview = True)
+        self.previewCanvas = PsMapBufferedWindow(parent = self, mouse = self.mouse, cursors = self.cursors,
+                                                    pen = self.pen, brush = self.brush, preview = True)
         
         
         # save current region without resolution, set WIND_OVERRIDE
@@ -261,11 +263,14 @@ class PsMapFrame(wx.Frame):
 ##        #
 ##        self.cmdThread = CmdThread(self, self.requestQ, self.resultQ)
         
-        
-        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-        
         self._layout()
         self.SetMinSize(wx.Size(700, 600))
+        
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+
+
         
         
     def DefaultData(self):
@@ -312,6 +317,9 @@ class PsMapFrame(wx.Frame):
         self.book = fnb.FlatNotebook(self, wx.ID_ANY, style = fnb.FNB_BOTTOM)
         self.book.AddPage(self.canvas, "Draft mode")
         self.book.AddPage(self.previewCanvas, "Preview")
+        self.book.SetSelection(0)
+        self.currentPage = 0
+##        self.book.EnableTab(1, enabled = False)
         mainSizer.Add(self.book,1, wx.EXPAND)
         
         self.SetSizer(mainSizer)
@@ -481,31 +489,68 @@ class PsMapFrame(wx.Frame):
     def OnPSFile(self, event):
         filename = self.getFile(wildcard = "PostScript (*.ps)|*.ps|Encapsulated PostScript (*.eps)|*.eps")
         if filename:
-            instrFile = tempfile.NamedTemporaryFile(mode = 'w')
-            instrFile.file.write(self.InstructionFile())
-            instrFile.file.flush()
-            flags = ''
-            if os.path.splitext(filename)[1] == '.eps':
-                flags = flags + 'e'
-            if self.dialogDict[self.pageId]['Orientation'] == 'Landscape':
-                flags = flags + 'r'
-
-##            # new thread
+            self.PSFile(filename)
+##            instrFile = tempfile.NamedTemporaryFile(mode = 'w')
+##            instrFile.file.write(self.InstructionFile())
+##            instrFile.file.flush()
+##            flags = ''
+##            if os.path.splitext(filename)[1] == '.eps':
+##                flags = flags + 'e'
+##            if self.dialogDict[self.pageId]['Orientation'] == 'Landscape':
+##                flags = flags + 'r'
 ##
-##            self.cmdThread.SetId(-1)
-##            onDone = None
-##            self.cmdThread.RunCmd(GrassCmd, onDone,
-##                                ['ps.map', 'input='+instrFile.name, 'output='+filename], stdout = None, stderr = None)
+####            # new thread
+####
+####            self.cmdThread.SetId(-1)
+####            onDone = None
+####            self.cmdThread.RunCmd(GrassCmd, onDone,
+####                                ['ps.map', 'input='+instrFile.name, 'output='+filename], stdout = None, stderr = None)
+##
+##            RunCommand('ps.map', flags = flags, read = False, 
+##                        input = instrFile.name, output = filename)
+##            
+##            # convert to png
+##            img = Image.open(filename)
+##            img.save(self.imgName)
+##            rect = self.previewCanvas.ImageRect()
+##            self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
+##
+##            self.previewCanvas.DrawImage(rect = rect)
 
-            RunCommand('ps.map', flags = flags, read = False, 
-                        input = instrFile.name, output = filename)
             
-            # convert to png
-            img = Image.open(filename)
-            img.save(self.imgName)
+    def OnPreview(self, event):
+        """!Run ps.map and show result"""
+        self.PSFile()
 
-            self.previewCanvas.DrawImage(rect = wx.Rect(20, 20, 210, 300))
-                    
+        
+    def PSFile(self, filename = False):
+        """!Create temporary instructions file and run ps.map with output = filename"""
+        instrFile = tempfile.NamedTemporaryFile(mode = 'w')
+        instrFile.file.write(self.InstructionFile())
+        instrFile.file.flush()
+        
+        psFile = tempfile.NamedTemporaryFile(mode = 'w')
+        if not filename:
+            filename = psFile.name
+            
+        flags = ''
+        if os.path.splitext(filename)[1] == '.eps':
+            flags = flags + 'e'
+        if self.dialogDict[self.pageId]['Orientation'] == 'Landscape':
+            flags = flags + 'r'
+            
+        RunCommand('ps.map', flags = flags, read = False, 
+                        input = instrFile.name, output = filename)
+        
+        instrFile.close()
+                        
+        img = Image.open(filename)
+        img.save(self.imgName)
+        rect = self.previewCanvas.ImageRect()
+        self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
+
+        self.previewCanvas.DrawImage(rect = rect)
+                        
     def getFile(self, wildcard):
         suffix = []
         for filter in wildcard.split('|')[1::2]:
@@ -557,29 +602,33 @@ class PsMapFrame(wx.Frame):
         self.toolbar.OnTool(event)
         self.mouse["use"] = "pointer"
         self.canvas.SetCursor(self.cursors["default"])
+        self.previewCanvas.SetCursor(self.cursors["default"])
         
     def OnPan(self, event):
         self.toolbar.OnTool(event)
         self.mouse["use"] = "pan"
         self.canvas.SetCursor(self.cursors["hand"])
+        self.previewCanvas.SetCursor(self.cursors["hand"])
             
     def OnZoomIn(self, event):
         self.toolbar.OnTool(event)
         self.mouse["use"] = "zoomin"
         self.canvas.SetCursor(self.cursors["cross"])
+        self.previewCanvas.SetCursor(self.cursors["cross"])
         
     def OnZoomOut(self, event):
         self.toolbar.OnTool(event)
         self.mouse["use"] = "zoomout"
         self.canvas.SetCursor(self.cursors["cross"])
+        self.previewCanvas.SetCursor(self.cursors["cross"])
         
     def OnZoomAll(self, event):
         self.mouseOld = self.mouse['use']
-        self.cursorOld = self.canvas.GetCursor()
+        self.cursorOld = self.canvas.GetCursor() if self.currentPage == 0 else self.previewCanvas.GetCursor()
         self.mouse["use"] = "zoomin"
-        self.canvas.ZoomAll() 
+        self.canvas.ZoomAll() if self.currentPage == 0 else self.previewCanvas.ZoomAll()
         self.mouse["use"] = self.mouseOld 
-        self.canvas.SetCursor(self.cursorOld)  
+        self.canvas.SetCursor(self.cursorOld)  if self.currentPage == 0 else self.previewCanvas.SetCursor(self.cursorOld)
         
     def OnAddMap(self, event, notebook = False):
         if event is not None:
@@ -638,6 +687,10 @@ class PsMapFrame(wx.Frame):
         else:    # sofar no map
             self.mouse["use"] = "addMap"
             self.canvas.SetCursor(self.cursors["cross"])
+            if self.currentPage == 1:
+                self.book.SetSelection(0)
+                self.currentPage = 0
+                
             
     def OnAddVect(self, event):
         id = find_key(self.itemType, 'vector')
@@ -794,6 +847,7 @@ class PsMapFrame(wx.Frame):
         tmpFile = tempfile.NamedTemporaryFile(mode = 'w', delete = True)
         tmpFile.file.write(self.InstructionFile())
         tmpFile.file.flush()
+
         bb = map(float, RunCommand('ps.map', read = True, flags = 'b', input = tmpFile.name, 
                                             output = 'foo').strip().split('=')[1].split(','))
         mapInitRect = rect = Rect(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])    
@@ -809,7 +863,7 @@ class PsMapFrame(wx.Frame):
         self.dialogDict[id] = {'rect': mapInitRect, 'scale': scale}
 
     def OnDelete(self, event):
-        if self.canvas.dragId != -1:
+        if self.canvas.dragId != -1 and self.currentPage == 0:
             if self.itemType[self.canvas.dragId] == 'map':
                 self.deleteObject(self.canvas.dragId)
                 self.getInitMap()
@@ -849,7 +903,17 @@ class PsMapFrame(wx.Frame):
         self.objectId.append(id) if drawable else None
         self.SetDefault(id = id, type = type)
         return id
+    
+    def OnPageChanged(self, event):
+        """!Flatnotebook page has changed"""
+        self.currentPage = self.book.GetPageIndex(self.book.GetCurrentPage())
         
+    def OnPageChanging(self, event):
+        """!Flatnotebook page is changing"""
+        if self.currentPage == 0 and self.mouse['use'] == 'addMap':
+            event.Veto()
+
+
     def OnCloseWindow(self, event):
         """!Close window"""
         self.Destroy()
@@ -877,14 +941,20 @@ class PsMapBufferedWindow(wx.Window):
         
 
         self.mouse = kwargs['mouse']
+        self.cursors = kwargs['cursors']
+        self.preview = kwargs['preview']
         self.pen = kwargs['pen']
         self.brush = kwargs['brush']
-        self.cursors = kwargs['cursors']
-        self.dialogDict = kwargs['settings']
-        self.itemType = kwargs['itemType']
-        self.pageId = kwargs['pageId']
-        self.objectId = kwargs['objectId']
-        self.preview = kwargs['preview']
+        
+        if kwargs.has_key('settings'):
+            self.dialogDict = kwargs['settings']
+        if kwargs.has_key('itemType'):
+            self.itemType = kwargs['itemType']
+        if kwargs.has_key('pageId'):
+            self.pageId = kwargs['pageId']
+        if kwargs.has_key('objectId'):
+            self.objectId = kwargs['objectId']
+        
         
         #labels
         self.itemLabels = { 'map': ['MAP FRAME'],
@@ -915,6 +985,7 @@ class PsMapBufferedWindow(wx.Window):
             self.image = None
             self.imageId = 2000
             self.imgName = self.parent.imgName
+            
             
  
         self.currScale = None
@@ -949,7 +1020,6 @@ class PsMapBufferedWindow(wx.Window):
 
         if self.currScale is None:
             self.currScale = min(cW/pW, cH/pH)
-        paperRect = wx.Rect()
         pW = pW * self.currScale
         pH = pH * self.currScale
         x = cW/2 - pW/2
@@ -1045,6 +1115,7 @@ class PsMapBufferedWindow(wx.Window):
         self.pdcTmp.DrawToDCClipped(dc, rgn.GetBox())
         
     def OnMouse(self, event):
+
         if event.GetWheelRotation():
             zoom = event.GetWheelRotation()
             use = self.mouse['use']
@@ -1299,48 +1370,61 @@ class PsMapBufferedWindow(wx.Window):
                 
     def Zoom(self, zoomFactor, view):
         """! Zoom to specified region, scroll view, redraw"""
+        if not self.currScale:
+            return
         self.currScale = self.currScale*zoomFactor
         if self.currScale > 10 or self.currScale < 0.2:
             self.currScale = self.currScale/zoomFactor
             return 
+        if not self.preview:
+            # redraw paper
+            for i, id in enumerate(self.pageId):
+                pRect = self.pdcPaper.GetIdBounds(self.pageId[i])
+                pRect.OffsetXY(-view[0], -view[1])
+                pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
+                type = self.itemType[id]
+                self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
+                            drawid = id, pdctype = 'rect', bb = pRect)
 
-        # redraw paper
-        for i, id in enumerate(self.pageId):
-            pRect = self.pdcPaper.GetIdBounds(self.pageId[i])
-            pRect.OffsetXY(-view[0], -view[1])
-            pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
-            type = self.itemType[id]
-            self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
-                        drawid = id, pdctype = 'rect', bb = pRect)
-
-        
-        #redraw objects
-        for id in self.objectId:
-            oRect = self.pdcObj.GetIdBounds(id)
-            oRect.OffsetXY(-view[0] , -view[1])
-            oRect = self.ScaleRect(rect = oRect, scale = zoomFactor)
-            type = self.itemType[id]
-            if type == 'text':
-                coords = self.dialogDict[id]['coords']# recalculate coordinates, they are not equal to BB
-                self.dialogDict[id]['coords'] = coords = [(int(coord) - view[i]) * zoomFactor
-                                                                    for i, coord in enumerate(coords)]
-                self.DrawRotText(pdc = self.pdcObj, drawId = id, textDict = self.dialogDict[id],
-                 coords = coords, bounds = oRect )
-                extent = self.parent.getTextExtent(textDict = self.dialogDict[id])
-                rot = float(self.dialogDict[id]['rotate']) if self.dialogDict[id]['rotate'] else 0
-                bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
-                self.pdcObj.SetIdBounds(id, bounds)
-            else:
-                self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
-                        drawid = id, pdctype = 'rectText', bb = oRect)
-        #redraw tmp objects
-        if self.dragId != -1:
-            self.RedrawSelectBox(self.dragId)
+            
+            #redraw objects
+            for id in self.objectId:
+                oRect = self.pdcObj.GetIdBounds(id)
+                oRect.OffsetXY(-view[0] , -view[1])
+                oRect = self.ScaleRect(rect = oRect, scale = zoomFactor)
+                type = self.itemType[id]
+                if type == 'text':
+                    coords = self.dialogDict[id]['coords']# recalculate coordinates, they are not equal to BB
+                    self.dialogDict[id]['coords'] = coords = [(int(coord) - view[i]) * zoomFactor
+                                                                        for i, coord in enumerate(coords)]
+                    self.DrawRotText(pdc = self.pdcObj, drawId = id, textDict = self.dialogDict[id],
+                     coords = coords, bounds = oRect )
+                    extent = self.parent.getTextExtent(textDict = self.dialogDict[id])
+                    rot = float(self.dialogDict[id]['rotate']) if self.dialogDict[id]['rotate'] else 0
+                    bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
+                    self.pdcObj.SetIdBounds(id, bounds)
+                else:
+                    self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
+                            drawid = id, pdctype = 'rectText', bb = oRect)
+            #redraw tmp objects
+            if self.dragId != -1:
+                self.RedrawSelectBox(self.dragId)
+                
+        #redraw preview
+        else: # preview mode    
+            imageRect = self.pdcImage.GetIdBounds(self.imageId)
+            imageRect.OffsetXY(-view[0], -view[1])
+            imageRect = self.ScaleRect(rect = imageRect, scale = zoomFactor)
+            self.DrawImage(imageRect)
+            
             
         
     def ZoomAll(self):
         """! Zoom to full extent"""  
-        bounds = self.pdcPaper.GetIdBounds(self.pageId[0])
+        if not self.preview:
+            bounds = self.pdcPaper.GetIdBounds(self.pageId[0])
+        else:
+            bounds = self.pdcImage.GetIdBounds(self.imageId)
         zoomP = bounds.Inflate(bounds.width/20, bounds.height/20)
         zoomFactor, view = self.ComputeZoom(zoomP)
         self.Zoom(zoomFactor, view)
@@ -1412,19 +1496,38 @@ class PsMapBufferedWindow(wx.Window):
         pdc.EndDrawing()
         
     def DrawImage(self, rect):
+        """!Draw preview image to pseudoDC"""
         self.pdcImage.ClearId(self.imageId)
         self.pdcImage.SetId(self.imageId)
-        img = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
-        img.Rescale(rect.width, rect.height)
-        bitmap = wx.BitmapFromImage(img)
+        img = self.image
 
+        if img.GetWidth() != rect.width or img.GetHeight() != rect.height:
+            img = img.Scale(rect.width, rect.height)
+        bitmap = img.ConvertToBitmap()
+        
         self.pdcImage.BeginDrawing()
         self.pdcImage.DrawBitmap(bitmap, rect.x, rect.y)
         self.pdcImage.SetIdBounds(self.imageId, rect)
         self.pdcImage.EndDrawing()
         self.Refresh()
         
+    def ImageRect(self):
+        """!Returns image centered in canvas, computes scale"""
+        img = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
+        cW, cH = self.GetClientSize()
+        iW, iH = img.GetWidth(), img.GetHeight()
+
+        self.currScale = min(float(cW)/iW, float(cH)/iH)
+        iW = iW * self.currScale
+        iH = iH * self.currScale
+        x = cW/2 - iW/2
+        y = cH/2 - iH/2
+        imageRect = wx.Rect(x, y, iW, iH)
+
+        return imageRect 
+    
     def RedrawSelectBox(self, id):
+        """!Redraws select box when selected object changes its size"""
         if self.dragId == id:
             rect = [self.pdcObj.GetIdBounds(id).Inflate(3,3)]
             type = ['select']
