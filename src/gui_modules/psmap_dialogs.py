@@ -70,7 +70,7 @@ class UnitConversion():
     
     
 class TCValidator(wx.PyValidator):
-    """!validates input in textctrls, combobox, took from wx demo"""
+    """!validates input in textctrls, combobox, taken from wxpython demo"""
     def __init__(self, flag = None):
         wx.PyValidator.__init__(self)
         self.flag = flag
@@ -110,7 +110,66 @@ class TCValidator(wx.PyValidator):
         # gets to the text control
         return  
 
-  
+
+class PenStyleComboBox(wx.combo.OwnerDrawnComboBox):
+    """!Combo for selecting line style, taken from wxpython demo"""
+
+    # Overridden from OwnerDrawnComboBox, called to draw each
+    # item in the list
+    def OnDrawItem(self, dc, rect, item, flags):
+        if item == wx.NOT_FOUND:
+            # painting the control, but there is no valid item selected yet
+            return
+
+        r = wx.Rect(*rect)  # make a copy
+        r.Deflate(3, 5)
+
+        penStyle = wx.SOLID
+        if item == 1:
+            penStyle = wx.LONG_DASH
+        elif item == 2:
+            penStyle = wx.DOT
+        elif item == 3:
+            penStyle = wx.DOT_DASH
+
+        pen = wx.Pen(dc.GetTextForeground(), 3, penStyle)
+        dc.SetPen(pen)
+
+        # for painting the items in the popup
+        dc.DrawText(self.GetString( item ),
+                    r.x + 3,
+                    (r.y + 0) + ( (r.height/2) - dc.GetCharHeight() )/2
+                    )
+        dc.DrawLine( r.x+5, r.y+((r.height/4)*3)+1, r.x+r.width - 5, r.y+((r.height/4)*3)+1 )
+
+           
+    def OnDrawBackground(self, dc, rect, item, flags):
+        """!Overridden from OwnerDrawnComboBox, called for drawing the
+            background area of each item."""
+        # If the item is selected, or its item # iseven, or we are painting the
+        # combo control itself, then use the default rendering.
+        if (item & 1 == 0 or flags & (wx.combo.ODCB_PAINTING_CONTROL |
+                                      wx.combo.ODCB_PAINTING_SELECTED)):
+            wx.combo.OwnerDrawnComboBox.OnDrawBackground(self, dc, rect, item, flags)
+            return
+
+        # Otherwise, draw every other background with different colour.
+        bgCol = wx.Colour(240,240,250)
+        dc.SetBrush(wx.Brush(bgCol))
+        dc.SetPen(wx.Pen(bgCol))
+        dc.DrawRectangleRect(rect);
+
+    def OnMeasureItem(self, item):
+        """!Overridden from OwnerDrawnComboBox, should return the height
+            needed to display an item in the popup, or -1 for default"""
+        return 30
+
+    def OnMeasureItemWidth(self, item):
+        """!Overridden from OwnerDrawnComboBox.  Callback for item width, or
+            -1 for default/undetermined"""
+        return -1; # default - will be measured from text width  
+    
+    
 class PsmapDialog(wx.Dialog):
     def __init__(self, parent, title, settings, itemType):
         wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
@@ -640,12 +699,27 @@ class VectorDialog(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnUp, self.btnUp)
         self.Bind(wx.EVT_BUTTON, self.OnDown, self.btnDown)
         self.Bind(wx.EVT_BUTTON, self.OnProperties, self.btnProp)
+        self.select.GetTextCtrl().Bind(wx.EVT_TEXT, self.OnVector)
         
         self.SetSizer(border)
         self.Fit()
 
-    
+    def OnVector(self, event):
+        """!Gets info about toplogy and enables/disables choices point/line/area"""
+        vmap = self.select.GetValue()        
+        topoInfo = grass.parse_key_val(RunCommand('v.info', read = True, map = vmap, shell = 'topo'), val_type = int)
+
+        self.vectorType.EnableItem(2, bool(topoInfo['areas']))
+        self.vectorType.EnableItem(1, bool(topoInfo['boundaries']) or bool(topoInfo['lines']))
+        self.vectorType.EnableItem(0, bool(topoInfo['centroids'] or bool(topoInfo['points']) ))
+        for item in range(2,-1,-1):
+            if self.vectorType.IsItemEnabled(item):
+                self.vectorType.SetSelection(item)
+                return
+                
+            
     def OnAddVector(self, event):
+        """!Adds vector map to list"""
         vmap = self.select.GetValue()
         if vmap:
             type = self.vectorType.GetStringSelection()
@@ -655,8 +729,10 @@ class VectorDialog(wx.Panel):
             self.listbox.InsertItems([record], 0)
             self.itemType[id] = 'vProperties'
             self.dialogDict[id] = self.DefaultData(dataType = self.vectorList[0][1])
+
             
     def OnDelete(self, event):
+        """!Deletes vector map from the list"""
         if self.listbox.GetSelections():
             pos = self.listbox.GetSelection()
             id = self.vectorList[pos][2]
@@ -666,6 +742,7 @@ class VectorDialog(wx.Panel):
             self.updateListBox(selected = pos if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
             
     def OnUp(self, event):
+        """!Moves selected map to top"""
         if self.listbox.GetSelections():
             pos = self.listbox.GetSelection()
             if pos:
@@ -673,6 +750,7 @@ class VectorDialog(wx.Panel):
             self.updateListBox(selected = (pos - 1) if pos > 0 else 0)
             
     def OnDown(self, event):
+        """!Moves selected map to bottom"""
         if self.listbox.GetSelections():
             pos = self.listbox.GetSelection()
             if pos != len(self.vectorList) - 1:
@@ -680,6 +758,7 @@ class VectorDialog(wx.Panel):
             self.updateListBox(selected = (pos + 1) if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
     
     def OnProperties(self, event):
+        """!Opens vector map properties dialog"""
         if self.listbox.GetSelections():
             pos = self.listbox.GetSelection()
             id = self.vectorList[pos][2]
@@ -737,167 +816,7 @@ class MainVectorDialog(PsmapDialog):
         self.panel._update()
         event.Skip()   
         
-##class MainVectorDialog(PsmapDialog):
-##    def __init__(self, parent, settings, itemType):
-##        PsmapDialog.__init__(self, parent = parent, title = "Choose vector maps", settings = settings, itemType = itemType)
-##
-##        id = find_key(dic = self.itemType, val = 'vector')
-##        self.mainVectDict = self.dialogDict[id] 
-##        if self.mainVectDict['list']:
-##            self.vectorList = self.mainVectDict['list']
-##        else:
-##            self.vectorList = []
-##        self.mainVectDict['list'] = self.vectorList
-##        self.panel = self._vectorPanel()
-##     
-##        self._layout(self.panel)
-##        
-##    def _vectorPanel(self):
-##        panel = wx.Panel(parent = self, id = wx.ID_ANY, size = (-1, -1), style = wx.TAB_TRAVERSAL)
-##        border = wx.BoxSizer(wx.VERTICAL)
-##        
-##        # choose vector map
-##        
-##        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Choose map")))
-##        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-##        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
-##        
-##        text = wx.StaticText(panel, id = wx.ID_ANY, label = _("Map:"))
-##        self.select = Select(panel, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
-##                             type = 'vector', multiple = False,
-##                             updateOnPopup = True, onPopup = None)
-##        topologyType = [_("points"), _("lines"), _("areas")]
-##        self.vectorType = wx.RadioBox(panel, id = wx.ID_ANY, label = " {0} ".format(_("Data Type")), choices = topologyType,
-##                                        majorDimension = 3, style = wx.RA_SPECIFY_COLS)
-##        self.AddVector = wx.Button(panel, id = wx.ID_ANY, label = _("Add"))
-##        
-##        gridBagSizer.Add(text, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        gridBagSizer.Add(self.select, pos = (0,1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        gridBagSizer.Add(self.vectorType, pos = (1,1), flag = wx.ALIGN_CENTER, border = 0)
-##        gridBagSizer.Add(self.AddVector, pos = (1,2), flag = wx.ALIGN_BOTTOM|wx.ALIGN_RIGHT, border = 0)
-##        
-##        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
-##        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
-##        
-##        # manage vector layers
-##        
-##        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Vector maps order")))
-##        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-##        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
-##        gridBagSizer.AddGrowableCol(0,2)
-##        gridBagSizer.AddGrowableCol(1,1)
-##
-##        
-##        
-##        text = wx.StaticText(panel, id = wx.ID_ANY, label = _("The topmost vector map overlaps the others"))
-##        self.listbox = wx.ListBox(panel, id = wx.ID_ANY, choices = [], style = wx.LB_SINGLE|wx.LB_NEEDED_SB)
-##        self.btnUp = wx.Button(panel, id = wx.ID_ANY, label = _("Up"))
-##        self.btnDown = wx.Button(panel, id = wx.ID_ANY, label = _("Down"))
-##        self.btnDel = wx.Button(panel, id = wx.ID_ANY, label = _("Delete"))
-##        self.btnProp = wx.Button(panel, id = wx.ID_ANY, label = _("Properties"))
-##        
-##        self.updateListBox()
-##        
-##        
-##        gridBagSizer.Add(text, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        gridBagSizer.Add(self.listbox, pos = (1,0), span = (4, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
-##        gridBagSizer.Add(self.btnUp, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        gridBagSizer.Add(self.btnDown, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        gridBagSizer.Add(self.btnDel, pos = (3,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        gridBagSizer.Add(self.btnProp, pos = (4,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-##        
-##        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
-##        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
-##        
-##        self.Bind(wx.EVT_BUTTON, self.OnAddVector, self.AddVector)
-##        self.Bind(wx.EVT_BUTTON, self.OnDelete, self.btnDel)
-##        self.Bind(wx.EVT_BUTTON, self.OnUp, self.btnUp)
-##        self.Bind(wx.EVT_BUTTON, self.OnDown, self.btnDown)
-##        self.Bind(wx.EVT_BUTTON, self.OnProperties, self.btnProp)
-##        
-##        panel.SetSizer(border)
-##        panel.Fit()
-##        return panel
-##    
-##    def OnAddVector(self, event):
-##        vmap = self.select.GetValue()
-##        if vmap:
-##            type = self.vectorType.GetStringSelection()
-##            record = "{0} - {1}".format(vmap,type)
-##            id = wx.NewId()
-##            self.vectorList.insert(0, [vmap, type, id])
-##            self.listbox.InsertItems([record], 0)
-##            self.itemType[id] = 'vProperties'
-##            self.dialogDict[id] = self.DefaultData(dataType = self.vectorList[0][1])
-##            
-##    def OnDelete(self, event):
-##        if self.listbox.GetSelections():
-##            pos = self.listbox.GetSelection()
-##            id = self.vectorList[pos][2]
-##            del self.vectorList[pos]
-##            del self.itemType[id]
-##            del self.dialogDict[id]
-##            self.updateListBox(selected = pos if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
-##            
-##    def OnUp(self, event):
-##        if self.listbox.GetSelections():
-##            pos = self.listbox.GetSelection()
-##            if pos:
-##                self.vectorList.insert(pos - 1, self.vectorList.pop(pos))
-##            self.updateListBox(selected = (pos - 1) if pos > 0 else 0)
-##            
-##    def OnDown(self, event):
-##        if self.listbox.GetSelections():
-##            pos = self.listbox.GetSelection()
-##            if pos != len(self.vectorList) - 1:
-##                self.vectorList.insert(pos + 1, self.vectorList.pop(pos))
-##            self.updateListBox(selected = (pos + 1) if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
-##    
-##    def OnProperties(self, event):
-##        if self.listbox.GetSelections():
-##            pos = self.listbox.GetSelection()
-##            id = self.vectorList[pos][2]
-##
-##            dlg = VPropertiesDialog(self, settings = self.dialogDict, itemType = self.itemType, id = id)
-##            if dlg.ShowModal() == wx.ID_OK:
-##                self.dialogDict[id] = dlg.getInfo()
-##
-##            dlg.Destroy()
-##           
-##    def DefaultData(self, dataType):
-##        if dataType == 'points':
-##            dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
-##                        fcolor = '255:0:0', rgbcolumn = None, symbol = os.path.join('basic', 'x'), eps = None,
-##                        size = 5, sizecolumn = None, scale = None,
-##                        rotation = False, rotate = 0, rotatecolumn = None)
-##        elif dataType == 'lines':
-##            dd = dict(type = 'line or boundary', connection = False, layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
-##                        hcolor = 'none', rgbcolumn = None,
-##                        width = 1, cwidth = None,
-##                        style = 'solid', linecap = 'butt')
-##        else:
-##            dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
-##                        fcolor = '255:0:0', rgbcolumn = None,
-##                        pat = None, pwidth = 1, scale = 1)
-##        return dd
-##    
-##    def updateListBox(self, selected = None):
-##        mapList = ["{0} - {1}".format(*item) for item in self.vectorList]
-##        self.listbox.Set(mapList)
-##        if selected is not None:
-##            self.listbox.SetSelection(selected)  
-##            self.listbox.EnsureVisible(selected)    
-##        
-##    def _update(self):
-##        self.mainVectDict['list'] = self.vectorList
-##        
-##
-##    def getInfo(self):
-##        return self.mainVectDict
-##    
-##    def OnOK(self, event):
-##        self._update()
-##        event.Skip()   
+
 class VPropertiesDialog(PsmapDialog):
     def __init__(self, parent, settings, itemType, id):
         PsmapDialog.__init__(self, parent = parent, title = "", settings = settings, itemType = itemType)
@@ -1363,13 +1282,15 @@ class VPropertiesDialog(PsmapDialog):
         gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
         
         styleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose line style:"))
-        self.styleCombo = wx.ComboBox(panel, id = wx.ID_ANY,
-                            choices = ["solid", "dashed", "dotted", "dashdotted"],
-                            validator = TCValidator(flag = 'ZERO_AND_ONE_ONLY'))
-        self.styleCombo.SetToolTipString(_("It's possible to enter a series of 0's and 1's too. "\
-                                    "The first block of repeated zeros or ones represents 'draw', "\
-                                    "the second block represents 'blank'. An even number of blocks "\
-                                    "will repeat the pattern, an odd number of blocks will alternate the pattern."))
+        penStyles = ["solid", "dashed", "dotted", "dashdotted"]
+        self.styleCombo = PenStyleComboBox(panel, choices = penStyles, validator = TCValidator(flag = 'ZERO_AND_ONE_ONLY'))
+##        self.styleCombo = wx.ComboBox(panel, id = wx.ID_ANY,
+##                            choices = ["solid", "dashed", "dotted", "dashdotted"],
+##                            validator = TCValidator(flag = 'ZERO_AND_ONE_ONLY'))
+##        self.styleCombo.SetToolTipString(_("It's possible to enter a series of 0's and 1's too. "\
+##                                    "The first block of repeated zeros or ones represents 'draw', "\
+##                                    "the second block represents 'blank'. An even number of blocks "\
+##                                    "will repeat the pattern, an odd number of blocks will alternate the pattern."))
         linecapText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose linecap:"))
         self.linecapChoice = wx.Choice(panel, id = wx.ID_ANY, choices = ["butt", "round", "extended_butt"])
         
@@ -1377,7 +1298,7 @@ class VPropertiesDialog(PsmapDialog):
         self.linecapChoice.SetStringSelection(self.vPropertiesDict['linecap'])
         
         gridBagSizer.Add(styleText, pos = (0, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(self.styleCombo, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.styleCombo, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
         gridBagSizer.Add(linecapText, pos = (1, 0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.linecapChoice, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
         

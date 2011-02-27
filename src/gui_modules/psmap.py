@@ -217,7 +217,8 @@ class PsMapFrame(wx.Frame):
             'select':wx.TRANSPARENT_BRUSH,
             'resize': wx.BLACK_BRUSH
             } 
-            
+          
+        
         self.itemType = {}
         self.dialogDict = {}
         self.objectId = []
@@ -233,10 +234,8 @@ class PsMapFrame(wx.Frame):
         
         
         # image path
-        gisdbase = RunCommand('g.gisenv', flags = 's', get = 'GISDBASE', read = True).strip()
-        loc = RunCommand('g.gisenv', flags = 's', get = 'LOCATION_NAME',  read = True).strip()
-        mapset = RunCommand('g.gisenv', flags = 's', get = 'MAPSET',  read = True).strip()
-        self.imgName = os.path.join( gisdbase, loc, mapset, '.tmp', 'tmpImage.png')
+        env = grass.gisenv()
+        self.imgName = os.path.join( env['GISDBASE'], env['LOCATION_NAME'], env['MAPSET'], '.tmp', 'tmpImage.png')
         
         #canvas for preview
         self.previewCanvas = PsMapBufferedWindow(parent = self, mouse = self.mouse, cursors = self.cursors,
@@ -521,6 +520,8 @@ class PsMapFrame(wx.Frame):
     def OnPreview(self, event):
         """!Run ps.map and show result"""
         self.PSFile()
+        self.book.SetSelection(1)
+        self.currentPage = 1
 
         
     def PSFile(self, filename = False):
@@ -544,8 +545,10 @@ class PsMapFrame(wx.Frame):
         
         instrFile.close()
                         
-        img = Image.open(filename)
-        img.save(self.imgName)
+        try:
+            Image.open(filename).save(self.imgName)
+        except IOError:
+            return
         rect = self.previewCanvas.ImageRect()
         self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
 
@@ -900,7 +903,10 @@ class PsMapFrame(wx.Frame):
         if not id:
             id = wx.NewId()
         self.itemType[id] = type
-        self.objectId.append(id) if drawable else None
+        if type == 'map':#lower map to the bottom
+            self.objectId.insert(0,id) if drawable else None
+        else:
+            self.objectId.append(id) if drawable else None
         self.SetDefault(id = id, type = type)
         return id
     
@@ -916,6 +922,10 @@ class PsMapFrame(wx.Frame):
 
     def OnCloseWindow(self, event):
         """!Close window"""
+        try:
+            os.remove(self.imgName)
+        except OSError:
+            pass
         self.Destroy()
 
 
@@ -959,7 +969,7 @@ class PsMapBufferedWindow(wx.Window):
         #labels
         self.itemLabels = { 'map': ['MAP FRAME'],
                             'rasterLegend': ['RASTER LEGEND'],
-                            'mapinfo': ['MAPINFO']}
+                            'mapinfo': ['MAP INFO']}
         
         # define PseudoDC
         self.pdc = wx.PseudoDC()
@@ -1243,6 +1253,8 @@ class PsMapBufferedWindow(wx.Window):
                     self.itemLabels['map'].append('raster: ' + raster)
                     self.Draw(pen = self.pen[self.itemType[mapId]], brush = self.brush[self.itemType[mapId]],
                             pdc = self.pdcObj, drawid = mapId, pdctype = 'rectText', bb = rectCanvas)
+                    #redraw objects to lower map to the bottom
+                    self.Zoom(zoomFactor = 1, view = (0, 0))
                     
                     self.mouse['use'] = self.parent.mouseOld
                     self.SetCursor(self.parent.cursorOld)
@@ -1435,7 +1447,7 @@ class PsMapBufferedWindow(wx.Window):
             drawid = wx.NewId()
             
         pdc.BeginDrawing()
-        pdc.ClearId(drawid)
+        pdc.RemoveId(drawid)
         pdc.SetId(drawid)
         pdc.SetPen(pen)
         pdc.SetBrush(brush)
@@ -1465,8 +1477,8 @@ class PsMapBufferedWindow(wx.Window):
             pdc.DrawText(text = text, x = textRect.x, y = textRect.y)
             
         pdc.SetIdBounds(drawid, bb)
-        self.Refresh()
         pdc.EndDrawing()
+        self.Refresh()
 
         return drawid
     
@@ -1479,7 +1491,7 @@ class PsMapBufferedWindow(wx.Window):
         dc.SetFont(wx.FontFromNativeInfoString(textDict['font'] + " " + fontsize))
         textExtent = dc.GetTextExtent(textDict['text'])
         pdc.BeginDrawing()
-        pdc.ClearId(drawId)
+        pdc.RemoveId(drawId)
         pdc.SetId(drawId)
         # doesn't work
         if background:
