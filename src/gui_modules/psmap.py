@@ -101,56 +101,41 @@ class PsMapToolbar(AbstractToolbar):
         self.instructionFile = wx.NewId()
         self.generatePS = wx.NewId()
         self.pan = wx.NewId()
-        
-        # tool, label, bitmap, kind, shortHelp, longHelp, handler
-        return (
-            (self.pagesetup, 'page setup', Icons['settings'].GetBitmap(),
-             wx.ITEM_NORMAL, "Page setup", "Specify paper size, margins and orientation",
-             self.parent.OnPageSetup),
-            ("", "", "", "", "", "", ""),
-            (self.pointer, "pointer", Icons["pointer"].GetBitmap(),
-             wx.ITEM_CHECK, Icons["pointer"].GetLabel(), Icons["pointer"].GetDesc(),
-             self.parent.OnPointer),
-            (self.pan, 'pan', Icons['pan'].GetBitmap(),
-             wx.ITEM_CHECK, Icons["pan"].GetLabel(), Icons["pan"].GetDesc(),
-             self.parent.OnPan),
-            (self.zoomIn, "zoomin", Icons["zoom_in"].GetBitmap(),
-             wx.ITEM_CHECK, Icons["zoom_in"].GetLabel(), Icons["zoom_in"].GetDesc(),
-             self.parent.OnZoomIn),
-            (self.zoomOut, "zoomout", Icons["zoom_out"].GetBitmap(),
-             wx.ITEM_CHECK, Icons["zoom_out"].GetLabel(), Icons["zoom_out"].GetDesc(),
-             self.parent.OnZoomOut),
-            (self.zoomAll, 'full extent', Icons['zoom_extent'].GetBitmap(),
-             wx.ITEM_NORMAL, "Full extent", "Zoom to full extent",
-             self.parent.OnZoomAll),
-            ("", "", "", "", "", "", ""),
-            (self.addMap, 'add map', Icons['addrast'].GetBitmap(),
-             wx.ITEM_CHECK, "Raster map", "Click and drag to place raster map",
-             self.parent.OnAddMap),
-            (self.addVector, 'add vect', Icons['addvect'].GetBitmap(),
-             wx.ITEM_NORMAL, "Vector map", "Add vector layer",
-             self.parent.OnAddVect),
-            (self.dec, "overlay", Icons["overlay"].GetBitmap(),
-             wx.ITEM_NORMAL, Icons["overlay"].GetLabel(), Icons["overlay"].GetDesc(),
-             self.parent.OnDecoration),
-            (self.delete, "delete", Icons["delcmd"].GetBitmap(),
-             wx.ITEM_NORMAL, "delete", "Delete selected object",
-             self.parent.OnDelete),
-            ("", "", "", "", "", "", ""),
-            (self.preview, "preview", Icons["modelRun"].GetBitmap(),
-             wx.ITEM_NORMAL, "Preview", "Show preview",
-             self.parent.OnPreview),
-            (self.instructionFile, 'psScript', Icons['psScript'].GetBitmap(),
-             wx.ITEM_NORMAL, Icons['psScript'].GetLabel(), Icons['psScript'].GetDesc(),
-             self.parent.OnInstructionFile),
-            (self.generatePS, 'generatePS', Icons['psExport'].GetBitmap(),
-             wx.ITEM_NORMAL, Icons['psExport'].GetLabel(), Icons['psExport'].GetDesc(),
-             self.parent.OnPSFile),
-            ("", "", "", "", "", "", ""),
-            (self.quit, 'quit', Icons['quit'].GetBitmap(),
-             wx.ITEM_NORMAL, Icons['quit'].GetLabel(), Icons['quit'].GetDesc(),
-             self.parent.OnCloseWindow)
-            )
+
+        icons = Icons['psMap']
+        return self._getToolbarData(((self.pagesetup, 'page setup', icons['pageSetup'],
+                                      self.parent.OnPageSetup),
+                                     (None, ),
+                                     (self.pointer, "pointer", Icons["displayWindow"]["pointer"],
+                                      self.parent.OnPointer),
+                                     (self.pan, 'pan', Icons["displayWindow"]['pan'],
+                                      self.parent.OnPan),
+                                     (self.zoomIn, "zoomin", Icons["displayWindow"]["zoomIn"],
+                                      self.parent.OnZoomIn),
+                                     (self.zoomOut, "zoomout", Icons["displayWindow"]["zoomOut"],
+                                      self.parent.OnZoomOut),
+                                     (self.zoomAll, 'full extent', icons['fullExtent'],
+                                      self.parent.OnZoomAll),
+                                     (None, ),
+                                     (self.addMap, 'add map', icons['addRast'],
+                                      self.parent.OnAddMap),
+                                     (self.addVector, 'add vect', icons['addVect'],
+                                      self.parent.OnAddVect),
+                                     (self.dec, "overlay", Icons["displayWindow"]["overlay"],
+                                      self.parent.OnDecoration),
+                                     (self.delete, "delete", icons["deleteObj"],
+                                      self.parent.OnDelete),
+                                     (None, ),
+                                     (self.preview, "preview", icons["preview"],
+                                      self.parent.OnPreview),
+                                     (self.instructionFile, 'psScript', icons['script'],
+                                      self.parent.OnInstructionFile),
+                                     (self.generatePS, 'generatePS', icons['export'],
+                                      self.parent.OnPSFile),
+                                     (None, ),
+                                     (self.quit, 'quit', icons['quit'],
+                                      self.parent.OnCloseWindow))
+                                    )
 
                 
 class PsMapFrame(wx.Frame):
@@ -852,7 +837,7 @@ class PsMapFrame(wx.Frame):
         tmpFile.file.flush()
 
         bb = map(float, RunCommand('ps.map', read = True, flags = 'b', input = tmpFile.name, 
-                                            output = 'foo').strip().split('=')[1].split(','))
+                                   output = 'foo').strip().split('=')[1].split(','))
         mapInitRect = rect = Rect(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])    
         tmpFile.file.close()
         # file is not deleted
