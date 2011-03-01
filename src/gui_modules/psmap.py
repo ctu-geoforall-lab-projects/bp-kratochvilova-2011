@@ -137,7 +137,7 @@ class PsMapToolbar(AbstractToolbar):
              wx.ITEM_NORMAL, "delete", "Delete selected object",
              self.parent.OnDelete),
             ("", "", "", "", "", "", ""),
-            (self.preview, "preview", Icons["modelRun"].GetBitmap(),
+            (self.preview, "preview", Icons["displaymap"].GetBitmap(),
              wx.ITEM_NORMAL, "Preview", "Show preview",
              self.parent.OnPreview),
             (self.instructionFile, 'psScript', Icons['psScript'].GetBitmap(),
@@ -291,6 +291,11 @@ class PsMapFrame(wx.Frame):
                                                 #color = '0:0:0', tickbar = False, range = False, min = 0, max = 0,
                                                 color = 'black', tickbar = False, range = False, min = 0, max = 0,
                                                 nodata = False)
+        # vector legend 
+        self.defaultDict['vectorLegend'] = dict(vLegend = False, unit = 'inch', where = (page['Left'], page['Top']),
+                                                defaultSize = True, width = 0, cols = 1, font = "Serif", fontsize = 10,
+                                                border = 'none')
+                                                
         #mapinfo
         self.defaultDict['mapinfo'] = dict( unit = 'inch', where = (page['Left'], page['Top']),
                                             font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
@@ -750,20 +755,38 @@ class PsMapFrame(wx.Frame):
         decmenu.Destroy()
         
     def OnAddLegend(self, event):
-        id = find_key(dic = self.itemType, val = 'rasterLegend')
-        if not id:
-            id = self.createObject(type = 'rasterLegend')
+        idR = find_key(dic = self.itemType, val = 'rasterLegend')
+        idV = find_key(dic = self.itemType, val = 'vectorLegend')
+        vectorLOld = True
+        rasterLOld = True
+        if not idR:
+            idR = self.createObject(type = 'rasterLegend')
+            rasterLOld = False
+        if not idV:
+            idV = self.createObject(type = 'vectorLegend')
+            vectorLOld = False
         dlg = LegendDialog(self, settings = self.dialogDict, itemType = self.itemType)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.dialogDict[id] = dlg.getInfo()
-            if self.dialogDict[id]['rLegend']:
-                drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'], canvasToPaper = False)
-                self.canvas.Draw( pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]],
-                                pdc = self.canvas.pdcObj, drawid = id, pdctype = 'rectText', bb = drawRectangle)
-                self.canvas.RedrawSelectBox(id)
+        val = dlg.ShowModal()
+        if val == wx.ID_OK:
+            self.dialogDict[idR] = dlg.getRasterInfo()
+            self.dialogDict[idV] = dlg.getVectorInfo()
+            if self.dialogDict[idR]['rLegend']:
+                drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[idR]['rect'], canvasToPaper = False)
+                self.canvas.Draw( pen = self.pen[self.itemType[idR]], brush = self.brush[self.itemType[idR]],
+                                pdc = self.canvas.pdcObj, drawid = idR, pdctype = 'rectText', bb = drawRectangle)
+                self.canvas.RedrawSelectBox(idR)
             else: 
-                self.deleteObject(id)
+                self.deleteObject(idR)
 
+            if self.dialogDict[idV]['vLegend']:
+                pass
+            else:
+                self.deleteObject(idV)
+        elif val == wx.ID_CANCEL:
+            if not rasterLOld:
+                self.deleteObject(idR)
+            if not vectorLOld:
+                self.deleteObject(idV)
         dlg.Destroy()
 
     def OnAddMapinfo(self, event):

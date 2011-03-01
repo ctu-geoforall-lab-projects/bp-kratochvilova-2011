@@ -40,6 +40,7 @@ from grass.script import core as grass
 import wx
 import wx.lib.scrolledpanel as scrolled
 import  wx.lib.filebrowsebutton as filebrowse
+from wx.lib.mixins.listctrl import CheckListCtrlMixin, ListCtrlAutoWidthMixin
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 try:
@@ -170,6 +171,15 @@ class PenStyleComboBox(wx.combo.OwnerDrawnComboBox):
         return -1; # default - will be measured from text width  
     
     
+class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin, ListCtrlAutoWidthMixin):
+    """!List control for managing order and labels of vector maps in legend"""
+    def __init__(self, parent):
+        wx.ListCtrl.__init__(self, parent, id = wx.ID_ANY, style = wx.LC_REPORT|wx.LC_SINGLE_SEL)
+        CheckListCtrlMixin.__init__(self) 
+        ListCtrlAutoWidthMixin.__init__(self)
+        
+        
+        
 class PsmapDialog(wx.Dialog):
     def __init__(self, parent, title, settings, itemType):
         wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
@@ -225,7 +235,7 @@ class PsmapDialog(wx.Dialog):
 ##        self.font['fontCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = fontChoices)
 ##        self.font['fontCtrl'].SetStringSelection(dialogDict['font'])
 ##        self.colorCtrl = wx.Choice(parent, id = wx.ID_ANY, choices = colorChoices)
-##        self.colorCtrl.SetStringSelection(self.legendDict['color'])
+##        self.colorCtrl.SetStringSelection(self.rLegendDict['color'])
 ##        self.font['fontSizeCtrl']= wx.SpinCtrl(parent, id = wx.ID_ANY, min = 4, max = 50, initial = 10)
 ##        self.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
 ##        self.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
@@ -627,6 +637,7 @@ class VectorDialog(wx.Panel):
         self.itemType = itemType
         self.dialogDict = settings
         id = find_key(dic = self.itemType, val = 'vector')
+        self.vLegendId = find_key(dic = self.itemType, val = 'vectorLegend')
         self.mainVectDict = self.dialogDict[id] 
         if self.mainVectDict['list']:
             self.vectorList = self.mainVectDict['list']
@@ -722,10 +733,18 @@ class VectorDialog(wx.Panel):
         """!Adds vector map to list"""
         vmap = self.select.GetValue()
         if vmap:
+            mapname = vmap.split('@')[0]
+            try:
+                mapset = '(' + vmap.split('@')[1] + ')'
+            except IndexError:
+                mapset = ''
             type = self.vectorType.GetStringSelection()
             record = "{0} - {1}".format(vmap,type)
             id = wx.NewId()
-            self.vectorList.insert(0, [vmap, type, id])
+            lpos = 1
+            label = mapname + mapset 
+            self.vectorList.insert(0, [vmap, type, id, lpos, label])
+            self.reposition()
             self.listbox.InsertItems([record], 0)
             self.itemType[id] = 'vProperties'
             self.dialogDict[id] = self.DefaultData(dataType = self.vectorList[0][1])
@@ -739,6 +758,8 @@ class VectorDialog(wx.Panel):
             del self.vectorList[pos]
             del self.itemType[id]
             del self.dialogDict[id]
+            for i in range(pos, len(self.vectorList)):
+                self.vectorList[i][3] -= 1
             self.updateListBox(selected = pos if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
             
     def OnUp(self, event):
@@ -747,6 +768,8 @@ class VectorDialog(wx.Panel):
             pos = self.listbox.GetSelection()
             if pos:
                 self.vectorList.insert(pos - 1, self.vectorList.pop(pos))
+            if not self.vLegendId:
+                self.reposition()
             self.updateListBox(selected = (pos - 1) if pos > 0 else 0)
             
     def OnDown(self, event):
@@ -755,6 +778,8 @@ class VectorDialog(wx.Panel):
             pos = self.listbox.GetSelection()
             if pos != len(self.vectorList) - 1:
                 self.vectorList.insert(pos + 1, self.vectorList.pop(pos))
+                if not self.vLegendId:
+                    self.reposition()
             self.updateListBox(selected = (pos + 1) if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
     
     def OnProperties(self, event):
@@ -791,7 +816,13 @@ class VectorDialog(wx.Panel):
         self.listbox.Set(mapList)
         if selected is not None:
             self.listbox.SetSelection(selected)  
-            self.listbox.EnsureVisible(selected)    
+            self.listbox.EnsureVisible(selected)  
+              
+    def reposition(self):
+        """!Update position in legend, used only if there is no vlegend yet"""
+        for i in range(len(self.vectorList)):
+           self.vectorList[i][3] = i + 1
+        print self.vectorList
         
     def _update(self):
         self.mainVectDict['list'] = self.vectorList
@@ -1546,11 +1577,14 @@ class LegendDialog(PsmapDialog):
         PsmapDialog.__init__(self, parent = parent, title = "Legend settings", settings = settings, itemType = itemType)
         
         self.mapId = find_key(dic = self.itemType, val = 'map')
+        self.vectorId = find_key(dic = self.itemType, val = 'vector')
 
         self.pageId = find_key(dic = self.itemType, val = 'paper'), find_key(dic = self.itemType, val = 'margins')
         rLegendId = find_key(dic = self.itemType, val = 'rasterLegend')
+        vLegendId = find_key(dic = self.itemType, val = 'vectorLegend')
         
-        self.legendDict = self.dialogDict[rLegendId]
+        self.rLegendDict = self.dialogDict[rLegendId]
+        self.vLegendDict = self.dialogDict[vLegendId]
         self.currRaster = self.dialogDict[self.mapId]['raster'] if self.mapId else None
         
         #notebook
@@ -1572,7 +1606,7 @@ class LegendDialog(PsmapDialog):
         border = wx.BoxSizer(wx.VERTICAL)
         # is legend
         self.isLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show raster legend"))
-        self.isLegend.SetValue(self.legendDict['rLegend'])
+        self.isLegend.SetValue(self.rLegendDict['rLegend'])
         border.Add(item = self.isLegend, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
 
         # choose raster
@@ -1584,8 +1618,8 @@ class LegendDialog(PsmapDialog):
         
         self.rasterDefault = wx.RadioButton(panel, id = wx.ID_ANY, label = _("current raster"), style = wx.RB_GROUP)
         self.rasterOther = wx.RadioButton(panel, id = wx.ID_ANY, label = _("select raster"))
-        self.rasterDefault.SetValue(self.legendDict['rasterDefault'])#
-        self.rasterOther.SetValue(not self.legendDict['rasterDefault'])#
+        self.rasterDefault.SetValue(self.rLegendDict['rasterDefault'])#
+        self.rasterOther.SetValue(not self.rLegendDict['rasterDefault'])#
 
         rasterType = self.getRasterType(map = self.currRaster)
 
@@ -1593,7 +1627,7 @@ class LegendDialog(PsmapDialog):
         self.rasterSelect = Select( panel, id = wx.ID_ANY, size = globalvar.DIALOG_GSELECT_SIZE,
                                     type = 'raster', multiple = False,
                                     updateOnPopup = True, onPopup = None)
-        self.rasterSelect.SetValue(self.legendDict['raster'] if not self.legendDict['rasterDefault'] else '')
+        self.rasterSelect.SetValue(self.rLegendDict['raster'] if not self.rLegendDict['rasterDefault'] else '')
         flexSizer.Add(self.rasterDefault, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexSizer.Add(self.rasterCurrent, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 10)
         flexSizer.Add(self.rasterOther, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -1622,7 +1656,7 @@ class LegendDialog(PsmapDialog):
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Size and position")))        
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         #unit
-        self.AddUnits(parent = panel, dialogDict = self.legendDict)
+        self.AddUnits(parent = panel, dialogDict = self.rLegendDict)
         unitBox = wx.BoxSizer(wx.HORIZONTAL)
         unitBox.Add(self.units['unitsLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border = 10)
         unitBox.Add(self.units['unitsCtrl'], proportion = 1, flag = wx.ALL, border = 5)
@@ -1637,15 +1671,15 @@ class LegendDialog(PsmapDialog):
         posGridBagSizer.AddGrowableRow(2)
         self.sizeGridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
         #position
-        self.AddPosition(parent = panel, dialogDict = self.legendDict)
+        self.AddPosition(parent = panel, dialogDict = self.rLegendDict)
         #size
         self.defaultSize = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Use default size"))
-        self.defaultSize.SetValue(self.legendDict['defaultSize'])
+        self.defaultSize.SetValue(self.rLegendDict['defaultSize'])
         width = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width:"))
-        self.widthCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.legendDict['width']))
+        self.widthCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.rLegendDict['width']))
 
         self.heightOrColumnsLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("Height:"))
-        self.heightOrColumnsCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.legendDict['height']))
+        self.heightOrColumnsCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.rLegendDict['height']))
 
         posGridBagSizer.Add(self.position['xLabel'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         posGridBagSizer.Add(self.position['xCtrl'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -1673,7 +1707,7 @@ class LegendDialog(PsmapDialog):
         flexSizer = wx.FlexGridSizer (cols = 2, hgap = 5, vgap = 5)
         flexSizer.AddGrowableCol(1)
         
-        self.AddFont(parent = panel, dialogDict = self.legendDict)
+        self.AddFont(parent = panel, dialogDict = self.rLegendDict)
         
         flexSizer.Add(self.font['fontLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexSizer.Add(self.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -1690,10 +1724,10 @@ class LegendDialog(PsmapDialog):
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
         # no data
         self.nodata = wx.CheckBox(panel, id = wx.ID_ANY, label = _('draw "no data" box'))
-        self.nodata.SetValue(True if self.legendDict['nodata'] == 'y' else False)
+        self.nodata.SetValue(True if self.rLegendDict['nodata'] == 'y' else False)
         #tickbar
         self.ticks = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw ticks across color table"))
-        self.ticks.SetValue(True if self.legendDict['tickbar'] == 'y' else False)
+        self.ticks.SetValue(True if self.rLegendDict['tickbar'] == 'y' else False)
         # range
         if self.mapId and self.dialogDict[self.mapId]['raster']:
             range = RunCommand('r.info', flags = 'r', read = True, map = self.dialogDict[self.mapId]['raster']).strip().split('\n')
@@ -1701,12 +1735,12 @@ class LegendDialog(PsmapDialog):
         else:
             self.minim, self.maxim = 0,0
         self.range = wx.CheckBox(panel, id = wx.ID_ANY, label = _("range"))
-        self.range.SetValue(self.legendDict['range'])
+        self.range.SetValue(self.rLegendDict['range'])
         self.minText =  wx.StaticText(panel, id = wx.ID_ANY, label = "{0} ({1})".format(_("min:"),self.minim))
         self.maxText =  wx.StaticText(panel, id = wx.ID_ANY, label = "{0} ({1})".format(_("max:"),self.maxim))
        
-        self.min = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.legendDict['min']))
-        self.max = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.legendDict['max']))
+        self.min = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.rLegendDict['min']))
+        self.max = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(self.rLegendDict['max']))
         
         gridBagSizer.Add(self.nodata, pos = (0,0), span = (1,5), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.ticks, pos = (1,0), span = (1,5), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -1735,9 +1769,58 @@ class LegendDialog(PsmapDialog):
         return panel
     
     def _vectorLegend(self, notebook):
-        pass
+        panel = scrolled.ScrolledPanel(parent = notebook, id = wx.ID_ANY, size = (-1, 500), style = wx.TAB_TRAVERSAL)
+        panel.SetupScrolling(scroll_x = False, scroll_y = True)
+        notebook.AddPage(page = panel, text = _("Vector legend"))
+
+        border = wx.BoxSizer(wx.VERTICAL)
+        # is legend
+        self.isVLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show vector legend"))
+        self.isVLegend.SetValue(self.vLegendDict['vLegend'])
+        border.Add(item = self.isVLegend, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
+        #vector maps, their order, labels
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Source vector maps")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(0,2)
+        gridBagSizer.AddGrowableCol(1,1)
         
+        vectorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose vector maps and their order in legend"))
+
+        self.vectorList = CheckListCtrl(panel)
+        self.vectorList.InsertColumn(0, _("Vector map"), width = 150)
+        self.vectorList.InsertColumn(1, _("Label"))
+        if self.vectorId:
+            vectors = sorted(self.dialogDict[self.vectorId]['list'], key = lambda x: x[3])
+            for vector in vectors:
+                index = self.vectorList.InsertStringItem(sys.maxint, vector[0].split('@')[0])
+                self.vectorList.SetStringItem(index, 1, vector[4])
+                self.vectorList.SetItemData(index, vector[3]-1)
+        self.vectorList.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+##        self.checkListBox = wx.CheckListBox(panel, id = wx.ID_ANY, choices = choices)
+        self.btnUp = wx.Button(panel, id = wx.ID_ANY, label = _("Up"))
+        self.btnDown = wx.Button(panel, id = wx.ID_ANY, label = _("Down"))
+        self.btnLabel = wx.Button(panel, id = wx.ID_ANY, label = _("Edit label"))
+
+        
+        gridBagSizer.Add(vectorText, pos = (0,0), span = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.vectorList, pos = (1,0), span = (3,2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.btnUp, pos = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.btnDown, pos = (2,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.btnLabel, pos = (3,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
+        self.Bind(wx.EVT_BUTTON, self.OnUp, self.btnUp)
+        self.Bind(wx.EVT_BUTTON, self.OnDown, self.btnDown)  
+        self.Bind(wx.EVT_BUTTON, self.OnEditLabel, self.btnLabel)      
+        
+        panel.SetSizer(border)
+        panel.Fit()
+        return panel
+    
     #   some enable/disable methods  
         
     def OnIsLegend(self, event):
@@ -1768,9 +1851,9 @@ class LegendDialog(PsmapDialog):
         elif type in ('FCELL', 'DCELL'):
             self.continuous.SetValue(True)
         if event is None:
-            if self.legendDict['discrete'] == 'y':
+            if self.rLegendDict['discrete'] == 'y':
                 self.discrete.SetValue(True)
-            elif self.legendDict['discrete'] == 'n':
+            elif self.rLegendDict['discrete'] == 'n':
                 self.continuous.SetValue(True)
         self.OnDiscrete(None)
         
@@ -1780,7 +1863,7 @@ class LegendDialog(PsmapDialog):
         self.heightOrColumnsCtrl.Destroy()
         if self.discrete.GetValue():
             self.heightOrColumnsLabel.SetLabel(_("Columns:"))
-            self.heightOrColumnsCtrl = wx.SpinCtrl(self.panelRaster, id = wx.ID_ANY, value = "", min = 1, max = 10, initial = self.legendDict['cols'])
+            self.heightOrColumnsCtrl = wx.SpinCtrl(self.panelRaster, id = wx.ID_ANY, value = "", min = 1, max = 10, initial = self.rLegendDict['cols'])
             self.heightOrColumnsCtrl.Enable(enabledSize)
             self.nodata.Enable()
             self.range.Disable()
@@ -1791,7 +1874,7 @@ class LegendDialog(PsmapDialog):
             self.ticks.Disable()
         else:
             self.heightOrColumnsLabel.SetLabel(_("Height:"))
-            self.heightOrColumnsCtrl = wx.TextCtrl(self.panelRaster, id = wx.ID_ANY, value = str(self.legendDict['height']))
+            self.heightOrColumnsCtrl = wx.TextCtrl(self.panelRaster, id = wx.ID_ANY, value = str(self.rLegendDict['height']))
             self.heightOrColumnsCtrl.Enable(enabledSize)
             self.nodata.Disable()
             self.range.Enable()
@@ -1826,132 +1909,162 @@ class LegendDialog(PsmapDialog):
             self.max.Enable() 
             self.minText.Enable()
             self.maxText.Enable()           
+     
+    def OnUp(self, event):
+        """!Moves selected map to top"""
+        if self.vectorList.GetFirstSelected() != -1:
+            pos = self.vectorList.GetFirstSelected()
+            if pos:
+                idx1 = self.vectorList.GetItemData(pos) - 1
+                idx2 = self.vectorList.GetItemData(pos - 1) + 1
+                self.vectorList.SetItemData(pos, idx1) 
+                self.vectorList.SetItemData(pos - 1, idx2) 
+                self.vectorList.SortItems(cmp)
+                selected = (pos - 1) if pos > 0 else 0
+                self.vectorList.Select(selected)
+       
+    def OnDown(self, event):
+        if self.vectorList.GetFirstSelected() != -1:
+            pos = self.vectorList.GetFirstSelected()
+            if pos != self.vectorList.GetItemCount() - 1:
+                idx1 = self.vectorList.GetItemData(pos) + 1
+                idx2 = self.vectorList.GetItemData(pos + 1) - 1
+                self.vectorList.SetItemData(pos, idx1) 
+                self.vectorList.SetItemData(pos + 1, idx2) 
+                self.vectorList.SortItems(cmp)
+                selected = (pos + 1) if pos < self.vectorList.GetItemCount() -1 else self.vectorList.GetItemCount() -1
+                self.vectorList.Select(selected)
+                
+    def OnEditLabel(self, event):
+        pass
         
     def OnOK(self, event):
         self.update()
-        if self.legendDict['rLegend']:
-            if not self.legendDict['raster']:
+        if self.rLegendDict['rLegend']:
+            if not self.rLegendDict['raster']:
                 wx.MessageBox(message = _("No raster map selected!"),
                                     caption = _('No raster'), style = wx.OK|wx.ICON_ERROR)
             else:
                 event.Skip()
         else:
             event.Skip()
-    
+        
     def update(self):
         #is raster legend
         if not self.isLegend.GetValue():
-            self.legendDict['rLegend'] = False
+            self.rLegendDict['rLegend'] = False
             return
         else:
-            self.legendDict['rLegend'] = True
+            self.rLegendDict['rLegend'] = True
         #units
         currUnit = self.units['unitsCtrl'].GetStringSelection()
-        self.legendDict['unit'] = currUnit
+        self.rLegendDict['unit'] = currUnit
         # raster
         if self.rasterDefault.GetValue():
-            self.legendDict['rasterDefault'] = True
-            self.legendDict['raster'] = self.currRaster
+            self.rLegendDict['rasterDefault'] = True
+            self.rLegendDict['raster'] = self.currRaster
         else:
-            self.legendDict['rasterDefault'] = False
-            self.legendDict['raster'] = self.rasterSelect.GetValue()
+            self.rLegendDict['rasterDefault'] = False
+            self.rLegendDict['raster'] = self.rasterSelect.GetValue()
             
-        if self.legendDict['raster']:
+        if self.rLegendDict['raster']:
             # type and range of map
-            rasterType = self.getRasterType(self.legendDict['raster'])
-            self.legendDict['type'] = rasterType
+            rasterType = self.getRasterType(self.rLegendDict['raster'])
+            self.rLegendDict['type'] = rasterType
             
-            range = RunCommand('r.info', flags = 'r', read = True, map = self.legendDict['raster']).strip().split('\n')
+            range = RunCommand('r.info', flags = 'r', read = True, map = self.rLegendDict['raster']).strip().split('\n')
             minim, maxim = range[0].split('=')[1], range[1].split('=')[1]
             
             #discrete
             if self.discrete.GetValue():
-                self.legendDict['discrete'] = 'y'
+                self.rLegendDict['discrete'] = 'y'
             else:
-                self.legendDict['discrete'] = 'n'   
+                self.rLegendDict['discrete'] = 'n'   
                     
             # font 
             font = self.font['fontCtrl'].GetSelectedFont()
-            self.legendDict['font'] = font.GetFaceName()
-            self.legendDict['fontsize'] = font.GetPointSize()
-            self.legendDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(wx.C2S_NAME)
+            self.rLegendDict['font'] = font.GetFaceName()
+            self.rLegendDict['fontsize'] = font.GetPointSize()
+            self.rLegendDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(wx.C2S_NAME)
             dc = wx.PaintDC(self)
-            dc.SetFont(wx.Font(   pointSize = self.legendDict['fontsize'], family = font.GetFamily(),
+            dc.SetFont(wx.Font(   pointSize = self.rLegendDict['fontsize'], family = font.GetFamily(),
                                                 style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
             # position
             x = self.unitConv.convert(value = float(self.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
             y = self.unitConv.convert(value = float(self.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
-            self.legendDict['where'] = (x, y)
+            self.rLegendDict['where'] = (x, y)
             # estimated size
             if not self.defaultSize.GetValue():
-                self.legendDict['defaultSize'] = False
+                self.rLegendDict['defaultSize'] = False
             
                 width = self.unitConv.convert(value = float(self.widthCtrl.GetValue()), fromUnit = currUnit, toUnit = 'inch')
                 height = self.unitConv.convert(value = float(self.heightOrColumnsCtrl.GetValue()), fromUnit = currUnit, toUnit = 'inch')
             
-                if self.legendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
-                    self.legendDict['width'] = width 
-                    self.legendDict['height'] = height
+                if self.rLegendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
+                    self.rLegendDict['width'] = width 
+                    self.rLegendDict['height'] = height
                     textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
                     drawWidth = width + textPart
                     drawHeight = height
-                    self.legendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
                 else: #categorical map
-                    self.legendDict['width'] = width 
-                    self.legendDict['cols'] = self.heightOrColumnsCtrl.GetValue() 
-                    cat = RunCommand(   'r.category', read = True, map = self.legendDict['raster'],
+                    self.rLegendDict['width'] = width 
+                    self.rLegendDict['cols'] = self.heightOrColumnsCtrl.GetValue() 
+                    cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
                                         fs = ':').strip().split('\n')
-                    rows = ceil(float(len(cat))/self.legendDict['cols'])
+                    rows = ceil(float(len(cat))/self.rLegendDict['cols'])
 
-                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.legendDict['fontsize'], fromUnit = 'point', toUnit = 'inch')
-                    self.legendDict['rect'] = Rect(x = x, y = y, width = width, height = drawHeight)
+                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'], fromUnit = 'point', toUnit = 'inch')
+                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = width, height = drawHeight)
 
             else:
-                self.legendDict['defaultSize'] = True
-                if self.legendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
+                self.rLegendDict['defaultSize'] = True
+                if self.rLegendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
                     textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
-                    drawWidth = self.unitConv.convert( value = self.legendDict['fontsize'] * 2, 
+                    drawWidth = self.unitConv.convert( value = self.rLegendDict['fontsize'] * 2, 
                                                     fromUnit = 'point', toUnit = 'inch') + textPart
                                 
-                    drawHeight = self.unitConv.convert(value = self.legendDict['fontsize'] * 10,
+                    drawHeight = self.unitConv.convert(value = self.rLegendDict['fontsize'] * 10,
                                                     fromUnit = 'point', toUnit = 'inch')
-                    self.legendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
                 else:#categorical map
-                    self.legendDict['cols'] = self.heightOrColumnsCtrl.GetValue()
-                    cat = RunCommand(   'r.category', read = True, map = self.legendDict['raster'],
+                    self.rLegendDict['cols'] = self.heightOrColumnsCtrl.GetValue()
+                    cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
                                         fs = ':').strip().split('\n')
                     if len(cat) == 1:# for discrete FCELL
                         rows = float(maxim)
                     else:
-                        rows = ceil(float(len(cat))/self.legendDict['cols'])
-                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.legendDict['fontsize'],
+                        rows = ceil(float(len(cat))/self.rLegendDict['cols'])
+                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'],
                                                     fromUnit = 'point', toUnit = 'inch')
                     paperWidth = self.dialogDict[self.pageId]['Width']- self.dialogDict[self.pageId]['Right']\
                                                                         - self.dialogDict[self.pageId]['Left']
-                    drawWidth = (paperWidth / self.legendDict['cols']) * (self.legendDict['cols'] - 1) + 1
-                    self.legendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    drawWidth = (paperWidth / self.rLegendDict['cols']) * (self.rLegendDict['cols'] - 1) + 1
+                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
 
 
                          
             # no data
-            if self.legendDict['discrete'] == 'y':
+            if self.rLegendDict['discrete'] == 'y':
                 if self.nodata.GetValue():
-                    self.legendDict['nodata'] = 'y'
+                    self.rLegendDict['nodata'] = 'y'
                 else:
-                    self.legendDict['nodata'] = 'n'
+                    self.rLegendDict['nodata'] = 'n'
             # tickbar
-            elif self.legendDict['discrete'] == 'n':
+            elif self.rLegendDict['discrete'] == 'n':
                 if self.ticks.GetValue():
-                    self.legendDict['tickbar'] = 'y'
+                    self.rLegendDict['tickbar'] = 'y'
                 else:
-                    self.legendDict['tickbar'] = 'n'
+                    self.rLegendDict['tickbar'] = 'n'
             # range
                 if self.range.GetValue():
-                    self.legendDict['range'] = True
-                    self.legendDict['min'] = self.min.GetValue()
-                    self.legendDict['max'] = self.max.GetValue()
+                    self.rLegendDict['range'] = True
+                    self.rLegendDict['min'] = self.min.GetValue()
+                    self.rLegendDict['max'] = self.max.GetValue()
                 else:
-                    self.legendDict['range'] = False
+                    self.rLegendDict['range'] = False
+                    
+
                         
     def getRasterType(self, map):
         rasterType = RunCommand('r.info', flags = 't', read = True, 
@@ -1959,8 +2072,10 @@ class LegendDialog(PsmapDialog):
         return (rasterType[1] if rasterType[0] else None)
         
     
-    def getInfo(self):
-        return self.legendDict   
+    def getRasterInfo(self):
+        return self.rLegendDict   
+    def getVectorInfo(self):
+        return self.vLegendDict 
              
 class MapinfoDialog(PsmapDialog):
     def __init__(self, parent, settings, itemType):
