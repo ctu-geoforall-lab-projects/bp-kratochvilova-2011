@@ -174,7 +174,8 @@ class PenStyleComboBox(wx.combo.OwnerDrawnComboBox):
 class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin, ListCtrlAutoWidthMixin):
     """!List control for managing order and labels of vector maps in legend"""
     def __init__(self, parent):
-        wx.ListCtrl.__init__(self, parent, id = wx.ID_ANY, style = wx.LC_REPORT|wx.LC_SINGLE_SEL)
+        wx.ListCtrl.__init__(self, parent, id = wx.ID_ANY, 
+                style = wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.BORDER_SUNKEN|wx.LC_VRULES|wx.LC_HRULES)
         CheckListCtrlMixin.__init__(self) 
         ListCtrlAutoWidthMixin.__init__(self)
         
@@ -759,7 +760,8 @@ class VectorDialog(wx.Panel):
             del self.itemType[id]
             del self.dialogDict[id]
             for i in range(pos, len(self.vectorList)):
-                self.vectorList[i][3] -= 1
+                if self.vectorList[i][3]:# can be 0
+                    self.vectorList[i][3] -= 1
             self.updateListBox(selected = pos if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
             
     def OnUp(self, event):
@@ -821,8 +823,8 @@ class VectorDialog(wx.Panel):
     def reposition(self):
         """!Update position in legend, used only if there is no vlegend yet"""
         for i in range(len(self.vectorList)):
-           self.vectorList[i][3] = i + 1
-        print self.vectorList
+            if self.vectorList[i][3]:
+                self.vectorList[i][3] = i + 1
         
     def _update(self):
         self.mainVectDict['list'] = self.vectorList
@@ -1588,15 +1590,16 @@ class LegendDialog(PsmapDialog):
         self.currRaster = self.dialogDict[self.mapId]['raster'] if self.mapId else None
         
         #notebook
-        notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
-        self.panelRaster = self._rasterLegend(notebook)
+        self.notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
+        self.panelRaster = self._rasterLegend(self.notebook)
+        self.panelVector = self._vectorLegend(self.notebook)  
         self.OnDefaultSize(None)
         self.OnRaster(None)
         self.OnRange(None)
         self.OnIsLegend(None)
-        self._vectorLegend(notebook)  
         
-        self._layout(notebook)
+        
+        self._layout(self.notebook)
         
     def _rasterLegend(self, notebook):
         panel = scrolled.ScrolledPanel(parent = notebook, id = wx.ID_ANY, size = (-1, 500), style = wx.TAB_TRAVERSAL)
@@ -1605,9 +1608,9 @@ class LegendDialog(PsmapDialog):
 
         border = wx.BoxSizer(wx.VERTICAL)
         # is legend
-        self.isLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show raster legend"))
-        self.isLegend.SetValue(self.rLegendDict['rLegend'])
-        border.Add(item = self.isLegend, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        self.isRLegend = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Show raster legend"))
+        self.isRLegend.SetValue(self.rLegendDict['rLegend'])
+        border.Add(item = self.isRLegend, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
 
         # choose raster
         
@@ -1759,7 +1762,7 @@ class LegendDialog(PsmapDialog):
         # bindings
         self.Bind(wx.EVT_RADIOBUTTON, self.OnRaster, self.rasterDefault)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnRaster, self.rasterOther)
-        self.Bind(wx.EVT_CHECKBOX, self.OnIsLegend, self.isLegend)
+        self.Bind(wx.EVT_CHECKBOX, self.OnIsLegend, self.isRLegend)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnDiscrete, self.discrete)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnDiscrete, self.continuous)
         self.Bind(wx.EVT_CHECKBOX, self.OnDefaultSize, self.defaultSize)
@@ -1783,59 +1786,78 @@ class LegendDialog(PsmapDialog):
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Source vector maps")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
-        gridBagSizer.AddGrowableCol(0,2)
+        gridBagSizer.AddGrowableCol(0,3)
         gridBagSizer.AddGrowableCol(1,1)
         
         vectorText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Choose vector maps and their order in legend"))
 
-        self.vectorList = CheckListCtrl(panel)
-        self.vectorList.InsertColumn(0, _("Vector map"), width = 150)
-        self.vectorList.InsertColumn(1, _("Label"))
+        self.vectorListCtrl = CheckListCtrl(panel)
+        
+        self.vectorListCtrl.InsertColumn(0, _("Vector map"))
+        self.vectorListCtrl.InsertColumn(1, _("Label"))
         if self.vectorId:
             vectors = sorted(self.dialogDict[self.vectorId]['list'], key = lambda x: x[3])
             for vector in vectors:
-                index = self.vectorList.InsertStringItem(sys.maxint, vector[0].split('@')[0])
-                self.vectorList.SetStringItem(index, 1, vector[4])
-                self.vectorList.SetItemData(index, vector[3]-1)
-        self.vectorList.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-##        self.checkListBox = wx.CheckListBox(panel, id = wx.ID_ANY, choices = choices)
+                index = self.vectorListCtrl.InsertStringItem(sys.maxint, vector[0].split('@')[0])
+                self.vectorListCtrl.SetStringItem(index, 1, vector[4])
+                self.vectorListCtrl.SetItemData(index, index)
+                self.vectorListCtrl.CheckItem(index, True)
+                if vector[3] == 0:
+                    self.vectorListCtrl.CheckItem(index, False)
+        self.vectorListCtrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.vectorListCtrl.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        
         self.btnUp = wx.Button(panel, id = wx.ID_ANY, label = _("Up"))
         self.btnDown = wx.Button(panel, id = wx.ID_ANY, label = _("Down"))
         self.btnLabel = wx.Button(panel, id = wx.ID_ANY, label = _("Edit label"))
 
         
-        gridBagSizer.Add(vectorText, pos = (0,0), span = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(self.vectorList, pos = (1,0), span = (3,2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
-        gridBagSizer.Add(self.btnUp, pos = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(self.btnDown, pos = (2,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(self.btnLabel, pos = (3,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(vectorText, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.vectorListCtrl, pos = (1,0), span = (3,1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.btnUp, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.btnDown, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.btnLabel, pos = (3,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         
-        sizer.Add(gridBagSizer, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        sizer.Add(gridBagSizer, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         self.Bind(wx.EVT_BUTTON, self.OnUp, self.btnUp)
         self.Bind(wx.EVT_BUTTON, self.OnDown, self.btnDown)  
-        self.Bind(wx.EVT_BUTTON, self.OnEditLabel, self.btnLabel)      
+        self.Bind(wx.EVT_BUTTON, self.OnEditLabel, self.btnLabel)
+        self.Bind(wx.EVT_CHECKBOX, self.OnIsLegend, self.isVLegend)      
         
         panel.SetSizer(border)
+        
         panel.Fit()
         return panel
     
     #   some enable/disable methods  
         
     def OnIsLegend(self, event):
-        children = self.panelRaster.GetChildren()
-        if self.isLegend.GetValue():
-            for i,widget in enumerate(children):
-                    widget.Enable()
-            self.OnRaster(None)
-            self.OnDefaultSize(None)
-            self.OnRange(None)
-            self.OnDiscrete(None)
-        else:
-            for i,widget in enumerate(children):
-                if i != 0:
-                    widget.Disable()
+        """!Enables and disables controls, it depends if raster or vector legend is checked"""
+        page = self.notebook.GetSelection()
+        if page == 0 or event is None:
+            children = self.panelRaster.GetChildren()
+            if self.isRLegend.GetValue():
+                for i,widget in enumerate(children):
+                        widget.Enable()
+                self.OnRaster(None)
+                self.OnDefaultSize(None)
+                self.OnRange(None)
+                self.OnDiscrete(None)
+            else:
+                for i,widget in enumerate(children):
+                    if i != 0:
+                        widget.Disable()
+        if page == 1 or event is None:
+            children = self.panelVector.GetChildren()
+            if self.isVLegend.GetValue():
+                for i, widget in enumerate(children):
+                        widget.Enable()
+            else:
+                for i, widget in enumerate(children):
+                    if i != 0:
+                        widget.Disable()
                     
     def OnRaster(self, event):
         if self.rasterDefault.GetValue():#default
@@ -1911,35 +1933,46 @@ class LegendDialog(PsmapDialog):
             self.maxText.Enable()           
      
     def OnUp(self, event):
-        """!Moves selected map to top"""
-        if self.vectorList.GetFirstSelected() != -1:
-            pos = self.vectorList.GetFirstSelected()
+        """!Moves selected map up, changes order in vector legend"""
+        if self.vectorListCtrl.GetFirstSelected() != -1:
+            pos = self.vectorListCtrl.GetFirstSelected()
             if pos:
-                idx1 = self.vectorList.GetItemData(pos) - 1
-                idx2 = self.vectorList.GetItemData(pos - 1) + 1
-                self.vectorList.SetItemData(pos, idx1) 
-                self.vectorList.SetItemData(pos - 1, idx2) 
-                self.vectorList.SortItems(cmp)
+                idx1 = self.vectorListCtrl.GetItemData(pos) - 1
+                idx2 = self.vectorListCtrl.GetItemData(pos - 1) + 1
+                self.vectorListCtrl.SetItemData(pos, idx1) 
+                self.vectorListCtrl.SetItemData(pos - 1, idx2) 
+                self.vectorListCtrl.SortItems(cmp)
                 selected = (pos - 1) if pos > 0 else 0
-                self.vectorList.Select(selected)
+                self.vectorListCtrl.Select(selected)
        
     def OnDown(self, event):
-        if self.vectorList.GetFirstSelected() != -1:
-            pos = self.vectorList.GetFirstSelected()
-            if pos != self.vectorList.GetItemCount() - 1:
-                idx1 = self.vectorList.GetItemData(pos) + 1
-                idx2 = self.vectorList.GetItemData(pos + 1) - 1
-                self.vectorList.SetItemData(pos, idx1) 
-                self.vectorList.SetItemData(pos + 1, idx2) 
-                self.vectorList.SortItems(cmp)
-                selected = (pos + 1) if pos < self.vectorList.GetItemCount() -1 else self.vectorList.GetItemCount() -1
-                self.vectorList.Select(selected)
+        """!Moves selected map down, changes order in vector legend"""
+        if self.vectorListCtrl.GetFirstSelected() != -1:
+            pos = self.vectorListCtrl.GetFirstSelected()
+            if pos != self.vectorListCtrl.GetItemCount() - 1:
+                idx1 = self.vectorListCtrl.GetItemData(pos) + 1
+                idx2 = self.vectorListCtrl.GetItemData(pos + 1) - 1
+                self.vectorListCtrl.SetItemData(pos, idx1) 
+                self.vectorListCtrl.SetItemData(pos + 1, idx2) 
+                self.vectorListCtrl.SortItems(cmp)
+                selected = (pos + 1) if pos < self.vectorListCtrl.GetItemCount() -1 else self.vectorListCtrl.GetItemCount() -1
+                self.vectorListCtrl.Select(selected)
                 
     def OnEditLabel(self, event):
-        pass
+        """!Change legend label of vector map"""
+        if self.vectorListCtrl.GetFirstSelected() != -1:
+            idx = self.vectorListCtrl.GetFirstSelected()
+            default = self.vectorListCtrl.GetItem(idx, 1).GetText()
+            dlg = wx.TextEntryDialog(self, message = _("Edit legend label:"), caption = _("Edit label"),
+                                    defaultValue = default, style = wx.OK|wx.CANCEL|wx.CENTRE)
+            if dlg.ShowModal() == wx.ID_OK:
+                new = dlg.GetValue()
+                self.vectorListCtrl.SetStringItem(idx, 1, new)
+            dlg.Destroy()
         
     def OnOK(self, event):
-        self.update()
+        self.updateRasterLegend()
+        self.updateVectorLegend()
         if self.rLegendDict['rLegend']:
             if not self.rLegendDict['raster']:
                 wx.MessageBox(message = _("No raster map selected!"),
@@ -1949,9 +1982,10 @@ class LegendDialog(PsmapDialog):
         else:
             event.Skip()
         
-    def update(self):
+    def updateRasterLegend(self):
+        """!Save information from raster legend dialog to dictionary"""
         #is raster legend
-        if not self.isLegend.GetValue():
+        if not self.isRLegend.GetValue():
             self.rLegendDict['rLegend'] = False
             return
         else:
@@ -2064,8 +2098,30 @@ class LegendDialog(PsmapDialog):
                 else:
                     self.rLegendDict['range'] = False
                     
-
-                        
+    def updateVectorLegend(self):
+        """!Save information from vector legend dialog to dictionary"""
+        #is vector legend
+        if not self.isVLegend.GetValue():
+            self.vLegendDict['vLegend'] = False
+            return
+        else:
+            self.vLegendDict['vLegend'] = True   
+        # labels
+        #reindex order
+        idx = 1
+        for item in range(self.vectorListCtrl.GetItemCount()):
+            if self.vectorListCtrl.IsChecked(item):
+                self.vectorListCtrl.SetItemData(item, idx)
+                idx += 1
+            else:
+                self.vectorListCtrl.SetItemData(item, 0)
+                
+        for i, vector in enumerate(self.dialogDict[self.vectorId]['list']):
+            item = self.vectorListCtrl.FindItem(start = -1, str = vector[0].split('@')[0])
+            self.dialogDict[self.vectorId]['list'][i][3] = self.vectorListCtrl.GetItemData(item)
+            self.dialogDict[self.vectorId]['list'][i][4] = self.vectorListCtrl.GetItem(item, 1).GetText()
+        print self.dialogDict[self.vectorId]['list']
+        
     def getRasterType(self, map):
         rasterType = RunCommand('r.info', flags = 't', read = True, 
                                 map = map).strip().split('=')

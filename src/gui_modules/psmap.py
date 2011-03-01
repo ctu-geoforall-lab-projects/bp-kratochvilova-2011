@@ -107,18 +107,18 @@ class PsMapToolbar(AbstractToolbar):
                                       self.parent.OnPageSetup),
                                      (None, ),
                                      (self.pointer, "pointer", Icons["displayWindow"]["pointer"],
-                                      self.parent.OnPointer),
+                                      self.parent.OnPointer, wx.ITEM_CHECK),
                                      (self.pan, 'pan', Icons["displayWindow"]['pan'],
-                                      self.parent.OnPan),
+                                      self.parent.OnPan, wx.ITEM_CHECK),
                                      (self.zoomIn, "zoomin", Icons["displayWindow"]["zoomIn"],
-                                      self.parent.OnZoomIn),
+                                      self.parent.OnZoomIn, wx.ITEM_CHECK),
                                      (self.zoomOut, "zoomout", Icons["displayWindow"]["zoomOut"],
-                                      self.parent.OnZoomOut),
+                                      self.parent.OnZoomOut, wx.ITEM_CHECK),
                                      (self.zoomAll, 'full extent', icons['fullExtent'],
                                       self.parent.OnZoomAll),
                                      (None, ),
                                      (self.addMap, 'add map', icons['addRast'],
-                                      self.parent.OnAddMap),
+                                      self.parent.OnAddMap, wx.ITEM_CHECK),
                                      (self.addVector, 'add vect', icons['addVect'],
                                       self.parent.OnAddVect),
                                      (self.dec, "overlay", Icons["displayWindow"]["overlay"],
@@ -720,18 +720,18 @@ class PsMapFrame(wx.Frame):
         """
         decmenu = wx.Menu()
         # legend
-        AddLegend = wx.MenuItem(decmenu, wx.ID_ANY, "Show legend")##
-        AddLegend.SetBitmap(Icons["addlegend"].GetBitmap(self.iconsize))
+        AddLegend = wx.MenuItem(decmenu, wx.ID_ANY, Icons['displayWindow']["addLegend"].GetLabel())
+        AddLegend.SetBitmap(Icons['displayWindow']["addLegend"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddLegend)
         self.Bind(wx.EVT_MENU, self.OnAddLegend, AddLegend)
         # mapinfo
-        AddMapinfo = wx.MenuItem(decmenu, wx.ID_ANY, "Show mapinfo")
-        AddMapinfo.SetBitmap(Icons["addlegend"].GetBitmap(self.iconsize))
+        AddMapinfo = wx.MenuItem(decmenu, wx.ID_ANY, "Add mapinfo")
+        AddMapinfo.SetBitmap(Icons['displayWindow']["addLegend"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddMapinfo)
         self.Bind(wx.EVT_MENU, self.OnAddMapinfo, AddMapinfo) 
         # text
         AddText = wx.MenuItem(decmenu, wx.ID_ANY, "Add text")
-        AddText.SetBitmap(Icons["addtext"].GetBitmap(self.iconsize))
+        AddText.SetBitmap(Icons['displayWindow']["addText"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddText)
         self.Bind(wx.EVT_MENU, self.OnAddText, AddText) 
         # Popup the menu.  If an item is selected then its handler
@@ -844,7 +844,10 @@ class PsMapFrame(wx.Frame):
             X = x + W 
         if 0 < rotation < pi:
             Y = y - H
-        return wx.Rect(X, Y, abs(W), abs(H)).Inflate(h,h) 
+        if rotation == 0:
+            return wx.Rect(x,y, *textExtent)
+        else:
+            return wx.Rect(X, Y, abs(W), abs(H)).Inflate(h,h) 
        
     def getTextExtent(self, textDict):
         fontsize = str(textDict['fontsize'] * self.canvas.currScale)
@@ -1423,6 +1426,8 @@ class PsMapBufferedWindow(wx.Window):
                     rot = float(self.dialogDict[id]['rotate']) if self.dialogDict[id]['rotate'] else 0
                     bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
                     self.pdcObj.SetIdBounds(id, bounds)
+                elif type == 'vectorLegend':# only temporary
+                    pass
                 else:
                     self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
                             drawid = id, pdctype = 'rectText', bb = oRect)
