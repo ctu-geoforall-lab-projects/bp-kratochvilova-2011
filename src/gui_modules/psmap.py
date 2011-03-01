@@ -20,6 +20,7 @@ This program is free software under the GNU General Public License
 import os
 import sys
 import tempfile
+import textwrap
 import Queue
 try:
     import Image
@@ -953,6 +954,29 @@ class PsMapFrame(wx.Frame):
         if self.currentPage == 0 and self.mouse['use'] == 'addMap':
             event.Veto()
 
+    def OnHelp(self, event):
+        """!Show help"""
+        if self.parent and self.parent.GetName() == 'LayerManager':
+            log = self.parent.GetLogWindow()
+            log.RunCmd(['g.manual',
+                        'entry=wxGUI.PsMap'])
+        else:
+            RunCommand('g.manual',
+                       quiet = True,
+                       entry = 'wxGUI.PsMap')
+        
+    def OnAbout(self, event):
+        """!Display About window"""
+        info = wx.AboutDialogInfo()
+        
+        info.SetIcon(wx.Icon(os.path.join(globalvar.ETCICONDIR, 'grass.ico'), wx.BITMAP_TYPE_ICO))
+        info.SetName(_('wxGUI Hardcopy Map Utility'))
+        info.SetWebSite('http://grass.osgeo.org')
+        info.SetDescription(_('(C) 2011 by the GRASS Development Team\n\n') + 
+                            '\n'.join(textwrap.wrap(_('This program is free software under the GNU General Public License'
+                                                      '(>=v2). Read the file COPYING that comes with GRASS for details.'), 75)))
+        
+        wx.AboutBox(info)
 
     def OnCloseWindow(self, event):
         """!Close window"""
