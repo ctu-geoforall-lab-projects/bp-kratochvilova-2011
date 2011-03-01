@@ -21,7 +21,10 @@ import os
 import sys
 import tempfile
 import Queue
-import Image
+try:
+    import Image
+except ImportError:
+    sys.exit("Python Imaging Library is not available")
 from math import ceil, sin, cos, pi
 from collections import namedtuple
 
@@ -38,7 +41,7 @@ from   goutput    import CmdThread, GrassCmd
 from   menudata   import MenuData, etcwxdir
 from   gselect    import Select
 from   toolbars   import AbstractToolbar
-from   icon       import Icons
+from   icon       import Icons, MetaIcon, iconSet
 from   gcmd       import RunCommand, Command
 from grass.script import core as grass
 from psmap_dialogs import *
@@ -51,7 +54,30 @@ try:
 except ImportError: # if it's not there locally, try the wxPython lib.
     import wx.lib.agw.flatnotebook as fnb
 
-        
+Icons['psMap'] = {
+    'script'     : MetaIcon(img = iconSet['ps-script'],
+                            label = _('Generate instruction file')),
+    'export'     : MetaIcon(img = iconSet['ps-export'],
+                            label = _('Generate PostScript output')),
+    'pageSetup'  : MetaIcon(img = iconSet['settings'],
+                            label = _('Page setup'),
+                            desc = _('Specify paper size, margins and orientation')),
+    'fullExtent' : MetaIcon(img = iconSet['zoom-extent'],
+                            label = _("Full extent"),
+                            desc = _("Zoom to full extent")),
+    'addRast'    : MetaIcon(img = iconSet['layer-raster-add'],
+                            label = _("Raster map"),
+                            desc = _("Click and drag to place raster map")),
+    'addVect'   : MetaIcon(img = iconSet['layer-vector-add'],
+                           label = _("Vector map"),
+                           desc = _("Add vector map")),
+    'deleteObj' : MetaIcon(img = iconSet['layer-remove'],
+                           label = _("Delete selected object")),
+    'preview'   : MetaIcon(img = iconSet['execute'],
+                           label = _("Show preview")),
+    'quit'      : MetaIcon(img = iconSet['quit'],
+                           label = _('Quit Hardcopy Map Utility')),
+    }
     
 class PsMapData(MenuData):
     def __init__(self, path = None):
