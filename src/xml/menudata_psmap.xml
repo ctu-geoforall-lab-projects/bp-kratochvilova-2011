@@ -72,5 +72,21 @@
 		</menuitem>
       </items>
     </menu>
+    <menu>
+      <label>&amp;Help</label>
+      <items>
+	<menuitem>
+	  <label>Help</label>
+	  <help>Display the HTML man pages of Hardcopy Map Output Utility</help>
+	  <handler>OnHelp</handler>
+	</menuitem>
+	<separator />
+	<menuitem>
+	  <label>About Hardcopy Map Output Utility</label>
+	  <help>Display information about Hardcopy Map Output Utility</help>
+	  <handler>OnAbout</handler>
+	</menuitem>
+      </items>
+    </menu>
   </menubar>
 </menudata>
