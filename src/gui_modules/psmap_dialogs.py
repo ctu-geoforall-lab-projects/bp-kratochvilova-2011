@@ -21,7 +21,7 @@ import os
 import sys
 import string
 from math import ceil
-from collections import namedtuple
+from copy import deepcopy
 
 import grass.script as grass
 if int(grass.version()['version'].split('.')[0]) > 6:
@@ -48,8 +48,6 @@ try:
 except ImportError: # if it's not there locally, try the wxPython lib.
     import wx.lib.agw.flatnotebook as fnb
 
-# like wx.Rect but supports float     
-Rect = namedtuple('Rect', 'x y width height')
 
 class UnitConversion():
     """! Class for converting units"""
@@ -96,7 +94,7 @@ class TCValidator(wx.PyValidator):
         if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
             event.Skip()
             return
-        if self.flag == 'DIGIT_ONLY' and chr(key) in string.digits:
+        if self.flag == 'DIGIT_ONLY' and chr(key) in string.digits + '.':
             event.Skip()
             return
         if self.flag == 'SCALE' and chr(key) in string.digits + ':':
@@ -182,9 +180,12 @@ class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin, ListCtrlAutoWidthMixin):
         
         
 class PsmapDialog(wx.Dialog):
-    def __init__(self, parent, title, settings, itemType):
+    def __init__(self, parent, id,  title, settings, itemType, apply = True):
         wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
                             title = title, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE)
+        self.apply = apply
+        self.id = id
+        self.parent = parent
         self.dialogDict = settings
         self.itemType = itemType
         self.unitConv = UnitConversion(self)
@@ -242,26 +243,47 @@ class PsmapDialog(wx.Dialog):
 ##        self.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
 ##        self.font['colorCtrl'].SetColour(dialogDict['color'])    
 
+       
+    def OnApply(self, event):
+        ok = self.update()
+        if ok:
+            self.parent.DialogDataChanged(id = self.id)
+            return True 
+        else:
+            return False
         
     def OnOK(self, event):
-        event.Skip()
+        ok = self.OnApply(event)
+        if ok:
+            event.Skip()
+        
     def OnCancel(self, event):
         event.Skip()
+        
+        
     def _layout(self, panel):
         #buttons
         btnCancel = wx.Button(self, wx.ID_CANCEL)
         btnOK = wx.Button(self, wx.ID_OK)
         btnOK.SetDefault()
+        if self.apply:
+            btnApply = wx.Button(self, wx.ID_APPLY)
+        
 
         # bindigs
         btnOK.Bind(wx.EVT_BUTTON, self.OnOK)
         btnOK.SetToolTipString(_("Close dialog and apply changes"))
         btnCancel.Bind(wx.EVT_BUTTON, self.OnCancel)
         btnCancel.SetToolTipString(_("Close dialog and ignore changes"))
+        if self.apply:
+            btnApply.Bind(wx.EVT_BUTTON, self.OnApply)
+            btnApply.SetToolTipString(_("Apply changes"))
         
         # sizers
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(btnCancel)
+        if self.apply:
+            btnSizer.AddButton(btnApply)
         btnSizer.AddButton(btnOK)
         btnSizer.Realize()
         
@@ -277,15 +299,15 @@ class PsmapDialog(wx.Dialog):
         mainSizer.Fit(self) 
             
 class PageSetupDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType):
-        PsmapDialog.__init__(self, parent = parent, title = "Page setup",  settings = settings, itemType = itemType)
+    def __init__(self, parent, id, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Page setup",  settings = settings, itemType = itemType)
 
         
         self.cat = ['Units', 'Format', 'Orientation', 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
         paperString = RunCommand('ps.map', flags = 'p', read = True)
         self.paperTable = self._toList(paperString) 
         self.unitsList = self.unitConv.getPageUnits()
-        pageId = find_key(dic = self.itemType, val = 'paper'), find_key(dic = self.itemType, val = 'margins')
+        pageId = id
         self.pageSetupDict = self.dialogDict[pageId]
 
         self._layout()
@@ -307,11 +329,9 @@ class PageSetupDialog(PsmapDialog):
         self.getCtrl('Format').Bind(wx.EVT_CHOICE, self.OnChoice)
         self.getCtrl('Orientation').Bind(wx.EVT_CHOICE, self.OnChoice)
         self.btnOk.Bind(wx.EVT_BUTTON, self.OnOK)
+
     
-    def getInfo(self):
-        return self.pageSetupDict
-    
-    def _update(self):
+    def update(self):
         self.pageSetupDict['Units'] = self.getCtrl('Units').GetString(self.getCtrl('Units').GetSelection())
         self.pageSetupDict['Format'] = self.paperTable[self.getCtrl('Format').GetSelection()]['Format']
         self.pageSetupDict['Orientation'] = self.getCtrl('Orientation').GetString(self.getCtrl('Orientation').GetSelection())
@@ -323,7 +343,7 @@ class PageSetupDialog(PsmapDialog):
             
     def OnOK(self, event):
         try:
-            self._update()
+            self.update()
         except ValueError:
                 wx.MessageBox(message = _("Literal is not allowed!"), caption = _('Invalid input'),
                                     style = wx.OK|wx.ICON_ERROR)
@@ -418,13 +438,21 @@ class PageSetupDialog(PsmapDialog):
         return sizeList
     
 class MapDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType, region, notebook = False):
-        PsmapDialog.__init__(self, parent = parent, title = "Raster map settings", settings = settings, itemType = itemType)
+    def __init__(self, parent, id, settings, itemType, region, rect = None, notebook = False):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Raster map settings", settings = settings, itemType = itemType)
         
-        self.parent = parent
+        self.new = True
+        if self.id[0] is not None:
+            self.mapDialogDict = self.dialogDict[self.id[0]] 
+            self.new = False
+        else:
+            self.mapDialogDict = self.parent.GetDefault('map')
+            self.mapDialogDict['rect'] = rect
+            self.id[0] = wx.NewId()
+            
+            
         self.isNotebook = notebook
-        mapId = find_key(dic = self.itemType, val = 'map')
-        self.mapDialogDict = self.dialogDict[mapId]
+
 
         # original region without resolution
         self.currentRegionDict = region
@@ -436,7 +464,9 @@ class MapDialog(PsmapDialog):
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.panel = self._rasterPanel(notebook)
         if self.isNotebook:
-            self.vectorPanel = VectorDialog(parent = notebook, settings = self.dialogDict, itemType = self.itemType)
+            vectorId = self.id[1]
+            self.vPanel = VectorPanel(parent = notebook, id = vectorId, settings = self.dialogDict, itemType = self.itemType)
+            self.id[1] = self.vPanel.getId()
         self._layout(notebook)
         
         
@@ -530,8 +560,8 @@ class MapDialog(PsmapDialog):
         
         self.selectedRaster = self.select.GetValue() if self.select.GetValue() else None
 
-        self.scale[0], foo = AutoAdjust(self, scaleType = 0, raster = self.selectedRaster)
-        self.scale[1], foo = AutoAdjust(self, scaleType = 1, raster = self.selectedRaster)
+        self.scale[0], foo = AutoAdjust(self, scaleType = 0, raster = self.selectedRaster, rect = self.mapDialogDict['rect'])
+        self.scale[1], foo = AutoAdjust(self, scaleType = 1, raster = self.selectedRaster, rect = self.mapDialogDict['rect'])
         self.scale[2] = None
         self.center[0] = self.RegionCenter(self.RegionDict(scaleType = 0))
         self.center[1] = self.RegionCenter(self.RegionDict(scaleType = 1))
@@ -564,88 +594,104 @@ class MapDialog(PsmapDialog):
             
            
             
-    def _update(self):
+    def update(self):
+        mapDialogDict = dict(self.mapDialogDict)
         #draw raster
-        self.mapDialogDict['isRaster'] = self.rasterCheck.GetValue()
+        mapDialogDict['isRaster'] = self.rasterCheck.GetValue()
         #raster
-        self.mapDialogDict['raster'] = self.select.GetValue() \
+        mapDialogDict['raster'] = self.select.GetValue() \
                             if self.select.GetValue() else None
         #scale
         scaleType = self.scaleChoice.GetSelection()
-        self.mapDialogDict['scaleType'] = scaleType
+        mapDialogDict['scaleType'] = scaleType
         
-        if self.mapDialogDict['scaleType'] == 0 and not self.mapDialogDict['raster']:
+        if mapDialogDict['scaleType'] == 0 and not mapDialogDict['raster']:
                 wx.MessageBox(message = _("No raster selected!"),
                                     caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
                 return False    
                             
         if scaleType in (0, 1): # automatic - region from raster, current region
             if scaleType == 0:
-                RunCommand('g.region', rast = self.mapDialogDict['raster'])
+                RunCommand('g.region', rast = mapDialogDict['raster'])
             else:
-                RunCommand('g.region', rast = self.mapDialogDict['raster'], **self.currentRegionDict)
+                RunCommand('g.region', rast = mapDialogDict['raster'], **self.currentRegionDict)
 
-            self.scale, self.rectAdjusted = AutoAdjust(self, scaleType = scaleType, raster = self.selectedRaster)
-            self.mapDialogDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapDialogDict['rect']
-            self.mapDialogDict['scale'] = self.scale
-            self.mapDialogDict['center'] = self.center[scaleType]
+            self.scale[scaleType], self.rectAdjusted = AutoAdjust(self, scaleType = scaleType, raster = self.selectedRaster,
+                                                                    rect = self.mapDialogDict['rect'])
+            mapDialogDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapDialogDict['rect']
+            mapDialogDict['scale'] = self.scale[scaleType]
+            mapDialogDict['center'] = self.center[scaleType]
             
 
             
         elif scaleType == 2:
-            
-            scaleNumber = float(self.scaleTextCtrl.GetValue().split(':')[1].strip())
-            self.mapDialogDict['scale'] = 1/scaleNumber
+            mapDialogDict['rect'] = self.mapDialogDict['rect']
+            try:
+                scaleNumber = float(self.scaleTextCtrl.GetValue().split(':')[1].strip())
+            except IndexError:
+                wx.MessageBox(  message = _("Invalid scale!"),
+                                caption = _('Invalid scale'), style = wx.OK|wx.ICON_ERROR)
+                return False
+            mapDialogDict['scale'] = 1/scaleNumber
             try:
                 centerE = float(self.eastingTextCtrl.GetValue()) 
                 centerN = float(self.northingTextCtrl.GetValue())
-                self.mapDialogDict['center'] = centerE, centerN
+                mapDialogDict['center'] = centerE, centerN
             except ValueError:
-                self.mapDialogDict['center'] = None 
+                mapDialogDict['center'] = None 
             
-        if self.mapDialogDict['scaleType'] == 2 and \
-                                (not self.mapDialogDict['center'] or not self.mapDialogDict['scale']):
+        if mapDialogDict['scaleType'] == 2 and \
+                                (not mapDialogDict['center'] or not mapDialogDict['scale']):
             wx.MessageBox(message = _("No map center given!"),
                                     caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
             return False  
         
-        ComputeSetRegion(self)
+        ComputeSetRegion(self, mapDict = mapDialogDict)
           
+        self.dialogDict[self.id[0]] = mapDialogDict
+        self.itemType[self.id[0]] = 'map'
+        if self.new:
+            self.parent.objectId.append(self.id[0])
+            self.new = False
+       
         return True
         
-    def getInfo(self):
-        if self.isNotebook:
-            return self.mapDialogDict, self.vectorPanel.getInfo()
-        else:
-            return self.mapDialogDict
+
     
-    def OnOK(self, event):
+    def OnApply(self, event):
         if self.isNotebook:
-            self.vectorPanel._update()
-        try:
-            ok = self._update()
-            if ok:                        
-                event.Skip()
-        except IndexError:
-            wx.MessageBox(message = _("Invalid scale!"),
-                                    caption = _('Invalid scale'), style = wx.OK|wx.ICON_ERROR)
-       
+            ok = self.vPanel.update()
+            if ok:
+                self.parent.DialogDataChanged(id = self.id[1])
+
+        ok = self.update()
+        if ok:
+            self.parent.DialogDataChanged(id = self.id[0])
+            return True 
+        else:
+            return False
+
   
-class VectorDialog(wx.Panel):
-    def __init__(self, parent, settings, itemType, notebook = True):
+class VectorPanel(wx.Panel):
+    def __init__(self, parent, id, settings, itemType, notebook = True):
         wx.Panel.__init__(self, parent, id = wx.ID_ANY, style = wx.TAB_TRAVERSAL)
 
         self.itemType = itemType
         self.dialogDict = settings
-        id = find_key(dic = self.itemType, val = 'vector')
-        self.vLegendId = find_key(dic = self.itemType, val = 'vectorLegend')
-        self.mainVectDict = self.dialogDict[id] 
-        if self.mainVectDict['list']:
-            self.vectorList = self.mainVectDict['list']
-        else:
-            self.vectorList = []
-        self.mainVectDict['list'] = self.vectorList
+        self.tmpDialogDict = {}
+        ids = find_key(dic = self.itemType, val = 'vProperties', multiple = True)
+        for i in ids:
+            self.tmpDialogDict[i] = dict(self.dialogDict[i])
         self.parent = parent
+        if id:
+            self.id = id
+            self.vectorList = deepcopy(self.dialogDict[id]['list'])
+        else:
+            self.id = wx.NewId()
+            self.vectorList = []
+        
+        self.vLegendId = find_key(dic = self.itemType, val = 'vectorLegend')
+         
         self._layout()
         if notebook:
             self.parent.AddPage(page = self, text = _("Vector maps"))
@@ -747,9 +793,8 @@ class VectorDialog(wx.Panel):
             self.vectorList.insert(0, [vmap, type, id, lpos, label])
             self.reposition()
             self.listbox.InsertItems([record], 0)
-            self.itemType[id] = 'vProperties'
-            self.dialogDict[id] = self.DefaultData(dataType = self.vectorList[0][1])
-
+            self.tmpDialogDict[id] = dict(self.DefaultData(dataType = type))
+            
             
     def OnDelete(self, event):
         """!Deletes vector map from the list"""
@@ -757,8 +802,7 @@ class VectorDialog(wx.Panel):
             pos = self.listbox.GetSelection()
             id = self.vectorList[pos][2]
             del self.vectorList[pos]
-            del self.itemType[id]
-            del self.dialogDict[id]
+            del self.tmpDialogDict[id]
             for i in range(pos, len(self.vectorList)):
                 if self.vectorList[i][3]:# can be 0
                     self.vectorList[i][3] -= 1
@@ -790,11 +834,9 @@ class VectorDialog(wx.Panel):
             pos = self.listbox.GetSelection()
             id = self.vectorList[pos][2]
 
-            dlg = VPropertiesDialog(self, settings = self.dialogDict, itemType = self.itemType, id = id)
-            if dlg.ShowModal() == wx.ID_OK:
-                self.dialogDict[id] = dlg.getInfo()
-
-            dlg.Destroy()
+            dlg = VPropertiesDialog(self, id = id, settings = self.dialogDict, itemType = self.itemType,
+                                    vectors = self.vectorList, tmpSettings = self.tmpDialogDict[id])
+            dlg.ShowModal()
            
     def DefaultData(self, dataType):
         if dataType == 'points':
@@ -809,7 +851,7 @@ class VectorDialog(wx.Panel):
                         style = 'solid', linecap = 'butt')
         else:
             dd = dict(type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
-                        fcolor = '255:0:0', rgbcolumn = None,
+                        fcolor = 'none', rgbcolumn = None,
                         pat = None, pwidth = 1, scale = 1)
         return dd
     
@@ -825,41 +867,60 @@ class VectorDialog(wx.Panel):
         for i in range(len(self.vectorList)):
             if self.vectorList[i][3]:
                 self.vectorList[i][3] = i + 1
+                
+    def getId(self):
+        return self.id
         
-    def _update(self):
-        self.mainVectDict['list'] = self.vectorList
-        
+    def update(self):
+        ids = find_key(dic = self.itemType, val = 'vProperties', multiple = True)
+        for id in ids:
+            del self.itemType[id]
+            del self.dialogDict[id]
+            
+        if len(self.vectorList) > 0:
+            self.dialogDict[self.id] = {'list': deepcopy(self.vectorList)}
+            self.itemType[self.id] = 'vector'
 
-    def getInfo(self):
-        return self.mainVectDict
+            # save new vectors
+            for item in self.vectorList:
+                id = item[2]
+                self.itemType[id] = 'vProperties'
+                self.dialogDict[id] = dict(self.tmpDialogDict[id])
+            
+        else:
+            if self.dialogDict.has_key(self.id):
+                del self.dialogDict[self.id]
+                del self.itemType[self.id]
+
 
  
 class MainVectorDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType):
-        PsmapDialog.__init__(self, parent = parent, title = "Choose vector maps", settings = settings, itemType = itemType)
+    def __init__(self, parent, id, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Choose vector maps", settings = settings, itemType = itemType)
 
-       
-        self.panel = VectorDialog(parent = self, settings = self.dialogDict, itemType = self.itemType, notebook = False)
-     
-        self._layout(self.panel)
+        self.vPanel = VectorPanel(parent = self, id = self.id, settings = self.dialogDict, itemType = self.itemType, notebook = False)
+        self.id = self.vPanel.getId()
+        self._layout(self.vPanel)
     
-    def getInfo(self):
-        return self.panel.getInfo() 
-    def OnOK(self, event):
-        self.panel._update()
-        event.Skip()   
+    def update(self):
+        self.vPanel.update()
+        
+    def OnApply(self, event):
+        self.update()
+        mapId = find_key(dic = self.itemType, val = 'map')# need to redraw labels on map frame
+        self.parent.DialogDataChanged(id = mapId)
+        return True
         
 
 class VPropertiesDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType, id):
-        PsmapDialog.__init__(self, parent = parent, title = "", settings = settings, itemType = itemType)
-
-        id = id
-        self.vPropertiesDict = self.dialogDict[id]
+    def __init__(self, parent, id, settings, itemType, vectors, tmpSettings):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "", settings = settings, itemType = itemType, apply = False)
+        
+        vectorList = vectors
+        self.vPropertiesDict = tmpSettings
         
         # determine map and its type
-        vectorsId = find_key(dic = self.itemType, val = 'vector')
-        for item in self.dialogDict[vectorsId]['list']:
+        for item in vectorList:
             if id == item[2]:
                 self.vectorName = item[0]
                 self.type = item[1]
@@ -1457,7 +1518,7 @@ class VPropertiesDialog(PsmapDialog):
         choice = wx.Choice(parent = parent, id = wx.ID_ANY, choices = cols)
         return choice
         
-    def _update(self):
+    def update(self):
         #feature type
         if self.type in ('lines', 'points'):
             featureType = None
@@ -1567,26 +1628,32 @@ class VPropertiesDialog(PsmapDialog):
             self.vPropertiesDict['style'] = self.styleCombo.GetValue() if self.styleCombo.GetValue() else 'solid'
             self.vPropertiesDict['linecap'] = self.linecapChoice.GetStringSelection()
             
-    def getInfo(self):
-        return self.vPropertiesDict
     
     def OnOK(self, event):
-        self._update()
+        self.update()
         event.Skip()
         
 class LegendDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType):
-        PsmapDialog.__init__(self, parent = parent, title = "Legend settings", settings = settings, itemType = itemType)
+    def __init__(self, parent, id, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Legend settings", settings = settings, itemType = itemType)
         
         self.mapId = find_key(dic = self.itemType, val = 'map')
         self.vectorId = find_key(dic = self.itemType, val = 'vector')
 
         self.pageId = find_key(dic = self.itemType, val = 'paper'), find_key(dic = self.itemType, val = 'margins')
-        rLegendId = find_key(dic = self.itemType, val = 'rasterLegend')
-        vLegendId = find_key(dic = self.itemType, val = 'vectorLegend')
+        #raster legend
+        if self.id[0] is not None:
+            self.rLegendDict = self.dialogDict[self.id[0]] 
+        else:
+            self.rLegendDict = dict(self.parent.GetDefault('rasterLegend'))
+            self.id[0] = wx.NewId()
+        #vectro legend    
+        if self.id[1] is not None:
+            self.vLegendDict = self.dialogDict[self.id[1]] 
+        else:
+            self.vLegendDict = dict(self.parent.GetDefault('vectorLegend'))
+            self.id[1] = wx.NewId()
         
-        self.rLegendDict = self.dialogDict[rLegendId]
-        self.vLegendDict = self.dialogDict[vLegendId]
         self.currRaster = self.dialogDict[self.mapId]['raster'] if self.mapId else None
         
         #notebook
@@ -1970,24 +2037,14 @@ class LegendDialog(PsmapDialog):
                 self.vectorListCtrl.SetStringItem(idx, 1, new)
             dlg.Destroy()
         
-    def OnOK(self, event):
-        self.updateRasterLegend()
-        self.updateVectorLegend()
-        if self.rLegendDict['rLegend']:
-            if not self.rLegendDict['raster']:
-                wx.MessageBox(message = _("No raster map selected!"),
-                                    caption = _('No raster'), style = wx.OK|wx.ICON_ERROR)
-            else:
-                event.Skip()
-        else:
-            event.Skip()
+
         
     def updateRasterLegend(self):
         """!Save information from raster legend dialog to dictionary"""
+
         #is raster legend
         if not self.isRLegend.GetValue():
             self.rLegendDict['rLegend'] = False
-            return
         else:
             self.rLegendDict['rLegend'] = True
         #units
@@ -2000,6 +2057,10 @@ class LegendDialog(PsmapDialog):
         else:
             self.rLegendDict['rasterDefault'] = False
             self.rLegendDict['raster'] = self.rasterSelect.GetValue()
+        if self.rLegendDict['rLegend'] and not self.rLegendDict['raster']:
+            wx.MessageBox(message = _("No raster map selected!"),
+                                    caption = _('No raster'), style = wx.OK|wx.ICON_ERROR)
+            return False
             
         if self.rLegendDict['raster']:
             # type and range of map
@@ -2040,7 +2101,7 @@ class LegendDialog(PsmapDialog):
                     textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
                     drawWidth = width + textPart
                     drawHeight = height
-                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
                 else: #categorical map
                     self.rLegendDict['width'] = width 
                     self.rLegendDict['cols'] = self.heightOrColumnsCtrl.GetValue() 
@@ -2049,7 +2110,7 @@ class LegendDialog(PsmapDialog):
                     rows = ceil(float(len(cat))/self.rLegendDict['cols'])
 
                     drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'], fromUnit = 'point', toUnit = 'inch')
-                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = width, height = drawHeight)
+                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = width, h = drawHeight)
 
             else:
                 self.rLegendDict['defaultSize'] = True
@@ -2060,7 +2121,7 @@ class LegendDialog(PsmapDialog):
                                 
                     drawHeight = self.unitConv.convert(value = self.rLegendDict['fontsize'] * 10,
                                                     fromUnit = 'point', toUnit = 'inch')
-                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
                 else:#categorical map
                     self.rLegendDict['cols'] = self.heightOrColumnsCtrl.GetValue()
                     cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
@@ -2074,7 +2135,7 @@ class LegendDialog(PsmapDialog):
                     paperWidth = self.dialogDict[self.pageId]['Width']- self.dialogDict[self.pageId]['Right']\
                                                                         - self.dialogDict[self.pageId]['Left']
                     drawWidth = (paperWidth / self.rLegendDict['cols']) * (self.rLegendDict['cols'] - 1) + 1
-                    self.rLegendDict['rect'] = Rect(x = x, y = y, width = drawWidth, height = drawHeight)
+                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
 
 
                          
@@ -2098,12 +2159,19 @@ class LegendDialog(PsmapDialog):
                 else:
                     self.rLegendDict['range'] = False
                     
+        self.dialogDict[self.id[0]] = self.rLegendDict
+        self.itemType[self.id[0]] = 'rasterLegend'
+        if self.id[0] not in self.parent.objectId:
+            self.parent.objectId.append(self.id[0])
+        return True
+                    
     def updateVectorLegend(self):
         """!Save information from vector legend dialog to dictionary"""
+
         #is vector legend
+
         if not self.isVLegend.GetValue():
             self.vLegendDict['vLegend'] = False
-            return
         else:
             self.vLegendDict['vLegend'] = True   
         # labels
@@ -2115,30 +2183,44 @@ class LegendDialog(PsmapDialog):
                 idx += 1
             else:
                 self.vectorListCtrl.SetItemData(item, 0)
-                
-        for i, vector in enumerate(self.dialogDict[self.vectorId]['list']):
-            item = self.vectorListCtrl.FindItem(start = -1, str = vector[0].split('@')[0])
-            self.dialogDict[self.vectorId]['list'][i][3] = self.vectorListCtrl.GetItemData(item)
-            self.dialogDict[self.vectorId]['list'][i][4] = self.vectorListCtrl.GetItem(item, 1).GetText()
-        print self.dialogDict[self.vectorId]['list']
+        if self.vectorId is not None:        
+            for i, vector in enumerate(self.dialogDict[self.vectorId]['list']):
+                item = self.vectorListCtrl.FindItem(start = -1, str = vector[0].split('@')[0])
+                self.dialogDict[self.vectorId]['list'][i][3] = self.vectorListCtrl.GetItemData(item)
+                self.dialogDict[self.vectorId]['list'][i][4] = self.vectorListCtrl.GetItem(item, 1).GetText()
+            
+
+        self.dialogDict[self.id[1]] = self.vLegendDict
+        self.itemType[self.id[1]] = 'vectorLegend'
+        if self.id[1] not in self.parent.objectId:
+            self.parent.objectId.append(self.id[1])
+        return True
+    
+    def update(self)  :
+        okR = self.updateRasterLegend()
+        okV = self.updateVectorLegend()
+        if okR and okV:
+            return True
+        return False
         
     def getRasterType(self, map):
         rasterType = RunCommand('r.info', flags = 't', read = True, 
                                 map = map).strip().split('=')
         return (rasterType[1] if rasterType[0] else None)
         
-    
-    def getRasterInfo(self):
-        return self.rLegendDict   
-    def getVectorInfo(self):
-        return self.vLegendDict 
+
              
 class MapinfoDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType):
-        PsmapDialog.__init__(self, parent = parent, title = "Mapinfo settings", settings = settings, itemType = itemType)
-        mapInfoId = find_key(dic = self.itemType, val = 'mapinfo')
-        self.mapinfoDict = self.dialogDict[mapInfoId] 
-        
+    def __init__(self, parent, id, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Mapinfo settings", settings = settings, itemType = itemType)
+        self.new = True
+        if self.id is not None:
+            self.mapinfoDict = self.dialogDict[id] 
+            self.new = False
+        else:
+            self.mapinfoDict = dict(self.parent.GetDefault('mapinfo'))
+            self.id = wx.NewId()
+            
         self.panel = self._mapinfoPanel()
         
         self._layout(self.panel)
@@ -2228,6 +2310,7 @@ class MapinfoDialog(PsmapDialog):
         self.Bind(wx.EVT_CHECKBOX, self.OnIsBackground, self.colors['backgroundCtrl'])
         
         return panel
+    
     def OnIsBackground(self, event):
         if self.colors['backgroundCtrl'].GetValue():
             self.colors['backgroundColor'].Enable()
@@ -2241,10 +2324,6 @@ class MapinfoDialog(PsmapDialog):
             self.colors['borderColor'].Disable() 
                            
                     
-    def OnOK(self, event):
-        self.update()
-        event.Skip()
-        
     def update(self):
 
         #units
@@ -2276,19 +2355,31 @@ class MapinfoDialog(PsmapDialog):
         h = self.mapinfoDict['fontsize'] * 5
         width = self.unitConv.convert(value = w, fromUnit = 'point', toUnit = 'inch')
         height = self.unitConv.convert(value = h, fromUnit = 'point', toUnit = 'inch')
-        self.mapinfoDict['rect'] = Rect(x = x, y = y, width = width, height = height)
+        self.mapinfoDict['rect'] = wx.Rect2D(x = x, y = y, w = width, h = height)
         
-    def getInfo(self):
-        return self.mapinfoDict 
-        
+        if self.new:
+            self.dialogDict[self.id] = self.mapinfoDict
+            self.itemType[self.id] = 'mapinfo'
+            self.parent.objectId.append(self.id)
+            self.new = False
+        return True
         
 class TextDialog(PsmapDialog):
-    def __init__(self, parent, settings, itemType, textId):
-        PsmapDialog.__init__(self, parent = parent, title = "Text settings", settings = settings, itemType = itemType)
+    def __init__(self, parent, id, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Text settings", settings = settings, itemType = itemType)
+        
+        self.new = True
+        if self.id is not None:
+            self.textDict = self.dialogDict[id] 
+            self.new = False
+        else:
+            self.textDict = dict(self.parent.GetDefault('text'))
+            self.id = wx.NewId()        
+        
         self.mapId = find_key(dic = self.itemType, val = 'map')
         if self.mapId is None:
             self.mapId = find_key(dic = self.itemType, val = 'initMap')
-        self.textDict = self.dialogDict[textId]
+
         self.textDict['east'], self.textDict['north'] = PaperMapCoordinates(self, mapId = self.mapId, x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
         
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)     
@@ -2579,6 +2670,7 @@ class TextDialog(PsmapDialog):
             self.effect['borderWidthLabel'].Disable()
             
     def update(self): 
+
         #text
         self.textDict['text'] = self.textCtrl.GetValue()
         if not self.textDict['text']:
@@ -2589,7 +2681,7 @@ class TextDialog(PsmapDialog):
         font = self.font['fontCtrl'].GetSelectedFont()
         self.textDict['font'] = font.GetFaceName()
         self.textDict['fontsize'] = font.GetPointSize()
-        self.textDict['color'] = convertRGB(self.font['colorCtrl'].GetColour())
+        self.textDict['color'] = self.font['colorCtrl'].GetColour().GetAsString(flags=wx.C2S_NAME)
         #effects
         self.textDict['background'] = (convertRGB(self.effect['backgroundColor'].GetColour())
                                         if self.effect['backgroundCtrl'].GetValue() else 'none') 
@@ -2629,16 +2721,15 @@ class TextDialog(PsmapDialog):
         for radio in self.radio:
             if radio.GetValue() == True:
                 self.textDict['ref'] = radio.GetName()
-        return True
-
-    def OnOK(self, event):
-        ok = self.update()
-        if ok:
-            event.Skip()
+                
         
-    def getInfo(self):
-        return self.textDict 
-    
+        if self.new:
+            self.dialogDict[self.id] = self.textDict
+            self.itemType[self.id] = 'text'
+            self.parent.objectId.append(self.id)
+            self.new = False
+
+        return True
     
     
     
@@ -2684,12 +2775,8 @@ def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
         return int(textEasting), int(textNorthing)
     
     
-def AutoAdjust(self, scaleType, raster):
+def AutoAdjust(self, scaleType, raster, rect):
     """!Computes map scale and map frame rectangle to fit region (scale is not fixed)"""
-    
-    mapId = find_key(dic = self.itemType, val = 'map', multiple = False)
-    if not mapId:
-        return None, None
     
     if scaleType == 0 and raster: # automatic, region from raster
         res = grass.read_command("g.region", flags = 'gu', rast = raster)
@@ -2699,10 +2786,10 @@ def AutoAdjust(self, scaleType, raster):
     else:
         return None, None
 
-    rX = self.dialogDict[mapId]['rect'].x
-    rY = self.dialogDict[mapId]['rect'].y
-    rW = self.dialogDict[mapId]['rect'].width
-    rH = self.dialogDict[mapId]['rect'].height
+    rX = rect.x
+    rY = rect.y
+    rW = rect.width
+    rH = rect.height
     if not hasattr(self, 'unitConv'):
         self.unitConv = UnitConversion(self)
     mW = self.unitConv.convert(value = currRegionDict['e'] - currRegionDict['w'], fromUnit = 'meter', toUnit = 'inch')
@@ -2720,13 +2807,12 @@ def AutoAdjust(self, scaleType, raster):
         rHNew = rW*(mH/mW)
         rWNew = rW
 
-    return scale, Rect(x, y, rWNew, rHNew) #inch
+    return scale, wx.Rect2D(x, y, rWNew, rHNew) #inch
 
-def ComputeSetRegion(self):
+def ComputeSetRegion(self, mapDict):
     """!Computes and sets region from current scale, map center coordinates and map rectangle"""
-    mapId = find_key(dic = self.itemType, val = 'map', multiple = False)
-    if mapId and self.dialogDict[mapId]['scaleType'] == 2: # fixed scale
-        mapDict = self.dialogDict[mapId]
+
+    if mapDict['scaleType'] == 2: # fixed scale
         scale = mapDict['scale']
             
         if not hasattr(self, 'unitConv'):
