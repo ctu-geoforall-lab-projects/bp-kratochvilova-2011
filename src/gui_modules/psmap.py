@@ -214,6 +214,7 @@ class PsMapFrame(wx.Frame):
             'margins': wx.Pen(colour = "GREY", width = 1),
             'map': wx.Pen(colour = wx.Color(86, 122, 17), width = 2),
             'rasterLegend': wx.Pen(colour = wx.Color(219, 216, 4), width = 2),
+            'vectorLegend': wx.Pen(colour = wx.Color(219, 216, 4), width = 2),
             'mapinfo': wx.Pen(colour = wx.Color(5, 184, 249), width = 2),
             'box': wx.Pen(colour = 'RED', width = 2, style = wx.SHORT_DASH),
             'select': wx.Pen(colour = 'BLACK', width = 1, style = wx.SHORT_DASH),
@@ -224,6 +225,7 @@ class PsMapFrame(wx.Frame):
             'margins': wx.TRANSPARENT_BRUSH,            
             'map': wx.Brush(wx.Color(151, 214, 90)),
             'rasterLegend': wx.Brush(wx.Color(250, 247, 112)),
+            'vectorLegend': wx.Brush(wx.Color(250, 247, 112)),
             'mapinfo': wx.Brush(wx.Color(127, 222, 252)),
             'box': wx.TRANSPARENT_BRUSH,
             'select':wx.TRANSPARENT_BRUSH,
@@ -305,7 +307,7 @@ class PsMapFrame(wx.Frame):
                                                 nodata = False)
         # vector legend 
         self.defaultDict['vectorLegend'] = dict(vLegend = False, unit = 'inch', where = (page['Left'], page['Top']),
-                                                defaultSize = True, width = 0, cols = 1, font = "Serif", fontsize = 10,
+                                                defaultSize = True, width = 0.4, cols = 1, span = None, font = "Serif", fontsize = 10,
                                                 border = 'none')
                                                 
         #mapinfo
@@ -356,6 +358,7 @@ class PsMapFrame(wx.Frame):
         mapinfoId = find_key(dic = self.itemType, val = 'mapinfo', multiple = False)
         
         rasterLegendId = find_key(dic = self.itemType, val = 'rasterLegend', multiple = False)
+        vectorLegendId = find_key(dic = self.itemType, val = 'vectorLegend', multiple = False)
 
         vectorId = find_key(dic = self.itemType, val = 'vector', multiple = False)
         
@@ -445,8 +448,9 @@ class PsMapFrame(wx.Frame):
         #vector maps
         if vectorId:
             for map in self.dialogDict[vectorId]['list']:
+                print map
                 dic = self.dialogDict[map[2]]
-                vInstruction = "v{0} {1}\n".format(map[1], map[0])
+                vInstruction = "v{1} {0}\n".format(*map)
                 #data selection
                 if map[1] in ('points', 'lines'):
                    vInstruction += "    type {type}\n".format(**dic) 
@@ -502,9 +506,23 @@ class PsMapFrame(wx.Frame):
                         vInstruction += "    cwidth {cwidth}\n".format(**dic)
                     vInstruction += "    style {style}\n".format(**dic)
                     vInstruction += "    linecap {linecap}\n".format(**dic)
+                #position and label in vlegend
+                vInstruction += "    label {4}\n    lpos {3}\n".format(*map)
+                
                 vInstruction += "end"
                 instruction.append(vInstruction)
-                
+            
+            #vlegend
+            if vectorLegendId: 
+                dic = self.dialogDict[vectorLegendId]
+                vLegendInstruction = "vlegend\n"
+                vLegendInstruction += "    where {where[0]} {where[1]}\n".format(**dic)
+                vLegendInstruction += "    font {font}\n    fontsize {fontsize}\n".format(**dic)
+                vLegendInstruction += "    width {width}\n    cols {cols}\n".format(**dic)
+                if dic['span']:
+                    vLegendInstruction += "    span {span}\n".format(**dic)
+                vLegendInstruction += "    border {border}\n".format(**dic)    
+                instruction.append(vLegendInstruction)
         return '\n'.join(instruction) + '\nend' 
 
     def OnPSFile(self, event):
@@ -696,11 +714,11 @@ class PsMapFrame(wx.Frame):
         self.PopupMenu(decmenu)
         decmenu.Destroy()
         
-    def OnAddLegend(self, event):
+    def OnAddLegend(self, event, page = 0):
         idR = find_key(dic = self.itemType, val = 'rasterLegend')
         idV = find_key(dic = self.itemType, val = 'vectorLegend')
 
-        dlg = LegendDialog(self, id = [idR, idV], settings = self.dialogDict, itemType = self.itemType)
+        dlg = LegendDialog(self, id = [idR, idV], settings = self.dialogDict, itemType = self.itemType, page = page)
         dlg.ShowModal()
         
 
@@ -865,7 +883,10 @@ class PsMapFrame(wx.Frame):
                 if find_key(dic = self.itemType, val = 'vector') is None:
                     self.deleteObject(id)
                 elif self.dialogDict[id]['vLegend']:
-                    
+                    drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'], canvasToPaper = False)
+                    self.canvas.Draw( pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]],
+                                        pdc = self.canvas.pdcObj, drawid = id, pdctype = 'rectText', bb = drawRectangle)
+                    self.canvas.RedrawSelectBox(id)
 
                 else:
                     self.deleteObject(id)
@@ -952,6 +973,7 @@ class PsMapBufferedWindow(wx.Window):
         #labels
         self.itemLabels = { 'map': ['MAP FRAME'],
                             'rasterLegend': ['RASTER LEGEND'],
+                            'vectorLegend': ['VECTOR LEGEND'],
                             'mapinfo': ['MAP INFO']}
         
         # define PseudoDC
@@ -1270,9 +1292,11 @@ class PsMapBufferedWindow(wx.Window):
         elif event.LeftDClick():
             if self.mouse['use'] == 'pointer' and self.dragId != -1:
                 itemCall = {    'text':self.parent.OnAddText, 'mapinfo': self.parent.OnAddMapinfo,
-                                'rasterLegend': self.parent.OnAddLegend, 'map': self.parent.OnAddMap}
-                itemArg = {   'text': dict(event = None, id = self.dragId), 'mapinfo': dict(event = None),
-                                'rasterLegend': dict(event = None), 'map': dict(event = None, notebook = True)}
+                                'rasterLegend': self.parent.OnAddLegend, 'vectorLegend': self.parent.OnAddLegend,  
+                                'map': self.parent.OnAddMap}
+                itemArg = { 'text': dict(event = None, id = self.dragId), 'mapinfo': dict(event = None),
+                            'rasterLegend': dict(event = None), 'vectorLegend': dict(event = None, page = 1),
+                            'map': dict(event = None, notebook = True)}
                 type = self.itemType[self.dragId]
                 itemCall[type](**itemArg[type])
 
@@ -1286,10 +1310,7 @@ class PsMapBufferedWindow(wx.Window):
                                                                     canvasToPaper = True)
                         self.RecalculateEN()
                         
-            elif self.itemType[id] == 'rasterLegend':                                               
-                self.dialogDict[id]['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
-                                                            canvasToPaper = True)[:2]
-            elif self.itemType[id] == 'mapinfo':                                               
+            elif self.itemType[id] in ('rasterLegend', 'vectorLegend', 'mapinfo'):
                 self.dialogDict[id]['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
                                                             canvasToPaper = True)[:2]
             elif self.itemType[id] == 'text':
@@ -1381,8 +1402,6 @@ class PsMapBufferedWindow(wx.Window):
                     rot = float(self.dialogDict[id]['rotate']) if self.dialogDict[id]['rotate'] else 0
                     bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
                     self.pdcObj.SetIdBounds(id, bounds)
-                elif type == 'vectorLegend':# only temporary
-                    pass
                 else:
                     self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
                             drawid = id, pdctype = 'rectText', bb = oRect)

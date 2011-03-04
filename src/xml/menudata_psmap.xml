@@ -45,9 +45,9 @@
 		  <handler>OnAddVect</handler>
 		  <shortcut>Ctrl+V</shortcut>
 		</menuitem>
-      	<menuitem>
-		  <label>Raster legend</label>
-		  <help>Add or edit raster legend</help>
+    <menuitem>
+		  <label>Map legend</label>
+		  <help>Add or edit raster and vector legend</help>
 		  <handler>OnAddLegend</handler>
 		  <shortcut>Ctrl+L</shortcut>
 		</menuitem>
