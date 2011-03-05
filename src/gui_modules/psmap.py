@@ -764,8 +764,9 @@ class PsMapFrame(wx.Frame):
         tmpFile.file.flush()
         
         try:
-            bb = map(float, RunCommand('ps.map', read = True, flags = 'b', input = tmpFile.name, 
-                                       output = 'foo').strip().split('=')[1].split(','))
+            bb = map(float, RunCommand('ps.map', read = True,
+                                       flags = 'b',
+                                       input = tmpFile.name).strip().split('=')[1].split(','))
         except IndexError:
             return # some warning here ??
         
