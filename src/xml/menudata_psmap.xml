@@ -34,10 +34,16 @@
       <label>&amp;Insert</label>
       <items>
          <menuitem>
-		  <label>Map window</label>
-		  <help>Add or edit map window</help>
+		  <label>Map frame</label>
+		  <help>Add or edit map frame</help>
 		  <handler>OnAddMap</handler>
 		  <shortcut>Ctrl+M</shortcut>
+		</menuitem>
+		<menuitem>
+		  <label>Raster map</label>
+		  <help>Add or edit raster map</help>
+		  <handler>OnAddRaster</handler>
+		  <shortcut>Ctrl+R</shortcut>
 		</menuitem>
 		<menuitem>
 		  <label>Vector map</label>
@@ -52,7 +58,7 @@
 		  <shortcut>Ctrl+L</shortcut>
 		</menuitem>
 		<menuitem>
-		  <label>Mapinfo</label>
+		  <label>Map info</label>
 		  <help>Add or edit mapinfo</help>
 		  <handler>OnAddMapinfo</handler>
 		  <shortcut>Ctrl+I</shortcut>

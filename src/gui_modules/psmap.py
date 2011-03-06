@@ -66,9 +66,12 @@ Icons['psMap'] = {
     'fullExtent' : MetaIcon(img = iconSet['zoom-extent'],
                             label = _("Full extent"),
                             desc = _("Zoom to full extent")),
+    'addMap'    : MetaIcon(img = iconSet['layer-add'],
+                            label = _("Map frame"),
+                            desc = _("Click and drag to place map rame")),
     'addRast'    : MetaIcon(img = iconSet['layer-raster-add'],
                             label = _("Raster map"),
-                            desc = _("Click and drag to place raster map")),
+                            desc = _("Add raster map")),
     'addVect'   : MetaIcon(img = iconSet['layer-vector-add'],
                            label = _("Vector map"),
                            desc = _("Add vector map")),
@@ -121,6 +124,7 @@ class PsMapToolbar(AbstractToolbar):
         self.zoomOut = wx.NewId()
         self.zoomAll = wx.NewId()
         self.addMap = wx.NewId()
+        self.addRaster = wx.NewId()
         self.addVector = wx.NewId()
         self.dec = wx.NewId()
         self.delete = wx.NewId()
@@ -144,8 +148,10 @@ class PsMapToolbar(AbstractToolbar):
                                      (self.zoomAll, 'full extent', icons['fullExtent'],
                                       self.parent.OnZoomAll),
                                      (None, ),
-                                     (self.addMap, 'add map', icons['addRast'],
+                                     (self.addMap, 'add map', icons['addMap'],
                                       self.parent.OnAddMap, wx.ITEM_CHECK),
+                                     (self.addRaster, 'add raster', icons['addRast'],
+                                      self.parent.OnAddRaster),
                                      (self.addVector, 'add vect', icons['addVect'],
                                       self.parent.OnAddVect),
                                      (self.dec, "overlay", Icons["displayWindow"]["overlay"],
@@ -232,12 +238,18 @@ class PsMapFrame(wx.Frame):
             'resize': wx.BLACK_BRUSH
             } 
           
-        
+        # type of object, key is its id
         self.itemType = {}
+        # information about objects from dialogs, key is their id
         self.dialogDict = {}
+        # list of objects to draw
         self.objectId = []
+        
         self.pageId = (wx.NewId(), wx.NewId()) 
         self.SetDefault(id = self.pageId, type = 'page')
+        #current page of flatnotebook
+        self.currentPage = 0
+        #canvas for draft mode
         self.canvas = PsMapBufferedWindow(parent = self, mouse = self.mouse, pen = self.pen,
                                             brush = self.brush, cursors = self.cursors, settings = self.dialogDict,
                                             itemType = self.itemType, pageId = self.pageId, objectId = self.objectId,
@@ -256,13 +268,8 @@ class PsMapFrame(wx.Frame):
                                                     pen = self.pen, brush = self.brush, preview = True)
         
         
-        # save current region without resolution, set WIND_OVERRIDE
+        # set WIND_OVERRIDE
 
-        self.currentRegionDict = grass.region()
-        del self.currentRegionDict['ewres']
-        del self.currentRegionDict['nsres']
-        del self.currentRegionDict['cells']
-        del self.currentRegionDict['cols']
         grass.use_temp_region()
         
 
@@ -290,12 +297,19 @@ class PsMapFrame(wx.Frame):
         """! Default settings"""
         self.defaultDict = {}
         #page
-        
         self.defaultDict['page'] = dict(Units = 'inch', Format = 'a4', Orientation = 'Portrait',
                                         Width = 8.268, Height = 11.693, Left = 0.5, Right = 0.5, Top = 1, Bottom = 1)
 
-        #map
-        self.defaultDict['map'] = dict(isRaster = True, raster = None, rect = None, scaleType = 0, scale = None, center = None) 
+        #map frame
+        self.defaultDict['map'] = dict( map = None, mapType = None, region = None,
+                                        rect = None, scaleType = 0, scale = None, center = None) 
+        
+        #raster map
+        self.defaultDict['raster'] = dict(isRaster = False, raster = None) 
+        
+        #vector
+        self.defaultDict['vector'] = dict(list = None)
+        
         #rasterLegend
         page = self.defaultDict['page']
         self.defaultDict['rasterLegend'] = dict(rLegend = False, unit = 'inch', rasterDefault = True, raster = None,
@@ -320,8 +334,7 @@ class PsMapFrame(wx.Frame):
                                         hcolor = 'none', hwidth = 1, border = 'none', width = '1', XY = True,
                                         where = (page['Left'], page['Top']), unit = 'inch', rotate = None, 
                                         ref = "center center", xoffset = 0, yoffset = 0, east = None, north = None)
-        #vector
-        self.defaultDict['vector'] = dict(list = None)
+        
         
         return self.defaultDict
     
@@ -342,7 +355,7 @@ class PsMapFrame(wx.Frame):
         self.book.AddPage(self.canvas, "Draft mode")
         self.book.AddPage(self.previewCanvas, "Preview")
         self.book.SetSelection(0)
-        self.currentPage = 0
+        
 ##        self.book.EnableTab(1, enabled = False)
         mainSizer.Add(self.book,1, wx.EXPAND)
         
@@ -354,13 +367,13 @@ class PsMapFrame(wx.Frame):
         """!Creates list of mapping instructions"""
         instruction = []
         mapId = find_key(dic = self.itemType, val = 'map', multiple = False)
-        
+        rasterId = find_key(dic = self.itemType, val = 'raster', multiple = False)
+        vectorId = find_key(dic = self.itemType, val = 'vector', multiple = False)
         mapinfoId = find_key(dic = self.itemType, val = 'mapinfo', multiple = False)
         
         rasterLegendId = find_key(dic = self.itemType, val = 'rasterLegend', multiple = False)
         vectorLegendId = find_key(dic = self.itemType, val = 'vectorLegend', multiple = False)
-
-        vectorId = find_key(dic = self.itemType, val = 'vector', multiple = False)
+        
         
         #change region
         if mapId and self.dialogDict[mapId]['scaleType'] == 2: #fixed scale
@@ -378,8 +391,8 @@ class PsMapFrame(wx.Frame):
         instruction.append(paperInstruction)
         # raster
         rasterInstruction = ''
-        if mapId and self.dialogDict[mapId]['isRaster']:
-            rasterInstruction = "raster {raster}".format(**self.dialogDict[mapId])
+        if rasterId and self.dialogDict[rasterId]['isRaster']:
+            rasterInstruction = "raster {raster}".format(**self.dialogDict[rasterId])
         instruction.append(rasterInstruction)
         #maploc
         if mapId and self.dialogDict[mapId]['rect'] is not None:
@@ -575,10 +588,10 @@ class PsMapFrame(wx.Frame):
                 s = '.' + s
             suffix.append(s)
         
-        mapId = find_key(dic = self.itemType, val = 'map')
+        rasterId = find_key(dic = self.itemType, val = 'raster')
 
-        if mapId and self.dialogDict[mapId]['raster']:
-            mapName = self.dialogDict[mapId]['raster'].split('@')[0] + suffix[0]
+        if rasterId and self.dialogDict[rasterId]['raster']:
+            mapName = self.dialogDict[rasterId]['raster'].split('@')[0] + suffix[0]
         else:
             mapName = ''
             
@@ -647,6 +660,7 @@ class PsMapFrame(wx.Frame):
         self.mouse["use"] = self.mouseOld 
         self.canvas.SetCursor(self.cursorOld)  if self.currentPage == 0 else self.previewCanvas.SetCursor(self.cursorOld)
         
+        
     def OnAddMap(self, event, notebook = False):
         if event is not None:
             if event.GetId() != self.toolbar.action['id']:
@@ -656,14 +670,14 @@ class PsMapFrame(wx.Frame):
             self.toolbar.OnTool(event)
         
         mapId = find_key(dic = self.itemType, val = 'map')
-        id = [mapId, None]
+        id = [mapId, None, None]
         if notebook:
             vectorId = find_key(self.itemType, 'vector')
             id[1] = vectorId
         
         if mapId: # map exists
             dlg = MapDialog(parent = self, id  = id, settings = self.dialogDict, itemType = self.itemType,
-                            region = self.currentRegionDict, notebook = notebook)
+                            notebook = notebook)
             dlg.ShowModal()  
 
             self.canvas.SetCursor(self.cursorOld)  
@@ -677,7 +691,20 @@ class PsMapFrame(wx.Frame):
                 self.book.SetSelection(0)
                 self.currentPage = 0
                 
+    def OnAddRaster(self, event):
+        id = find_key(self.itemType, 'raster')
+        mapId = find_key(self.itemType, 'map', multiple = False)
+        if not id:
+            if not mapId:
+                wx.MessageBox(message = _("Please, create map frame first."),
+                                    caption = _('No map frame'), style = wx.OK|wx.ICON_ERROR)
+                return
             
+        dlg = RasterDialog(self, id = id, settings = self.dialogDict, itemType = self.itemType)
+        dlg.ShowModal()
+        
+        
+                
     def OnAddVect(self, event):
         id = find_key(self.itemType, 'vector')
         mapId = find_key(self.itemType, 'map', multiple = False)
@@ -856,10 +883,14 @@ class PsMapFrame(wx.Frame):
                                             coords = coords, bounds = bounds)
                 self.canvas.RedrawSelectBox(id)
                 
-            if itype in ('map', 'vector'):
-
-                if itype == 'vector':
-                    id = find_key(dic = self.itemType, val = 'map')
+            if itype in ('map', 'vector', 'raster'):
+                id = find_key(dic = self.itemType, val = 'map')
+                    
+                if itype == 'raster':#set resolution
+                    resol = RunCommand('r.info', raed = True, flags = 's', map = self.dialogDict[id]['raster'])
+                    resol = grass.parse_key_val(resol, val_type = float)
+                    RunCommand('g.region', nsres = resol['nsres'], ewres = resol['ewres'])
+                    
                 rectCanvas = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'],
                                                                     canvasToPaper = False)
                 self.canvas.RecalculateEN()
@@ -895,6 +926,7 @@ class PsMapFrame(wx.Frame):
         """!Flatnotebook page has changed"""
         self.currentPage = self.book.GetPageIndex(self.book.GetCurrentPage())
         
+                
     def OnPageChanging(self, event):
         """!Flatnotebook page is changing"""
         if self.currentPage == 0 and self.mouse['use'] == 'addMap':
@@ -1216,14 +1248,14 @@ class PsMapBufferedWindow(wx.Window):
                 bounds = self.pdcObj.GetIdBounds(self.dragId)
                 type = self.itemType[self.dragId]
                 self.mouse['end'] = event.GetPosition()
-                diffX = self.mouse['end'][0] - self.mouse['begin'][0]
-                diffY = self.mouse['end'][1] - self.mouse['begin'][1]
+                diffX = self.mouse['end'][0] - self.begin[0]
+                diffY = self.mouse['end'][1] - self.begin[1]
                 bounds.Inflate(diffX, diffY)
                 
                 self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj, drawid = self.dragId,
                             pdctype = 'rectText', bb = bounds)
                 self.RedrawSelectBox(self.dragId)
-                self.mouse['begin'] = event.GetPosition()
+                self.begin = event.GetPosition()
                 
         elif event.LeftUp():
             # zoom in, zoom out
@@ -1240,8 +1272,8 @@ class PsMapBufferedWindow(wx.Window):
                 rectTmp = self.pdcTmp.GetIdBounds(self.idZoomBoxTmp)
                 rectPaper = self.CanvasPaperCoordinates(rect = rectTmp, canvasToPaper = True)                
                 
-                dlg = MapDialog(parent = self.parent, id = [None, None], settings = self.dialogDict, 
-                                        itemType = self.itemType, region = self.parent.currentRegionDict, rect = rectPaper)
+                dlg = MapDialog(parent = self.parent, id = [None, None, None], settings = self.dialogDict, 
+                                        itemType = self.itemType, rect = rectPaper)
                 
                 if dlg.ShowModal() == wx.ID_OK:
                     #redraw objects to lower map to the bottom
@@ -1268,8 +1300,16 @@ class PsMapBufferedWindow(wx.Window):
                     self.dialogDict[mapId]['rect'] = newRectPaper
                     
                     if self.dialogDict[mapId]['scaleType'] in (0,1):
-                        scale, rect = AutoAdjust(self, scaleType = self.dialogDict[mapId]['scaleType'],
-                                        raster = self.dialogDict[mapId]['raster'], rect = self.dialogDict[mapId]['rect'])
+                        if self.dialogDict[mapId]['scaleType'] == 0:
+                            
+                            scale, rect = AutoAdjust(self, scaleType = 0,
+                                                        map = self.dialogDict[mapId]['map'],
+                                                        mapType = self.dialogDict[mapId]['mapType'], 
+                                                        rect = self.dialogDict[mapId]['rect'])
+                        else:
+                            scale, rect = AutoAdjust(self, scaleType = 1,
+                                                        region = self.dialogDict[mapId]['region'],
+                                                        rect = self.dialogDict[mapId]['rect'])
                         self.dialogDict[mapId]['rect'] = rect
                         self.dialogDict[mapId]['scale'] = scale
                         
@@ -1286,6 +1326,7 @@ class PsMapBufferedWindow(wx.Window):
             # recalculate the position of objects after dragging    
             if self.mouse['use'] in ('pointer', 'resize') and self.dragId != -1:
                 if self.mouse['begin'] != event.GetPosition(): #for double click
+                    
                     self.RecalculatePosition(ids = [self.dragId])
 
         # double click launches dialogs
@@ -1309,6 +1350,7 @@ class PsMapBufferedWindow(wx.Window):
                         self.dialogDict[id]['rect'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
                                                                     canvasToPaper = True)
                         self.RecalculateEN()
+                        
                         
             elif self.itemType[id] in ('rasterLegend', 'vectorLegend', 'mapinfo'):
                 self.dialogDict[id]['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
@@ -1548,8 +1590,12 @@ class PsMapBufferedWindow(wx.Window):
         """!Updates map frame label"""
         mapId = find_key(dic = self.itemType, val = 'map', multiple = False)
         vectorId = find_key(dic = self.itemType, val = 'vector', multiple = False)
-        raster = self.dialogDict[mapId]['raster'].split('@')[0] \
-                            if self.dialogDict[mapId]['raster'] and self.dialogDict[mapId]['isRaster'] else 'None'
+        rasterId = find_key(dic = self.itemType, val = 'raster', multiple = False)
+        raster = 'None'
+        if rasterId:
+            raster = self.dialogDict[rasterId]['raster'].split('@')[0]
+##        raster = self.dialogDict[rasterId]['raster'].split('@')[0] \
+##                            if self.dialogDict[mapId]['raster'] and self.dialogDict[mapId]['isRaster'] else 'None'
                             
         self.itemLabels['map'] = self.itemLabels['map'][0:1]
         self.itemLabels['map'].append("raster: " + raster)
@@ -1560,7 +1606,10 @@ class PsMapBufferedWindow(wx.Window):
     def OnSize(self, event):
         """!Init image size to match window size
         """
-        self.ZoomAll()
+        # not zoom all when notebook page is changed
+        if self.preview and self.parent.currentPage == 1 or not self.preview and self.parent.currentPage == 0:
+            self.ZoomAll()
+        self.OnIdle(None)
         event.Skip()
         
     def OnIdle(self, event):
