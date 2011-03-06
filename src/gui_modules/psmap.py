@@ -38,12 +38,12 @@ else:
                                  'gui_modules'))
 import globalvar
 import menu
-from   goutput    import CmdThread, GrassCmd
+from   goutput    import CmdThread, EVT_CMD_DONE
 from   menudata   import MenuData, etcwxdir
 from   gselect    import Select
 from   toolbars   import AbstractToolbar
 from   icon       import Icons, MetaIcon, iconSet
-from   gcmd       import RunCommand, Command
+from   gcmd       import RunCommand, GError
 from grass.script import core as grass
 from psmap_dialogs import *
 
@@ -265,16 +265,11 @@ class PsMapFrame(wx.Frame):
         del self.currentRegionDict['cols']
         grass.use_temp_region()
         
-
-##        #
-##        # create queues
-##        #
-##        self.requestQ = Queue.Queue()
-##        self.resultQ = Queue.Queue()
-##        #
-##        # thread
-##        #
-##        self.cmdThread = CmdThread(self, self.requestQ, self.resultQ)
+        # create queues
+        self.requestQ = Queue.Queue()
+        self.resultQ = Queue.Queue()
+        # thread
+        self.cmdThread = CmdThread(self, self.requestQ, self.resultQ)
         
         self._layout()
         self.SetMinSize(wx.Size(700, 600))
@@ -282,9 +277,7 @@ class PsMapFrame(wx.Frame):
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-
-
-        
+        self.Bind(EVT_CMD_DONE, self.OnCmdDone)
         
     def DefaultData(self):
         """! Default settings"""
@@ -448,7 +441,6 @@ class PsMapFrame(wx.Frame):
         #vector maps
         if vectorId:
             for map in self.dialogDict[vectorId]['list']:
-                print map
                 dic = self.dialogDict[map[2]]
                 vInstruction = "v{1} {0}\n".format(*map)
                 #data selection
@@ -537,36 +529,46 @@ class PsMapFrame(wx.Frame):
         self.currentPage = 1
 
         
-    def PSFile(self, filename = False):
+    def PSFile(self, filename = None):
         """!Create temporary instructions file and run ps.map with output = filename"""
-        instrFile = tempfile.NamedTemporaryFile(mode = 'w')
-        instrFile.file.write(self.InstructionFile())
-        instrFile.file.flush()
+        instrFile = grass.tempfile()
+        instrFileFd = open(instrFile, mode = 'w')
+        instrFileFd.write(self.InstructionFile())
+        instrFileFd.flush()
+        instrFileFd.close()
         
-        psFile = tempfile.NamedTemporaryFile(mode = 'w')
         if not filename:
-            filename = psFile.name
-            
-        flags = ''
-        if os.path.splitext(filename)[1] == '.eps':
-            flags = flags + 'e'
-        if self.dialogDict[self.pageId]['Orientation'] == 'Landscape':
-            flags = flags + 'r'
-            
-        RunCommand('ps.map', flags = flags, read = False, 
-                        input = instrFile.name, output = filename)
+            filename = grass.tempfile()
         
-        instrFile.close()
-                        
+        cmd = ['ps.map', '--overwrite']
+        if os.path.splitext(filename)[1] == '.eps':
+            cmd.append('-e')
+        if self.dialogDict[self.pageId]['Orientation'] == 'Landscape':
+            cmd.append('-r')
+        cmd.append('input=%s' % instrFile)
+        cmd.append('output=%s' % filename)
+        self.SetStatusText(_('Generating preview...'), 0)
+        self.cmdThread.RunCmd(cmd, userData = {'instrFile' : instrFile, 'filename' : filename })
+        
+    def OnCmdDone(self, event):
+        """!ps.map process finished"""
+        if event.returncode != 0:
+            return # @todo: error message 
+        
         try:
-            Image.open(filename).save(self.imgName)
-        except IOError:
-            return
+            Image.open(event.userData['filename']).save(self.imgName)
+        except IOError, e:
+            GError(parent = self,
+                   message = _("Unable to generate preview. %s") % e)
+        
         rect = self.previewCanvas.ImageRect()
         self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
-
         self.previewCanvas.DrawImage(rect = rect)
-                        
+        self.SetStatusText(_('Preview generated'), 0)
+
+        grass.try_remove(event.userData['instrFile'])
+        grass.try_remove(event.userData['filename'])
+        
     def getFile(self, wildcard):
         suffix = []
         for filter in wildcard.split('|')[1::2]:
@@ -958,7 +960,6 @@ class PsMapBufferedWindow(wx.Window):
         # indicates whether or not a resize event has taken place
         self.resize = False 
         
-
         self.mouse = kwargs['mouse']
         self.cursors = kwargs['cursors']
         self.preview = kwargs['preview']
