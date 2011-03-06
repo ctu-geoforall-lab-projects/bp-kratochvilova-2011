@@ -789,9 +789,14 @@ class PsMapFrame(wx.Frame):
         tmpFile = tempfile.NamedTemporaryFile(mode = 'w', delete = True)
         tmpFile.file.write(self.InstructionFile())
         tmpFile.file.flush()
-
-        bb = map(float, RunCommand('ps.map', read = True, flags = 'b', input = tmpFile.name, 
-                                   output = 'foo').strip().split('=')[1].split(','))
+        
+        try:
+            bb = map(float, RunCommand('ps.map', read = True,
+                                       flags = 'b',
+                                       input = tmpFile.name).strip().split('=')[1].split(','))
+        except IndexError:
+            return # some warning here ??
+        
         mapInitRect = rect = wx.Rect2D(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])    
 
         # file is not deleted
