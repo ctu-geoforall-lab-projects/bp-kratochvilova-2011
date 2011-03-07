@@ -759,7 +759,7 @@ class MapFramePanel(wx.Panel):
                                                
                 mapFrameDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapFrameDict['rect']
                 mapFrameDict['scale'] = self.scale[0]
-                print mapFrameDict['scale']
+                
                 mapFrameDict['center'] = self.center[scaleType]
                 # set region
                 if self.mapType == 'raster':
@@ -810,7 +810,7 @@ class MapFramePanel(wx.Panel):
             mapFrameDict['center'] = centerE, centerN
         
             ComputeSetRegion(self, mapDict = mapFrameDict)
-        print  mapFrameDict['scale']
+        
         self.dialogDict[self.id] = mapFrameDict
         self.itemType[self.id] = 'map'
         if self.id not in self.mapDialog.parent.objectId:
@@ -1010,7 +1010,7 @@ class VectorPanel(wx.Panel):
             if self.vectorType.IsItemEnabled(item):
                 self.vectorType.SetSelection(item)
                 break
-        print 'tady'
+        
         self.AddVector.SetFocus()        
             
     def OnAddVector(self, event):
@@ -1076,7 +1076,7 @@ class VectorPanel(wx.Panel):
             dlg = VPropertiesDialog(self, id = id, settings = self.dialogDict, itemType = self.itemType,
                                     vectors = self.vectorList, tmpSettings = self.tmpDialogDict[id])
             dlg.ShowModal()
-            print self.parent.FindWindowById(wx.ID_OK)
+            
             self.parent.FindWindowById(wx.ID_OK).SetFocus()
            
     def DefaultData(self, dataType):
