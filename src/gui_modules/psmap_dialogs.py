@@ -3158,7 +3158,14 @@ def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
     cornerEasting, cornerNorthing = currRegionDict['w'], currRegionDict['n']
     xMap = self.dialogDict[mapId]['rect'][0]
     yMap = self.dialogDict[mapId]['rect'][1]
-    currScale = float(self.dialogDict[mapId]['scale'])
+    widthMap = self.dialogDict[mapId]['rect'][2] * 0.0254 # to meter
+    heightMap = self.dialogDict[mapId]['rect'][3] * 0.0254
+    xScale = widthMap / abs(currRegionDict['w'] - currRegionDict['e'])
+    yScale = heightMap / abs(currRegionDict['n'] - currRegionDict['s'])
+    currScale = (xScale + yScale) / 2
+
+##    currScale = float(self.dialogDict[mapId]['scale'])
+##    print currScale
 
     
     if not paperToMap:
@@ -3202,7 +3209,9 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
     rH = rect.height
     if not hasattr(self, 'unitConv'):
         self.unitConv = UnitConversion(self)
-    toM = float(projInfo()['meters'])
+    toM = 1
+    if projInfo()['proj'] != 'xy':
+        toM = float(projInfo()['meters'])
 
     mW = self.unitConv.convert(value = (currRegionDict['e'] - currRegionDict['w']) * toM, fromUnit = 'meter', toUnit = 'inch')
     mH = self.unitConv.convert(value = (currRegionDict['n'] - currRegionDict['s']) * toM, fromUnit = 'meter', toUnit = 'inch')
@@ -3230,9 +3239,12 @@ def ComputeSetRegion(self, mapDict):
         if not hasattr(self, 'unitConv'):
             self.unitConv = UnitConversion(self)
         
+        fromM = 1
+        if projInfo()['proj'] != 'xy':
+            fromM = float(projInfo()['meters'])
         rectHalfInch = ( mapDict['rect'].width/2, mapDict['rect'].height/2)
-        rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')/scale,
-                                self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')/scale) 
+        rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')/ fromM /scale,
+                                self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')/ fromM /scale) 
 
         centerE = mapDict['center'][0]
         centerN = mapDict['center'][1]
@@ -3243,7 +3255,7 @@ def ComputeSetRegion(self, mapDict):
                            s = int(centerN - rectHalfMeter[1]),
                            e = int(centerE + rectHalfMeter[0]),
                            w = int(centerE - rectHalfMeter[0]),
-                           rast = mapDict['raster'])
+                           rast = self.dialogDict[rasterId]['raster'])
         else:
             RunCommand('g.region', n = int(centerN + rectHalfMeter[1]),
                            s = int(centerN - rectHalfMeter[1]),

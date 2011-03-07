@@ -211,7 +211,6 @@ class PsMapFrame(wx.Frame):
             "default" : wx.StockCursor(wx.CURSOR_ARROW),
             "cross"   : wx.StockCursor(wx.CURSOR_CROSS),
             "hand"    : wx.StockCursor(wx.CURSOR_HAND),
-            #"pencil"  : wx.StockCursor(wx.CURSOR_PENCIL),
             "sizenwse": wx.StockCursor(wx.CURSOR_SIZENWSE)
             }
         # pen and brush
@@ -538,8 +537,7 @@ class PsMapFrame(wx.Frame):
     def OnPreview(self, event):
         """!Run ps.map and show result"""
         self.PSFile()
-        self.book.SetSelection(1)
-        self.currentPage = 1
+
 
         
     def PSFile(self, filename = None):
@@ -550,7 +548,9 @@ class PsMapFrame(wx.Frame):
         instrFileFd.flush()
         instrFileFd.close()
         
+        temp = False
         if not filename:
+            temp = True
             filename = grass.tempfile()
         
         cmd = ['ps.map', '--overwrite']
@@ -561,11 +561,15 @@ class PsMapFrame(wx.Frame):
         cmd.append('input=%s' % instrFile)
         cmd.append('output=%s' % filename)
         self.SetStatusText(_('Generating preview...'), 0)
-        self.cmdThread.RunCmd(cmd, userData = {'instrFile' : instrFile, 'filename' : filename })
+         
+        self.cmdThread.RunCmd(cmd, userData = {'instrFile' : instrFile, 'filename' : filename, 'temp' : temp })
         
     def OnCmdDone(self, event):
         """!ps.map process finished"""
+        
         if event.returncode != 0:
+            GError(parent = self,
+                   message = _("Ps.map exited with return code %s") % event.returncode)
             return # @todo: error message 
         
         try:
@@ -577,10 +581,14 @@ class PsMapFrame(wx.Frame):
         rect = self.previewCanvas.ImageRect()
         self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
         self.previewCanvas.DrawImage(rect = rect)
+        
         self.SetStatusText(_('Preview generated'), 0)
+        self.book.SetSelection(1)
+        self.currentPage = 1
 
         grass.try_remove(event.userData['instrFile'])
-        grass.try_remove(event.userData['filename'])
+        if event.userData['temp']:
+            grass.try_remove(event.userData['filename'])
         
     def getFile(self, wildcard):
         suffix = []
@@ -790,19 +798,21 @@ class PsMapFrame(wx.Frame):
     
     def getInitMap(self):
         """!Create default map frame when no map is selected, needed for coordinates in map units"""
-        tmpFile = tempfile.NamedTemporaryFile(mode = 'w', delete = True)
-        tmpFile.file.write(self.InstructionFile())
-        tmpFile.file.flush()
+        instrFile = grass.tempfile()
+        instrFileFd = open(instrFile, mode = 'w')
+        instrFileFd.write(self.InstructionFile())
+        instrFileFd.flush()
+        instrFileFd.close()
         
         try:
             bb = map(float, RunCommand('ps.map', read = True,
                                        flags = 'b',
-                                       input = tmpFile.name).strip().split('=')[1].split(','))
+                                       input = instrFile).strip().split('=')[1].split(','))
         except IndexError:
             GError(parent = self,
                    message = _("Unable to run ps.map -b "))
             return # some warning here ??
-        
+        grass.try_remove(instrFile)
         mapInitRect = rect = wx.Rect2D(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])    
 
         # file is not deleted
