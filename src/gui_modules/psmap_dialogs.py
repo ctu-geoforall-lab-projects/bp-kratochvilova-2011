@@ -552,8 +552,8 @@ class MapFramePanel(wx.Panel):
 
         #scale options
         frameText = wx.StaticText(self, id = wx.ID_ANY, label = _("Map frame options:"))
-        scaleChoices = [_("fit frame to selected map"),
-                        _("fit frame to saved region"),
+        scaleChoices = [_("fit frame to match selected map"),
+                        _("fit frame to match saved region"),
                         _("fixed scale and map center")]
         self.scaleChoice = wx.Choice(self, id = wx.ID_ANY, choices = scaleChoices)
         
@@ -612,7 +612,7 @@ class MapFramePanel(wx.Panel):
         self.centerSizer.Add(self.scaleTextCtrl, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         
         sizerC.Add(self.centerSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
-        gridBagSizer.Add(sizerC, pos = (4, 0), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(sizerC, pos = (3, 0), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
         
         sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
@@ -686,19 +686,22 @@ class MapFramePanel(wx.Panel):
                 # set map selection
                 self.rasterTypeRadio.Show()
                 self.vectorTypeRadio.Show()
-                self.staticBox.SetLabel(_("Map selection"))
+                self.staticBox.SetLabel(" {0} ".format(_("Map selection")))
                 type = 'raster' if self.rasterTypeRadio.GetValue() else 'vector'
                 self.select.SetElementList(type = type)
                 self.mapText.SetLabel(self.mapOrRegionText[0])
+                self.select.SetToolTipString(_("Region is set to match this map,\nraster or vector map must be added later"))
                     
             if scaleType == 1:
                 # set region selection
                 self.rasterTypeRadio.Hide()
                 self.vectorTypeRadio.Hide()
-                self.staticBox.SetLabel(_("Region selection"))
+                self.staticBox.SetLabel(" {0} ".format(_("Region selection")))
                 type = 'region'
                 self.select.SetElementList(type = type)
                 self.mapText.SetLabel(self.mapOrRegionText[1])
+                self.select.SetToolTipString(_(""))
+                
             for each in self.mapSizer.GetChildren():
                 each.GetWindow().Enable()
             for each in self.centerSizer.GetChildren():
@@ -860,8 +863,11 @@ class RasterPanel(wx.Panel):
         else:
             self.rasterYesRadio.SetValue(False)
             self.rasterNoRadio.SetValue(True)
-            self.rasterSelect.SetValue('')# raster map from map frame dialog if possible
-                            
+            mapId = find_key(dic = self.itemType, val = 'map')
+            if self.dialogDict[mapId]['map'] and self.dialogDict[mapId]['mapType'] == 'raster':
+                self.rasterSelect.SetValue(self.dialogDict[mapId]['map'])# raster map from map frame dialog if possible
+            else:
+                self.rasterSelect.SetValue('')                
         gridBagSizer.Add(self.rasterNoRadio, pos = (0, 0), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)            
         gridBagSizer.Add(self.rasterYesRadio, pos = (1, 0),  flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(self.rasterSelect, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
@@ -1893,6 +1899,7 @@ class LegendDialog(PsmapDialog):
         
         self.mapId = find_key(dic = self.itemType, val = 'map')
         self.vectorId = find_key(dic = self.itemType, val = 'vector')
+        self.rasterId = find_key(dic = self.itemType, val = 'raster')
 
         self.pageId = find_key(dic = self.itemType, val = 'paper'), find_key(dic = self.itemType, val = 'margins')
         #raster legend
@@ -1908,7 +1915,7 @@ class LegendDialog(PsmapDialog):
             self.vLegendDict = dict(self.parent.GetDefault('vectorLegend'))
             self.id[1] = wx.NewId()
         
-        self.currRaster = self.dialogDict[self.mapId]['raster'] if self.mapId else None
+        self.currRaster = self.dialogDict[self.rasterId]['raster'] if self.rasterId else None
         
         #notebook
         self.notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
@@ -1993,8 +2000,8 @@ class LegendDialog(PsmapDialog):
         self.ticks = wx.CheckBox(panel, id = wx.ID_ANY, label = _("draw ticks across color table"))
         self.ticks.SetValue(True if self.rLegendDict['tickbar'] == 'y' else False)
         # range
-        if self.mapId and self.dialogDict[self.mapId]['raster']:
-            range = RunCommand('r.info', flags = 'r', read = True, map = self.dialogDict[self.mapId]['raster']).strip().split('\n')
+        if self.rasterId and self.dialogDict[self.rasterId]['raster']:
+            range = RunCommand('r.info', flags = 'r', read = True, map = self.dialogDict[self.rasterId]['raster']).strip().split('\n')
             self.minim, self.maxim = range[0].split('=')[1], range[1].split('=')[1]
         else:
             self.minim, self.maxim = 0,0

@@ -565,15 +565,15 @@ class PsMapFrame(wx.Frame):
             flags = flags + 'e'
         if self.dialogDict[self.pageId]['Orientation'] == 'Landscape':
             flags = flags + 'r'
-            
-        RunCommand('ps.map', flags = flags, read = False, 
-                        input = instrFile.name, output = filename)
+ 
+        RunCommand('ps.map', flags = flags, read = False,  getErrorMsg = True, 
+                        overwrite = True, input = instrFile.name, output = filename)
         
-        instrFile.close()
-                        
+               
         try:
             Image.open(filename).save(self.imgName)
         except IOError:
+            print 'problem'
             return
         rect = self.previewCanvas.ImageRect()
         self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
@@ -795,6 +795,7 @@ class PsMapFrame(wx.Frame):
                                        flags = 'b',
                                        input = tmpFile.name).strip().split('=')[1].split(','))
         except IndexError:
+            print 'error'
             return # some warning here ??
         
         mapInitRect = rect = wx.Rect2D(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])    
@@ -889,13 +890,13 @@ class PsMapFrame(wx.Frame):
                 self.canvas.RedrawSelectBox(id)
                 
             if itype in ('map', 'vector', 'raster'):
-                id = find_key(dic = self.itemType, val = 'map')
                     
                 if itype == 'raster':#set resolution
-                    resol = RunCommand('r.info', raed = True, flags = 's', map = self.dialogDict[id]['raster'])
+                    resol = RunCommand('r.info', read = True, flags = 's', map = self.dialogDict[id]['raster'])
                     resol = grass.parse_key_val(resol, val_type = float)
                     RunCommand('g.region', nsres = resol['nsres'], ewres = resol['ewres'])
-                    
+                id = find_key(dic = self.itemType, val = 'map') 
+                   
                 rectCanvas = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'],
                                                                     canvasToPaper = False)
                 self.canvas.RecalculateEN()
