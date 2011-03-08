@@ -54,16 +54,31 @@ class UnitConversion():
     def __init__(self, parent):
         self.parent = parent
         ppi = wx.PaintDC(self.parent).GetPPI()
-        self._unitsPage = {'inch':1.0,
-                            'point':72.0,
-                            'centimeter':2.54,
-                            'milimeter':25.4}
+        self._unitsPage = { 'inch' : 1.0,
+                            'point' : 72.0,
+                            'centimeter' : 2.54,
+                            'milimeter' : 25.4}
+        self._unitsMap = {  'meters' : 0.0254,
+                            'kilometers' : 2.54e-5,
+                            'feet' : 1./12,
+                            'miles' : 1./63360,
+                            'nautmiles' : 1/72913.44}
+
         self._units = { 'pixel': ppi[0],
-                        'meter': 0.0254}
+                        'meter': 0.0254,
+                        'degrees' : 0.0254  #like 1 meter, incorrect
+                        }
         self._units.update(self._unitsPage)
+        self._units.update(self._unitsMap)
 
     def getPageUnits(self):
-        return self._unitsPage.keys()
+        return sorted(self._unitsPage.keys())
+    
+    def getMapUnits(self):
+        return sorted(self._unitsMap.keys())
+    
+    def getAllUnits(self):
+        return sorted(self._units.keys())
     
     def convert(self, value, fromUnit = None, toUnit = None):
         return float(value)/self._units[fromUnit]*self._units[toUnit]
@@ -2775,7 +2790,190 @@ class MapinfoDialog(PsmapDialog):
             self.parent.objectId.append(self.id)
             
         return True
+      
+    
+class ScalebarDialog(PsmapDialog):
+    """!Dialog for scale bar"""
+    def __init__(self, parent, id, settings, itemType):
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Scale bar settings", settings = settings, itemType = itemType)
+        if self.id is not None:
+            self.scalebarDict = self.dialogDict[id] 
+        else:
+            self.scalebarDict = dict(self.parent.GetDefault('scalebar'))
+            self.id = wx.NewId()
+            
+        self.panel = self._scalebarPanel()
         
+        self._layout(self.panel)
+        #self.OnIsBackground(None)
+        self.mapUnit = projInfo()['units']
+        if self.mapUnit not in self.unitConv.getAllUnits():
+            GError(parent = self,
+                   message = _("Units %s of current projection are not supported,\n meters will be used") %s )
+            self.mapUnit = 'meters'
+            
+    def _scalebarPanel(self):
+        panel = wx.Panel(parent = self, id = wx.ID_ANY, style = wx.TAB_TRAVERSAL)
+        border = wx.BoxSizer(wx.VERTICAL)
+        #        
+        # position
+        #
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Position")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(1)
+        
+        self.AddUnits(parent = panel, dialogDict = self.scalebarDict)
+        self.AddPosition(parent = panel, dialogDict = self.scalebarDict)
+        
+        if self.scalebarDict['rect']: # set position, ref point is center and not left top corner
+            
+            x = self.unitConv.convert(value = self.scalebarDict['where'][0] - self.scalebarDict['rect'].Get()[2]/2,
+                                                    fromUnit = 'inch', toUnit = self.scalebarDict['unit'])
+            y = self.unitConv.convert(value = self.scalebarDict['where'][1] - self.scalebarDict['rect'].Get()[3]/2,
+                                                    fromUnit = 'inch', toUnit = self.scalebarDict['unit'])
+            panel.position['xCtrl'].SetValue("{0:5.3f}".format(x))
+            panel.position['yCtrl'].SetValue("{0:5.3f}".format(y))
+        
+        gridBagSizer.Add(panel.units['unitsLabel'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.units['unitsCtrl'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.position['xLabel'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.position['xCtrl'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.position['yLabel'], pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.position['yCtrl'], pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.position['comment'], pos = (3,0), span = (1,2), flag =wx.ALIGN_BOTTOM, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        #
+        # size
+        #
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Size")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        gridBagSizer.AddGrowableCol(1)
+        
+        lengthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Length:"))
+        heightText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Height:"))
+        
+        self.lengthTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, validator = TCValidator('DIGIT_ONLY'))
+        self.lengthTextCtrl.SetToolTipString(_("Scalebar length is given in map units"))
+        
+        self.heightTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, validator = TCValidator('DIGIT_ONLY'))
+        self.heightTextCtrl.SetToolTipString(_("Scalebar height is real height on paper"))
+        
+        choices = ['auto'] + self.unitConv.getMapUnits()
+        self.unitsLength = wx.Choice(panel, id = wx.ID_ANY, choices = choices)
+        choices = self.unitConv.getPageUnits()
+        self.unitsHeight = wx.Choice(panel, id = wx.ID_ANY, choices = choices)
+        
+        # set values
+        self.unitsLength.SetStringSelection(self.scalebarDict['unitsLength'])
+        self.unitsHeight.SetStringSelection(self.scalebarDict['unitsHeight'])
+        if self.scalebarDict['length']:
+            self.lengthTextCtrl.SetValue(str(self.scalebarDict['length']))
+        else: #estimate default
+            reg = grass.region()
+            w = int((reg['e'] - reg['w'])/4)
+            w = round(w, -len(str(w)) + 2) #12345 -> 12000
+            self.lengthTextCtrl.SetValue(str(w))
+            
+        h = self.unitConv.convert(value = self.scalebarDict['height'], fromUnit = 'inch',
+                                                toUnit =  self.scalebarDict['unitsHeight']) 
+        self.heightTextCtrl.SetValue(str(h))
+        
+        gridBagSizer.Add(lengthText, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.lengthTextCtrl, pos = (0, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.unitsLength, pos = (0, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(heightText, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.heightTextCtrl, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.unitsHeight, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+
+        
+        panel.SetSizer(border)
+        
+##        self.Bind(wx.EVT_CHECKBOX, self.OnIsBackground, self.colors['backgroundCtrl'])
+        
+        return panel
+    
+##    def OnIsBackground(self, event):
+##        if self.colors['backgroundCtrl'].GetValue():
+##            self.colors['backgroundColor'].Enable()
+##        else:
+##            self.colors['backgroundColor'].Disable()
+##                        
+                           
+                    
+    def update(self):
+
+        #units
+        currUnit = self.panel.units['unitsCtrl'].GetStringSelection()
+        self.scalebarDict['unit'] = currUnit
+        # position
+        x = self.panel.position['xCtrl'].GetValue() if self.panel.position['xCtrl'].GetValue() else self.scalebarDict['where'][0]
+        y = self.panel.position['yCtrl'].GetValue() if self.panel.position['yCtrl'].GetValue() else self.scalebarDict['where'][1]
+        x = self.unitConv.convert(value = float(self.panel.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+        y = self.unitConv.convert(value = float(self.panel.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
+        
+        
+        # size
+        
+        # height
+        self.scalebarDict['unitsHeight'] = self.unitsHeight.GetStringSelection()
+        try:
+            height = float(self.heightTextCtrl.GetValue())  
+            height = self.unitConv.convert(value = height, fromUnit = self.scalebarDict['unitsHeight'], toUnit = 'inch') 
+        except ValueError, SyntaxError:
+            height = 0.1 #default in inch
+        self.scalebarDict['height'] = height    
+        
+        #length
+        self.scalebarDict['unitsLength'] = self.unitsLength.GetStringSelection()
+        try:
+            length = float(self.lengthTextCtrl.GetValue())
+        except ValueError, SyntaxError:
+            GError(parent = self,
+                   message = _("Length of scale bar is not defined"))
+            return False
+        self.scalebarDict['length'] = length
+        
+        if self.scalebarDict['unitsLength'] != 'auto':
+            length = self.unitConv.convert(value = length, fromUnit = self.scalebarDict['unitsLength'], toUnit = 'inch')
+        else:
+            length = self.unitConv.convert(value = length, fromUnit = self.mapUnit, toUnit = 'inch')
+        # estimation of size
+        mapId = find_key(dic = self.itemType, val = 'map')
+        if not mapId:
+            mapId = find_key(dic = self.itemType, val = 'initMap')
+        length *= self.dialogDict[mapId]['scale']
+        length *= 1.1 #for numbers on the edge
+        fontsize = 10
+        height = height + 2 * self.unitConv.convert(value = fontsize, fromUnit = 'point', toUnit = 'inch') 
+        self.scalebarDict['rect'] = wx.Rect2D(x, y, length, height)
+          
+        
+        self.scalebarDict['where'] = self.scalebarDict['rect'].GetCentre()  
+        # font
+
+        #colors
+
+        
+        
+
+        
+        
+        self.dialogDict[self.id] = self.scalebarDict
+        self.itemType[self.id] = 'scalebar'
+        if self.id not in self.parent.objectId:
+            self.parent.objectId.append(self.id)
+            
+        return True
+    
+      
 class TextDialog(PsmapDialog):
     def __init__(self, parent, id, settings, itemType):
         PsmapDialog.__init__(self, parent = parent, id = id, title = "Text settings", settings = settings, itemType = itemType)
@@ -3174,9 +3372,6 @@ def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
     yScale = heightMap / abs(currRegionDict['n'] - currRegionDict['s'])
     currScale = (xScale + yScale) / 2
 
-##    currScale = float(self.dialogDict[mapId]['scale'])
-##    print currScale
-
     
     if not paperToMap:
         textEasting, textNorthing = x, y
@@ -3226,7 +3421,7 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
     mW = self.unitConv.convert(value = (currRegionDict['e'] - currRegionDict['w']) * toM, fromUnit = 'meter', toUnit = 'inch')
     mH = self.unitConv.convert(value = (currRegionDict['n'] - currRegionDict['s']) * toM, fromUnit = 'meter', toUnit = 'inch')
     scale = min(rW/mW, rH/mH)
-    print 'scale autoadjust', scale
+    
 
     if rW/rH > mW/mH:
         x = rX - (rH*(mW/mH) - rW)/2
@@ -3256,10 +3451,10 @@ def ComputeSetRegion(self, mapDict):
         rectHalfInch = ( mapDict['rect'].width/2, mapDict['rect'].height/2)
         rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')/ fromM /scale,
                                 self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')/ fromM /scale) 
-        print scale, rectHalfMeter
+        
         centerE = mapDict['center'][0]
         centerN = mapDict['center'][1]
-        print '\n',centerN + rectHalfMeter[1], centerN - rectHalfMeter[1],centerE + rectHalfMeter[0],centerE - rectHalfMeter[0], '\n'
+        
         rasterId = find_key(dic = self.itemType, val = 'raster', multiple = False)
         if rasterId:
             RunCommand('g.region', n = ceil(centerN + rectHalfMeter[1]),

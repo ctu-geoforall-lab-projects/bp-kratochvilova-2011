@@ -81,6 +81,14 @@ Icons['psMap'] = {
                            label = _("Show preview")),
     'quit'      : MetaIcon(img = iconSet['quit'],
                            label = _('Quit Hardcopy Map Utility')),
+    'addText'   : MetaIcon(img = iconSet['text-add'],
+                            label = _('Add text')),
+    'addMapinfo': MetaIcon(img = iconSet['legend-add'],
+                            label = _('Add map info')),
+    'addLegend' : MetaIcon(img = iconSet['legend-add'],
+                            label = _('Add legend')),
+    'addScalebar' : MetaIcon(img = iconSet['scalebar-add'],
+                            label = _('Add scale bar')),
     }
     
 class PsMapData(MenuData):
@@ -221,6 +229,7 @@ class PsMapFrame(wx.Frame):
             'rasterLegend': wx.Pen(colour = wx.Color(219, 216, 4), width = 2),
             'vectorLegend': wx.Pen(colour = wx.Color(219, 216, 4), width = 2),
             'mapinfo': wx.Pen(colour = wx.Color(5, 184, 249), width = 2),
+            'scalebar': wx.Pen(colour = wx.Color(150, 150, 150), width = 2),
             'box': wx.Pen(colour = 'RED', width = 2, style = wx.SHORT_DASH),
             'select': wx.Pen(colour = 'BLACK', width = 1, style = wx.SHORT_DASH),
             'resize': wx.Pen(colour = 'BLACK', width = 1)
@@ -232,6 +241,7 @@ class PsMapFrame(wx.Frame):
             'rasterLegend': wx.Brush(wx.Color(250, 247, 112)),
             'vectorLegend': wx.Brush(wx.Color(250, 247, 112)),
             'mapinfo': wx.Brush(wx.Color(127, 222, 252)),
+            'scalebar': wx.Brush(wx.Color(200, 200, 200)),
             'box': wx.TRANSPARENT_BRUSH,
             'select':wx.TRANSPARENT_BRUSH,
             'resize': wx.BLACK_BRUSH
@@ -320,7 +330,13 @@ class PsMapFrame(wx.Frame):
         self.defaultDict['mapinfo'] = dict( unit = 'inch', where = (page['Left'], page['Top']),
                                             font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
 ##                                            font = 'Sans', fontsize = 10, color = '0:0:0', background = 'none', 
-                                            border = 'none')
+                                            border = 'none', rect = None)
+                                            
+        # scalebar
+        self.defaultDict['scalebar'] = dict( unit = 'inch', where = (page['Left'], page['Top']),
+                                            unitsLength = 'auto', unitsHeight = 'inch',
+                                            length = None, height = 0.1, rect = None,
+                                            fontsize = 10, background = 'none',)
         #text
         self.defaultDict['text'] = dict(text = "", font = "Serif", fontsize = 10, color = 'black', background = 'none',
                                         hcolor = 'none', hwidth = 1, border = 'none', width = '1', XY = True,
@@ -362,6 +378,7 @@ class PsMapFrame(wx.Frame):
         rasterId = find_key(dic = self.itemType, val = 'raster', multiple = False)
         vectorId = find_key(dic = self.itemType, val = 'vector', multiple = False)
         mapinfoId = find_key(dic = self.itemType, val = 'mapinfo', multiple = False)
+        scalebarId = find_key(dic = self.itemType, val = 'scalebar', multiple = False)
         
         rasterLegendId = find_key(dic = self.itemType, val = 'rasterLegend', multiple = False)
         vectorLegendId = find_key(dic = self.itemType, val = 'vectorLegend', multiple = False)
@@ -434,6 +451,15 @@ class PsMapFrame(wx.Frame):
             mapinfoInstruction += "    background {background}\n    border {border}\n".format(**self.dialogDict[mapinfoId])  
             mapinfoInstruction += "end"
             instruction.append(mapinfoInstruction) 
+            
+        if scalebarId:
+            scalebarInstruction = "scalebar \n"
+            scalebarInstruction += "    where {where[0]} {where[1]}\n".format(**self.dialogDict[scalebarId])
+            scalebarInstruction += "    length {length}\n    units {unitsLength}\n".format(**self.dialogDict[scalebarId])
+            scalebarInstruction += "    height {height}\n".format(**self.dialogDict[scalebarId])
+            scalebarInstruction += "end"
+            instruction.append(scalebarInstruction)
+            
         # text
         textIds = find_key(dic = self.itemType, val = 'text', multiple = True)
         for id in textIds:
@@ -742,18 +768,23 @@ class PsMapFrame(wx.Frame):
         """
         decmenu = wx.Menu()
         # legend
-        AddLegend = wx.MenuItem(decmenu, wx.ID_ANY, Icons['displayWindow']["addLegend"].GetLabel())
-        AddLegend.SetBitmap(Icons['displayWindow']["addLegend"].GetBitmap(self.iconsize))
+        AddLegend = wx.MenuItem(decmenu, wx.ID_ANY, Icons['psMap']["addLegend"].GetLabel())
+        AddLegend.SetBitmap(Icons['psMap']["addLegend"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddLegend)
         self.Bind(wx.EVT_MENU, self.OnAddLegend, AddLegend)
         # mapinfo
-        AddMapinfo = wx.MenuItem(decmenu, wx.ID_ANY, "Add mapinfo")
-        AddMapinfo.SetBitmap(Icons['displayWindow']["addLegend"].GetBitmap(self.iconsize))
+        AddMapinfo = wx.MenuItem(decmenu, wx.ID_ANY, Icons['psMap']["addMapinfo"].GetLabel())
+        AddMapinfo.SetBitmap(Icons['psMap']["addMapinfo"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddMapinfo)
         self.Bind(wx.EVT_MENU, self.OnAddMapinfo, AddMapinfo) 
+        # scalebar
+        AddScalebar = wx.MenuItem(decmenu, wx.ID_ANY, Icons['psMap']["addScalebar"].GetLabel())
+        AddScalebar.SetBitmap(Icons['psMap']["addScalebar"].GetBitmap(self.iconsize))
+        decmenu.AppendItem(AddScalebar)
+        self.Bind(wx.EVT_MENU, self.OnAddScalebar, AddScalebar) 
         # text
-        AddText = wx.MenuItem(decmenu, wx.ID_ANY, "Add text")
-        AddText.SetBitmap(Icons['displayWindow']["addText"].GetBitmap(self.iconsize))
+        AddText = wx.MenuItem(decmenu, wx.ID_ANY, Icons['psMap']["addText"].GetLabel())
+        AddText.SetBitmap(Icons['psMap']["addText"].GetBitmap(self.iconsize))
         decmenu.AppendItem(AddText)
         self.Bind(wx.EVT_MENU, self.OnAddText, AddText) 
         # Popup the menu.  If an item is selected then its handler
@@ -761,7 +792,20 @@ class PsMapFrame(wx.Frame):
         self.PopupMenu(decmenu)
         decmenu.Destroy()
         
+    def OnAddScalebar(self, event):
+        """!Add scalebar"""
+        if projInfo()['proj'] == 'll':
+            wx.MessageBox(message = _("Scalebar is not appropriate for this projection"), caption = _('No scale bar'),
+                                    style = wx.OK|wx.ICON_INFORMATION)
+            return
+        id = find_key(dic = self.itemType, val = 'scalebar')
+
+        dlg = ScalebarDialog(self, id = id, settings = self.dialogDict, itemType = self.itemType)
+        dlg.ShowModal()  
+        
+        
     def OnAddLegend(self, event, page = 0):
+        """!Add raster or vector legend"""
         idR = find_key(dic = self.itemType, val = 'rasterLegend')
         idV = find_key(dic = self.itemType, val = 'vectorLegend')
 
@@ -851,16 +895,20 @@ class PsMapFrame(wx.Frame):
             self.canvas.dragId = -1
         self.canvas.Refresh()
         
-        if self.itemType[id] == 'map': # when deleting map frame, vectors must be deleted too
+        if self.itemType[id] == 'map': # when deleting map frame, vectors and raster must be deleted too
+            rast = find_key(dic = self.itemType, val = 'raster', multiple = False)
             vect = find_key(dic = self.itemType, val = 'vector', multiple = False)
             vectProp = find_key(dic = self.itemType, val = 'vProperties', multiple = True)
+            if rast:
+                del self.itemType[rast]
+                del self.dialogDict[rast]                
             if vect:
                 del self.itemType[vect]
                 del self.dialogDict[vect]
             for vid in vectProp:
                 del self.itemType[vid]
                 del self.dialogDict[vid]
-            self.canvas.itemLabels['map'] = self.canvas.itemLabels['map'][:1]
+            self.canvas.UpdateMapLabel()
         del self.itemType[id]
         del self.dialogDict[id]
         
@@ -877,7 +925,7 @@ class PsMapFrame(wx.Frame):
                 itype = self.itemType[id] 
             except KeyError:
                 return
-            if itype == 'mapinfo':
+            if itype in ('mapinfo', 'scalebar'):
                 
                 drawRectangle = self.canvas.CanvasPaperCoordinates(rect = self.dialogDict[id]['rect'], canvasToPaper = False)
                 self.canvas.Draw( pen = self.pen[self.itemType[id]], brush = self.brush[self.itemType[id]],
@@ -1034,7 +1082,8 @@ class PsMapBufferedWindow(wx.Window):
         self.itemLabels = { 'map': ['MAP FRAME'],
                             'rasterLegend': ['RASTER LEGEND'],
                             'vectorLegend': ['VECTOR LEGEND'],
-                            'mapinfo': ['MAP INFO']}
+                            'mapinfo': ['MAP INFO'],
+                            'scalebar': ['SCALE BAR']}
         
         # define PseudoDC
         self.pdc = wx.PseudoDC()
@@ -1127,10 +1176,9 @@ class PsMapBufferedWindow(wx.Window):
         Height = units.convert(value = rect.height, fromUnit = fromU, toUnit = toU) * scale
         X = units.convert(value = (rect.x - pRectx), fromUnit = fromU, toUnit = toU) * scale
         Y = units.convert(value = (rect.y - pRecty), fromUnit = fromU, toUnit = toU) * scale
-##        if canvasToPaper: 
+
         return wx.Rect2D(X, Y, Width, Height)
-##        if not canvasToPaper:
-##            return Rect(X, Y, Width, Height)
+
         
         
     def SetPage(self):
@@ -1362,9 +1410,11 @@ class PsMapBufferedWindow(wx.Window):
         elif event.LeftDClick():
             if self.mouse['use'] == 'pointer' and self.dragId != -1:
                 itemCall = {    'text':self.parent.OnAddText, 'mapinfo': self.parent.OnAddMapinfo,
+                                'scalebar': self.parent.OnAddScalebar,
                                 'rasterLegend': self.parent.OnAddLegend, 'vectorLegend': self.parent.OnAddLegend,  
                                 'map': self.parent.OnAddMap}
                 itemArg = { 'text': dict(event = None, id = self.dragId), 'mapinfo': dict(event = None),
+                            'scalebar': dict(event = None),
                             'rasterLegend': dict(event = None), 'vectorLegend': dict(event = None, page = 1),
                             'map': dict(event = None, notebook = True)}
                 type = self.itemType[self.dragId]
@@ -1384,6 +1434,13 @@ class PsMapBufferedWindow(wx.Window):
             elif self.itemType[id] in ('rasterLegend', 'vectorLegend', 'mapinfo'):
                 self.dialogDict[id]['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
                                                             canvasToPaper = True)[:2]
+                                                            
+            elif self.itemType[id] == 'scalebar':
+                self.dialogDict[id]['rect'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
+                                                            canvasToPaper = True)
+                
+                self.dialogDict[id]['where'] = self.dialogDict[id]['rect'].GetCentre()
+                                                             
             elif self.itemType[id] == 'text':
                 x, y = self.dialogDict[id]['coords'][0] - self.dialogDict[id]['xoffset'],\
                         self.dialogDict[id]['coords'][1] - self.dialogDict[id]['yoffset']
