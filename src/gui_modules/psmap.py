@@ -368,9 +368,17 @@ class PsMapFrame(wx.Frame):
         
         
         #change region
-        if mapId and self.dialogDict[mapId]['scaleType'] == 2: #fixed scale
-            region = grass.region()
-            comment = "# set region: g.region n={n} s={s} e={e} w={w}\n".format(**region)
+        if mapId:
+            if self.dialogDict[mapId]['scaleType'] == 0: #match map
+                map = self.dialogDict[mapId]['map']
+                mapType = 'rast' if self.dialogDict[mapId]['mapType'] == 'raster' else 'vect'
+                comment = "# set region: g.region {0}={1}\n".format(mapType, map)
+            elif self.dialogDict[mapId]['scaleType'] == 1:# saved region
+                region = self.dialogDict[mapId]['region']
+                comment = "# set region: g.region region={0}\n".format(region)                
+            elif self.dialogDict[mapId]['scaleType'] == 2: #fixed scale
+                region = grass.region()
+                comment = "# set region: g.region n={n} s={s} e={e} w={w}\n".format(**region)
             instruction.append(comment)
         # paper
         if self.dialogDict[self.pageId]['Format'] == 'custom':
@@ -1294,12 +1302,13 @@ class PsMapBufferedWindow(wx.Window):
                 
                 dlg = MapDialog(parent = self.parent, id = [None, None, None], settings = self.dialogDict, 
                                         itemType = self.itemType, rect = rectPaper)
-                
-                if dlg.ShowModal() == wx.ID_OK:
+                dlg.ShowModal()
+                if  find_key(dic = self.itemType, val = 'map'):
                     #redraw objects to lower map to the bottom
                     self.Zoom(zoomFactor = 1, view = (0, 0))
-                    
+
                     self.mouse['use'] = self.parent.mouseOld
+
                     self.SetCursor(self.parent.cursorOld)
                     self.parent.toolbar.ToggleTool(self.parent.actionOld, True)
                     self.parent.toolbar.ToggleTool(self.parent.toolbar.action['id'], False)

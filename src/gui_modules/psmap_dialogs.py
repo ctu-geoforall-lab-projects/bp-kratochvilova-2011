@@ -20,7 +20,7 @@ This program is free software under the GNU General Public License
 import os
 import sys
 import string
-from math import ceil
+from math import ceil, floor
 from copy import deepcopy
 
 import grass.script as grass
@@ -541,6 +541,8 @@ class MapFramePanel(wx.Panel):
         self.OnScaleChoice(None)
         self.OnElementType(None)
         
+        
+        
     def _layout(self):
         """!Do layout"""
         border = wx.BoxSizer(wx.VERTICAL)
@@ -620,6 +622,14 @@ class MapFramePanel(wx.Panel):
         self.SetSizer(border)
         self.Fit()
         
+        
+        if projInfo()['proj'] == 'll':
+            self.scaleChoice.SetItems(self.scaleChoice.GetItems()[0:2])
+            boxC.Hide()
+            for each in self.centerSizer.GetChildren():
+                each.GetWindow().Hide()
+
+            
         # bindings
         self.scaleChoice.Bind(wx.EVT_CHOICE, self.OnScaleChoice)
         self.select.GetTextCtrl().Bind(wx.EVT_TEXT, self.OnMap)
@@ -2752,8 +2762,8 @@ class MapinfoDialog(PsmapDialog):
 ##                                        if self.colors['borderCtrl'].GetValue() else 'none')
         
         # estimation of size
-        w = self.mapinfoDict['fontsize'] * 15 
-        h = self.mapinfoDict['fontsize'] * 5
+        w = self.mapinfoDict['fontsize'] * 20 # any better estimation? 
+        h = self.mapinfoDict['fontsize'] * 7
         width = self.unitConv.convert(value = w, fromUnit = 'point', toUnit = 'inch')
         height = self.unitConv.convert(value = h, fromUnit = 'point', toUnit = 'inch')
         self.mapinfoDict['rect'] = wx.Rect2D(x = x, y = y, w = width, h = height)
@@ -3216,6 +3226,7 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
     mW = self.unitConv.convert(value = (currRegionDict['e'] - currRegionDict['w']) * toM, fromUnit = 'meter', toUnit = 'inch')
     mH = self.unitConv.convert(value = (currRegionDict['n'] - currRegionDict['s']) * toM, fromUnit = 'meter', toUnit = 'inch')
     scale = min(rW/mW, rH/mH)
+    print 'scale autoadjust', scale
 
     if rW/rH > mW/mH:
         x = rX - (rH*(mW/mH) - rW)/2
@@ -3245,22 +3256,22 @@ def ComputeSetRegion(self, mapDict):
         rectHalfInch = ( mapDict['rect'].width/2, mapDict['rect'].height/2)
         rectHalfMeter = ( self.unitConv.convert(value = rectHalfInch[0], fromUnit = 'inch', toUnit = 'meter')/ fromM /scale,
                                 self.unitConv.convert(value = rectHalfInch[1], fromUnit = 'inch', toUnit = 'meter')/ fromM /scale) 
-
+        print scale, rectHalfMeter
         centerE = mapDict['center'][0]
         centerN = mapDict['center'][1]
-
+        print '\n',centerN + rectHalfMeter[1], centerN - rectHalfMeter[1],centerE + rectHalfMeter[0],centerE - rectHalfMeter[0], '\n'
         rasterId = find_key(dic = self.itemType, val = 'raster', multiple = False)
         if rasterId:
-            RunCommand('g.region', n = int(centerN + rectHalfMeter[1]),
-                           s = int(centerN - rectHalfMeter[1]),
-                           e = int(centerE + rectHalfMeter[0]),
-                           w = int(centerE - rectHalfMeter[0]),
+            RunCommand('g.region', n = ceil(centerN + rectHalfMeter[1]),
+                           s = floor(centerN - rectHalfMeter[1]),
+                           e = ceil(centerE + rectHalfMeter[0]),
+                           w = floor(centerE - rectHalfMeter[0]),
                            rast = self.dialogDict[rasterId]['raster'])
         else:
-            RunCommand('g.region', n = int(centerN + rectHalfMeter[1]),
-                           s = int(centerN - rectHalfMeter[1]),
-                           e = int(centerE + rectHalfMeter[0]),
-                           w = int(centerE - rectHalfMeter[0]))
+            RunCommand('g.region', n = ceil(centerN + rectHalfMeter[1]),
+                           s = floor(centerN - rectHalfMeter[1]),
+                           e = ceil(centerE + rectHalfMeter[0]),
+                           w = floor(centerE - rectHalfMeter[0]))
                     
 def projInfo():
     """!Return region projection and map units information,
