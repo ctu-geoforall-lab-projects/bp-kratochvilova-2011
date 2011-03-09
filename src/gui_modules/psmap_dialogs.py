@@ -34,7 +34,6 @@ import globalvar
 import dbm_base
 from   gselect    import Select
 from   gcmd       import RunCommand
-
 from grass.script import core as grass
 
 import wx
@@ -62,7 +61,7 @@ class UnitConversion():
                             'kilometers' : 2.54e-5,
                             'feet' : 1./12,
                             'miles' : 1./63360,
-                            'nautmiles' : 1/72913.44}
+                            'nautical miles' : 1/72913.44}
 
         self._units = { 'pixel': ppi[0],
                         'meter': 0.0254,
@@ -555,6 +554,7 @@ class MapFramePanel(wx.Panel):
         self.center[self.mapFrameDict['scaleType']] = self.mapFrameDict['center']
         self.OnScaleChoice(None)
         self.OnElementType(None)
+        self.OnBorder(None)
         
         
         
@@ -634,6 +634,33 @@ class MapFramePanel(wx.Panel):
         sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
+        # border
+        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " {0} ".format(_("Border")))        
+        sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
+        
+        self.borderCheck = wx.CheckBox(self, id = wx.ID_ANY, label = (_("draw border around map frame")))
+        self.borderCheck.SetValue(True if self.mapFrameDict['border'] == 'y' else False)
+        
+        self.borderColorText = wx.StaticText(self, id = wx.ID_ANY, label = _("border color:"))
+        self.borderWidthText = wx.StaticText(self, id = wx.ID_ANY, label = _("border width (pts):"))
+        self.borderColourPicker = wx.ColourPickerCtrl(self, id = wx.ID_ANY)
+        self.borderWidthCtrl = wx.SpinCtrl(self, id = wx.ID_ANY, min = 1, max = 100, initial = 1)
+        
+        if self.mapFrameDict['border'] == 'y':
+            self.borderWidthCtrl.SetValue(int(self.mapFrameDict['width']))
+            self.borderColourPicker.SetColour(convertRGB(self.mapFrameDict['color']))
+        
+        
+        gridBagSizer.Add(self.borderCheck, pos = (0, 0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.borderColorText, pos = (1, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.borderWidthText, pos = (2, 1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.borderColourPicker, pos = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(self.borderWidthCtrl, pos = (2, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        
         self.SetSizer(border)
         self.Fit()
         
@@ -650,6 +677,7 @@ class MapFramePanel(wx.Panel):
         self.select.GetTextCtrl().Bind(wx.EVT_TEXT, self.OnMap)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnElementType, self.vectorTypeRadio)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnElementType, self.rasterTypeRadio)
+        self.Bind(wx.EVT_CHECKBOX, self.OnBorder, self.borderCheck)
         
         
       
@@ -761,6 +789,11 @@ class MapFramePanel(wx.Panel):
             self.select.SetValue('')
         self.mapType = mapType    
         
+    def OnBorder(self, event):
+        """!Enables/disable the part relating to border of map frame"""
+        for each in (self.borderColorText, self.borderWidthText, self.borderColourPicker, self.borderWidthCtrl):
+            each.Enable(self.borderCheck.GetValue())
+            
     def getId(self):
         """!Returns id of raster map"""
         return self.id
@@ -835,6 +868,14 @@ class MapFramePanel(wx.Panel):
             mapFrameDict['center'] = centerE, centerN
         
             ComputeSetRegion(self, mapDict = mapFrameDict)
+        
+        # border
+        mapFrameDict['border'] = 'y' if self.borderCheck.GetValue() else 'n'
+        if mapFrameDict['border'] == 'y':
+            mapFrameDict['width'] = self.borderWidthCtrl.GetValue()
+            mapFrameDict['color'] = convertRGB(self.borderColourPicker.GetColour())
+            
+        
         
         self.dialogDict[self.id] = mapFrameDict
         self.itemType[self.id] = 'map'
@@ -1637,7 +1678,7 @@ class VPropertiesDialog(PsmapDialog):
         sizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
         gridBagSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
         
-        widthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Set width:"))
+        widthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Set width (pts):"))
         self.widthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
         self.cwidthCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("multiply width by category value"))
         
@@ -1705,7 +1746,7 @@ class VPropertiesDialog(PsmapDialog):
                                 buttonText =  _("Browse"), toolTip = _("Type filename or click browse to choose file"), 
                                 dialogTitle = _("Choose a file"), startDirectory = self.patternPath, initialValue = '',
                                 fileMask = "Encapsulated PostScript (*.eps)|*.eps|All files (*.*)|*.*", fileMode = wx.OPEN)
-        self.patWidthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("pattern line width:"))
+        self.patWidthText = wx.StaticText(panel, id = wx.ID_ANY, label = _("pattern line width (pts):"))
         self.patWidthSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
         self.patScaleText = wx.StaticText(panel, id = wx.ID_ANY, label = _("pattern scale factor:"))
         self.patScaleSpin = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 25, initial = 1)
@@ -2805,11 +2846,14 @@ class ScalebarDialog(PsmapDialog):
         self.panel = self._scalebarPanel()
         
         self._layout(self.panel)
-        #self.OnIsBackground(None)
+        
         self.mapUnit = projInfo()['units']
+        if projInfo()['proj'] == 'xy':
+            self.mapUnit = 'meters'
         if self.mapUnit not in self.unitConv.getAllUnits():
-            GError(parent = self,
-                   message = _("Units %s of current projection are not supported,\n meters will be used") %s )
+            wx.MessageBox(message = _("Units of current projection are not supported,\n meters will be used!"),
+                            caption = _('Unsupported units'),
+                                    style = wx.OK|wx.ICON_ERROR)
             self.mapUnit = 'meters'
             
     def _scalebarPanel(self):
@@ -2862,13 +2906,18 @@ class ScalebarDialog(PsmapDialog):
         self.heightTextCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, validator = TCValidator('DIGIT_ONLY'))
         self.heightTextCtrl.SetToolTipString(_("Scalebar height is real height on paper"))
         
-        choices = ['auto'] + self.unitConv.getMapUnits()
+        choices = ['default'] + self.unitConv.getMapUnits()
         self.unitsLength = wx.Choice(panel, id = wx.ID_ANY, choices = choices)
         choices = self.unitConv.getPageUnits()
         self.unitsHeight = wx.Choice(panel, id = wx.ID_ANY, choices = choices)
         
         # set values
-        self.unitsLength.SetStringSelection(self.scalebarDict['unitsLength'])
+        ok = self.unitsLength.SetStringSelection(self.scalebarDict['unitsLength'])
+        if not ok:
+            if self.scalebarDict['unitsLength'] == 'auto':
+                 self.unitsLength.SetSelection(0)
+            elif self.scalebarDict['unitsLength'] == 'nautmiles':
+                 self.unitsLength.SetStringSelection("nautical miles")                
         self.unitsHeight.SetStringSelection(self.scalebarDict['unitsHeight'])
         if self.scalebarDict['length']:
             self.lengthTextCtrl.SetValue(str(self.scalebarDict['length']))
@@ -2892,23 +2941,64 @@ class ScalebarDialog(PsmapDialog):
         
         sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
+        #
+        #style
+        #
+        box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Style")))
+        sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
+        
+        
+        sbTypeText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Type:"))
+        self.sbCombo = wx.combo.BitmapComboBox(panel, style = wx.CB_READONLY)
+        # only temporary, images must be moved away
+        self.sbCombo.Append(item = 'fancy', bitmap = wx.Bitmap("./images/scalebar-fancy.png"), clientData = 'f')
+        self.sbCombo.Append(item = 'simple', bitmap = wx.Bitmap("./images/scalebar-simple.png"), clientData = 's')
+        if self.scalebarDict['scalebar'] == 'f':
+            self.sbCombo.SetSelection(0)
+        elif self.scalebarDict['scalebar'] == 's':
+            self.sbCombo.SetSelection(1)
+            
+        sbSegmentsText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Number of segments:"))
+        self.sbSegmentsCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 30, initial = 4)
+        self.sbSegmentsCtrl.SetValue(self.scalebarDict['segment'])
+        
+        sbLabelsText1 = wx.StaticText(panel, id = wx.ID_ANY, label = _("Label every "))
+        sbLabelsText2 = wx.StaticText(panel, id = wx.ID_ANY, label = _("segments"))
+        self.sbLabelsCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 1, max = 30, initial = 1)
+        self.sbLabelsCtrl.SetValue(self.scalebarDict['numbers'])
+        
+        #font
+        fontsizeText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Font size:"))
+        self.fontsizeCtrl = wx.SpinCtrl(panel, id = wx.ID_ANY, min = 4, max = 30, initial = 10)
+        self.fontsizeCtrl.SetValue(self.scalebarDict['fontsize'])
+        
+        self.backgroundCheck = wx.CheckBox(panel, id = wx.ID_ANY, label = _("transparent text background"))
+        self.backgroundCheck.SetValue(False if self.scalebarDict['background'] == 'y' else True)
 
+            
+        gridBagSizer.Add(sbTypeText, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.sbCombo, pos = (0,1), span = (1, 2), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        gridBagSizer.Add(sbSegmentsText, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.sbSegmentsCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(sbLabelsText1, pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.sbLabelsCtrl, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(sbLabelsText2, pos = (2,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(fontsizeText, pos = (3,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.fontsizeCtrl, pos = (3,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(self.backgroundCheck, pos = (4, 0), span = (1,3), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        
+        sizer.Add(gridBagSizer, proportion = 1, flag = wx.ALIGN_CENTER_VERTICAL, border = 5)
+        border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
         panel.SetSizer(border)
         
-##        self.Bind(wx.EVT_CHECKBOX, self.OnIsBackground, self.colors['backgroundCtrl'])
-        
         return panel
-    
-##    def OnIsBackground(self, event):
-##        if self.colors['backgroundCtrl'].GetValue():
-##            self.colors['backgroundColor'].Enable()
-##        else:
-##            self.colors['backgroundColor'].Disable()
-##                        
+
                            
                     
     def update(self):
+        """!Save information from dialog"""
 
         #units
         currUnit = self.panel.units['unitsCtrl'].GetStringSelection()
@@ -2932,17 +3022,22 @@ class ScalebarDialog(PsmapDialog):
         self.scalebarDict['height'] = height    
         
         #length
-        self.scalebarDict['unitsLength'] = self.unitsLength.GetStringSelection()
+        selected = self.unitsLength.GetStringSelection()
+        if selected == 'default':
+            selected = 'auto'
+        elif selected == 'nautical miles':
+            selected = 'nautmiles'
+        self.scalebarDict['unitsLength'] = selected
         try:
             length = float(self.lengthTextCtrl.GetValue())
         except ValueError, SyntaxError:
-            GError(parent = self,
-                   message = _("Length of scale bar is not defined"))
+            wx.MessageBox(message = _("Length of scale bar is not defined"),
+                                    caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
             return False
         self.scalebarDict['length'] = length
         
         if self.scalebarDict['unitsLength'] != 'auto':
-            length = self.unitConv.convert(value = length, fromUnit = self.scalebarDict['unitsLength'], toUnit = 'inch')
+            length = self.unitConv.convert(value = length, fromUnit = self.unitsLength.GetStringSelection(), toUnit = 'inch')
         else:
             length = self.unitConv.convert(value = length, fromUnit = self.mapUnit, toUnit = 'inch')
         # estimation of size
@@ -2957,9 +3052,13 @@ class ScalebarDialog(PsmapDialog):
           
         
         self.scalebarDict['where'] = self.scalebarDict['rect'].GetCentre()  
-        # font
 
-        #colors
+        #style
+        self.scalebarDict['scalebar'] = self.sbCombo.GetClientData(self.sbCombo.GetSelection())
+        self.scalebarDict['segment'] = self.sbSegmentsCtrl.GetValue()
+        self.scalebarDict['numbers'] = self.sbLabelsCtrl.GetValue()
+        self.scalebarDict['fontsize'] = self.fontsizeCtrl.GetValue()
+        self.scalebarDict['background'] = 'n' if self.backgroundCheck.GetValue() else 'y'
 
         
         
@@ -3358,6 +3457,7 @@ def convertRGB(rgb):
         return str(rgb.Red()) + ':' + str(rgb.Green()) + ':' + str(rgb.Blue())
     elif type(rgb) == str:
         return wx.Colour(*map(int, rgb.split(':')))
+        
         
 def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
     """!Converts paper (inch) coordinates -> map coordinates"""

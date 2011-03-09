@@ -304,7 +304,8 @@ class PsMapFrame(wx.Frame):
 
         #map frame
         self.defaultDict['map'] = dict( map = None, mapType = None, region = None,
-                                        rect = None, scaleType = 0, scale = None, center = None) 
+                                        rect = None, scaleType = 0, scale = None, center = None,
+                                        border = 'y', width = 1, color = '0:0:0') 
         
         #raster map
         self.defaultDict['raster'] = dict(isRaster = False, raster = None) 
@@ -336,7 +337,8 @@ class PsMapFrame(wx.Frame):
         self.defaultDict['scalebar'] = dict( unit = 'inch', where = (page['Left'], page['Top']),
                                             unitsLength = 'auto', unitsHeight = 'inch',
                                             length = None, height = 0.1, rect = None,
-                                            fontsize = 10, background = 'none',)
+                                            fontsize = 10, background = 'y',
+                                            scalebar = 'f', segment = 4, numbers = 1)
         #text
         self.defaultDict['text'] = dict(text = "", font = "Serif", fontsize = 10, color = 'black', background = 'none',
                                         hcolor = 'none', hwidth = 1, border = 'none', width = '1', XY = True,
@@ -411,14 +413,24 @@ class PsMapFrame(wx.Frame):
         if rasterId and self.dialogDict[rasterId]['isRaster']:
             rasterInstruction = "raster {raster}".format(**self.dialogDict[rasterId])
         instruction.append(rasterInstruction)
-        #maploc
+        # maploc
         if mapId and self.dialogDict[mapId]['rect'] is not None:
             maplocInstruction = "maploc {rect.x} {rect.y}".format(**self.dialogDict[mapId])
             if self.dialogDict[mapId]['scaleType'] != 2:
                 maplocInstruction += "  {rect.width} {rect.height}".format(**self.dialogDict[mapId])
             instruction.append(maplocInstruction)
         
-        #scale
+        # border
+        borderInstruction = ''
+        if not mapId or self.dialogDict[mapId]['border'] == 'n':
+            borderInstruction = "border n"
+        else:
+            borderInstruction = "border y\n"
+            borderInstruction += "    width {width}\n    color {color}\n".format(**self.dialogDict[mapId])
+            borderInstruction += "end"
+        instruction.append(borderInstruction)  
+          
+        # scale
         if mapId and self.dialogDict[mapId]['scaleType'] == 2: #fixed scale
             scaleInstruction = "scale 1:{0:.0f}".format(1/self.dialogDict[mapId]['scale'])
             instruction.append(scaleInstruction)
@@ -452,11 +464,14 @@ class PsMapFrame(wx.Frame):
             mapinfoInstruction += "end"
             instruction.append(mapinfoInstruction) 
             
+        # scalebar    
         if scalebarId:
-            scalebarInstruction = "scalebar \n"
+            scalebarInstruction = "scalebar {scalebar}\n".format(**self.dialogDict[scalebarId])
             scalebarInstruction += "    where {where[0]} {where[1]}\n".format(**self.dialogDict[scalebarId])
             scalebarInstruction += "    length {length}\n    units {unitsLength}\n".format(**self.dialogDict[scalebarId])
             scalebarInstruction += "    height {height}\n".format(**self.dialogDict[scalebarId])
+            scalebarInstruction += "    segment {segment}\n    numbers {numbers}\n".format(**self.dialogDict[scalebarId])
+            scalebarInstruction += "    fontsize {fontsize}\n    background {background}\n".format(**self.dialogDict[scalebarId])
             scalebarInstruction += "end"
             instruction.append(scalebarInstruction)
             
