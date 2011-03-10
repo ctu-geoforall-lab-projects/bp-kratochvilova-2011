@@ -2138,7 +2138,10 @@ class LegendDialog(PsmapDialog):
                 self.vectorListCtrl.CheckItem(index, True)
                 if vector[3] == 0:
                     self.vectorListCtrl.CheckItem(index, False)
-        self.vectorListCtrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        if not self.vectorId:
+            self.vectorListCtrl.SetColumnWidth(0, 100)
+        else:
+            self.vectorListCtrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         self.vectorListCtrl.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         
         self.btnUp = wx.Button(panel, id = wx.ID_ANY, label = _("Up"))
@@ -2952,8 +2955,13 @@ class ScalebarDialog(PsmapDialog):
         sbTypeText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Type:"))
         self.sbCombo = wx.combo.BitmapComboBox(panel, style = wx.CB_READONLY)
         # only temporary, images must be moved away
-        self.sbCombo.Append(item = 'fancy', bitmap = wx.Bitmap("./images/scalebar-fancy.png"), clientData = 'f')
-        self.sbCombo.Append(item = 'simple', bitmap = wx.Bitmap("./images/scalebar-simple.png"), clientData = 's')
+        for item, path in [('fancy', './images/scalebar-fancy.png'), ('simple', './images/scalebar-simple.png')]:
+            if not os.path.exists(path):
+                bitmap = wx.EmptyBitmap(0,0)
+            else:
+                bitmap = wx.Bitmap(path)
+            self.sbCombo.Append(item = item, bitmap = bitmap, clientData = item[0])
+        #self.sbCombo.Append(item = 'simple', bitmap = wx.Bitmap("./images/scalebar-simple.png"), clientData = 's')
         if self.scalebarDict['scalebar'] == 'f':
             self.sbCombo.SetSelection(0)
         elif self.scalebarDict['scalebar'] == 's':

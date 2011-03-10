@@ -59,9 +59,15 @@
 		</menuitem>
 		<menuitem>
 		  <label>Map info</label>
-		  <help>Add or edit mapinfo</help>
+		  <help>Add or edit map info</help>
 		  <handler>OnAddMapinfo</handler>
 		  <shortcut>Ctrl+I</shortcut>
+		</menuitem>
+		<menuitem>
+		  <label>Scale bar</label>
+		  <help>Add or edit scale bar</help>
+		  <handler>OnAddScalebar</handler>
+		  <shortcut>Ctrl+B</shortcut>
 		</menuitem>
 		<menuitem>
 		  <label>Text</label>

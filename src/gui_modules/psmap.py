@@ -43,7 +43,7 @@ from   menudata   import MenuData, etcwxdir
 from   gselect    import Select
 from   toolbars   import AbstractToolbar
 from   icon       import Icons, MetaIcon, iconSet
-from   gcmd       import RunCommand, GError
+from   gcmd       import RunCommand, GError, GMessage
 from grass.script import core as grass
 from psmap_dialogs import *
 
@@ -361,12 +361,19 @@ class PsMapFrame(wx.Frame):
         """!Do layout
         """
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.book = fnb.FlatNotebook(self, wx.ID_ANY, style = fnb.FNB_BOTTOM)
+        if globalvar.hasAgw:
+            self.book = fnb.FlatNotebook(parent = self, id = wx.ID_ANY,
+                                            agwStyle = fnb.FNB_FANCY_TABS | fnb.FNB_BOTTOM |
+                                            fnb.FNB_NO_NAV_BUTTONS | fnb.FNB_NO_X_BUTTON)
+        else:
+            self.book = fnb.FlatNotebook(parent = self, id = wx.ID_ANY,
+                                            style = fnb.FNB_FANCY_TABS | fnb.FNB_BOTTOM |
+                                            fnb.FNB_NO_NAV_BUTTONS | fnb.FNB_NO_X_BUTTON)
+        #self.book = fnb.FlatNotebook(self, wx.ID_ANY, style = fnb.FNB_BOTTOM)
         self.book.AddPage(self.canvas, "Draft mode")
         self.book.AddPage(self.previewCanvas, "Preview")
         self.book.SetSelection(0)
         
-##        self.book.EnableTab(1, enabled = False)
         mainSizer.Add(self.book,1, wx.EXPAND)
         
         self.SetSizer(mainSizer)
@@ -574,7 +581,8 @@ class PsMapFrame(wx.Frame):
                 vLegendInstruction += "    width {width}\n    cols {cols}\n".format(**dic)
                 if dic['span']:
                     vLegendInstruction += "    span {span}\n".format(**dic)
-                vLegendInstruction += "    border {border}\n".format(**dic)    
+                vLegendInstruction += "    border {border}\n".format(**dic)  
+                vLegendInstruction += "end"  
                 instruction.append(vLegendInstruction)
         return '\n'.join(instruction) + '\nend' 
 
@@ -617,15 +625,17 @@ class PsMapFrame(wx.Frame):
         """!ps.map process finished"""
         
         if event.returncode != 0:
-            GError(parent = self,
+            GMessage(parent = self,
                    message = _("Ps.map exited with return code %s") % event.returncode)
-            return # @todo: error message 
+            return 
         
         try:
-            Image.open(event.userData['filename']).save(self.imgName)
+            im = Image.open(event.userData['filename']).save(self.imgName)
+
         except IOError, e:
             GError(parent = self,
                    message = _("Unable to generate preview. %s") % e)
+        
         
         rect = self.previewCanvas.ImageRect()
         self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
@@ -1271,9 +1281,11 @@ class PsMapBufferedWindow(wx.Window):
             if self.mouse['use'] in ('pointer', 'resize'):
                 pos = event.GetPosition()
                 foundResize = self.pdcTmp.FindObjects(pos[0], pos[1])
-                if foundResize and foundResize[0] == self.idResizeBoxTmp: 
+                if foundResize and foundResize[0] == self.idResizeBoxTmp:
                     self.SetCursor(self.cursors["sizenwse"])
+                    self.parent.SetStatusText(_('Click and drag to resize object'), 0)
                 else:
+                    self.parent.SetStatusText(_(''), 0)
                     self.SetCursor(self.cursors["default"])
         elif event.LeftDown():
             self.mouse['begin'] = event.GetPosition()
@@ -1515,7 +1527,8 @@ class PsMapBufferedWindow(wx.Window):
         if not self.currScale:
             return
         self.currScale = self.currScale*zoomFactor
-        if self.currScale > 10 or self.currScale < 0.2:
+        
+        if self.currScale > 10 or self.currScale < 0.1:
             self.currScale = self.currScale/zoomFactor
             return 
         if not self.preview:
@@ -1646,6 +1659,7 @@ class PsMapBufferedWindow(wx.Window):
         self.pdcImage.ClearId(self.imageId)
         self.pdcImage.SetId(self.imageId)
         img = self.image
+        
 
         if img.GetWidth() != rect.width or img.GetHeight() != rect.height:
             img = img.Scale(rect.width, rect.height)
