@@ -255,6 +255,7 @@ class PsMapFrame(wx.Frame):
         self.instruction = Instruction(parent = self)
         
         self.pageId = (wx.NewId(), wx.NewId()) 
+        self.pageId = wx.NewId()
         #current page of flatnotebook
         self.currentPage = 0
         #canvas for draft mode
@@ -324,7 +325,6 @@ class PsMapFrame(wx.Frame):
     def InstructionFile(self):
         """!Creates mapping instructions"""
         
-        print str(self.instruction)
         return str(self.instruction)
 
     def OnPSFile(self, event):
@@ -705,7 +705,6 @@ class PsMapFrame(wx.Frame):
             ids = [id]
         for id in ids:
             itype = self.instruction.FindInstructionById(id).type
-            print itype
             if itype in ('scalebar', 'mapinfo'):
                 drawRectangle = self.canvas.CanvasPaperCoordinates(
                                     rect = self.instruction[id]['rect'], canvasToPaper = False)
@@ -737,7 +736,7 @@ class PsMapFrame(wx.Frame):
                 self.instruction[id]['coords'][0] += self.instruction[id]['xoffset']
                 self.instruction[id]['coords'][1] += self.instruction[id]['yoffset']
                 coords = self.instruction[id]['coords']
-                bounds = self.getModifiedTextBounds(coords[0], coords[1], extent, rot)
+                self.instruction[id]['rect'] = bounds = self.getModifiedTextBounds(coords[0], coords[1], extent, rot)
                 self.canvas.DrawRotText(pdc = self.canvas.pdcObj, drawId = id,
                                         textDict = self.instruction[id].GetInstruction(),
                                         coords = coords, bounds = bounds)
@@ -918,25 +917,6 @@ class PsMapBufferedWindow(wx.Window):
             self.SetPage()
         
 
-    def PageRect(self, pageDict):
-        """! Returnes offset and scaled page and margins rectangles"""
-        ppi = wx.PaintDC(self).GetPPI()
-        cW, cH = self.GetClientSize()
-        pW, pH = pageDict['Width']*ppi[0], pageDict['Height']*ppi[1]
-
-        if self.currScale is None:
-            self.currScale = min(cW/pW, cH/pH)
-        pW = pW * self.currScale
-        pH = pH * self.currScale
-        x = cW/2 - pW/2
-        y = cH/2 - pH/2
-        paperRect = wx.Rect(x, y, pW, pH)
-        #margins
-        marginRect = wx.Rect(   x + pageDict['Left']*ppi[0] * self.currScale,
-                                y + pageDict['Top']*ppi[1] * self.currScale,
-                                pW - pageDict['Left']*ppi[0] * self.currScale - pageDict['Right']*ppi[0] * self.currScale,
-                                pH - pageDict['Top']*ppi[1] * self.currScale - pageDict['Bottom']*ppi[1] * self.currScale)
-        return paperRect, marginRect
     
     def CanvasPaperCoordinates(self, rect, canvasToPaper = True):
         """!Converts canvas (pixel) -> paper (inch) coordinates and size and vice versa"""
@@ -945,7 +925,8 @@ class PsMapBufferedWindow(wx.Window):
         
         fromU = 'pixel'
         toU = 'inch'
-        pRect = self.pdcPaper.GetIdBounds(self.pageId[0])
+        #pRect = self.pdcPaper.GetIdBounds(self.pageId[0])
+        pRect = self.pdcPaper.GetIdBounds(self.pageId)
         pRectx, pRecty = pRect.x, pRect.y 
         scale = 1/self.currScale
         if not canvasToPaper: # paper -> canvas
@@ -966,15 +947,23 @@ class PsMapBufferedWindow(wx.Window):
     def SetPage(self):
         """!Sets and changes page, redraws paper"""
         
-        page = self.instruction.FindInstructionById(id = self.pageId)
+        page = self.instruction[self.pageId]
         if not page:
             page = PageSetup(id = self.pageId)
             self.instruction.AddInstruction(page)
         
-        rectangles = self.PageRect(pageDict = page.GetInstruction())
-        for id, rect, type in zip(self.pageId, rectangles, ['paper', 'margins']): 
-            self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
-                    pdctype = 'rect', drawid = id, bb = rect)
+        ppi = wx.PaintDC(self).GetPPI()
+        cW, cH = self.GetClientSize()
+        pW, pH = page['Width']*ppi[0], page['Height']*ppi[1]
+
+        if self.currScale is None:
+            self.currScale = min(cW/pW, cH/pH)
+        pW = pW * self.currScale
+        pH = pH * self.currScale
+        
+        x = cW/2 - pW/2
+        y = cH/2 - pH/2
+        self.DrawPaper(wx.Rect(x, y, pW, pH))
 
 
     def modifyRectangle(self, r):
@@ -1222,6 +1211,8 @@ class PsMapBufferedWindow(wx.Window):
                         self.RecalculateEN()
                         
             elif itype in ('mapinfo' ,'rasterLegend', 'vectorLegend'):
+                self.instruction[id]['rect'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
+                                                            canvasToPaper = True)
                 self.instruction[id]['where'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
                                                             canvasToPaper = True)[:2]            
             elif  itype == 'scalebar':
@@ -1267,6 +1258,9 @@ class PsMapBufferedWindow(wx.Window):
         else:   #dragging    
             rW, rH = float(rect.GetWidth()), float(rect.GetHeight())
             zoomFactor = 1/max(rW/cW, rH/cH)
+            # when zooming to full extent, in some cases, there was zoom 1.01..., which causes problem
+            zoomFactor = zoomFactor if abs(zoomFactor - 1) > 0.01 else 1.
+
             if self.mouse['use'] == 'zoomout':
                 zoomFactor = min(rW/cW, rH/cH) 
             if rW/rH > cW/cH:
@@ -1296,20 +1290,17 @@ class PsMapBufferedWindow(wx.Window):
             return 
         if not self.preview:
             # redraw paper
-            for id, type in zip(self.pageId, ['paper', 'margins']):
-                pRect = self.pdcPaper.GetIdBounds(id)
-                pRect.OffsetXY(-view[0], -view[1])
-                pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
-                self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcPaper,
-                            drawid = id, pdctype = 'rect', bb = pRect)
-
+            pRect = self.pdcPaper.GetIdBounds(self.pageId)
+            pRect.OffsetXY(-view[0], -view[1])
+            pRect = self.ScaleRect(rect = pRect, scale = zoomFactor)
+            self.DrawPaper(pRect)
             
             #redraw objects
             for id in self.objectId:
-                oRect = self.pdcObj.GetIdBounds(id)
-                oRect.OffsetXY(-view[0] , -view[1])
-                oRect = self.ScaleRect(rect = oRect, scale = zoomFactor)
-                type = self.instruction.FindInstructionById(id).type
+                oRect = self.CanvasPaperCoordinates(
+                                    rect = self.instruction[id]['rect'], canvasToPaper = False)
+                    
+                type = self.instruction[id].type
                 if type == 'text':
                     coords = self.instruction[id]['coords']# recalculate coordinates, they are not equal to BB
                     self.instruction[id]['coords'] = coords = [(int(coord) - view[i]) * zoomFactor
@@ -1318,7 +1309,7 @@ class PsMapBufferedWindow(wx.Window):
                      coords = coords, bounds = oRect )
                     extent = self.parent.getTextExtent(textDict = self.instruction[id])
                     rot = float(self.instruction[id]['rotate']) if self.instruction[id]['rotate'] else 0
-                    bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
+                    self.instruction[id]['rect'] = bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
                     self.pdcObj.SetIdBounds(id, bounds)
                 else:
                     self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj,
@@ -1339,7 +1330,7 @@ class PsMapBufferedWindow(wx.Window):
     def ZoomAll(self):
         """! Zoom to full extent"""  
         if not self.preview:
-            bounds = self.pdcPaper.GetIdBounds(self.pageId[0])
+            bounds = self.pdcPaper.GetIdBounds(self.pageId)
         else:
             bounds = self.pdcImage.GetIdBounds(self.imageId)
         zoomP = bounds.Inflate(bounds.width/20, bounds.height/20)
@@ -1412,7 +1403,7 @@ class PsMapBufferedWindow(wx.Window):
         pdc.SetTextForeground(textDict['color'])        
         pdc.DrawRotatedText(textDict['text'], coords[0], coords[1], rot)
 
-        pdc.SetIdBounds(drawId, bounds)
+        pdc.SetIdBounds(drawId, wx.Rect(*bounds))
         self.Refresh()
         pdc.EndDrawing()
         
@@ -1432,6 +1423,31 @@ class PsMapBufferedWindow(wx.Window):
         self.pdcImage.SetIdBounds(self.imageId, rect)
         self.pdcImage.EndDrawing()
         self.Refresh()
+        
+    def DrawPaper(self, rect):
+        """!Draw paper and margins"""
+        page = self.instruction[self.pageId]
+        scale = page['Width'] / rect.GetWidth()
+        w = (page['Width'] - page['Right'] - page['Left']) / scale
+        h = (page['Height'] - page['Top'] - page['Bottom']) / scale
+        x = page['Left'] / scale + rect.GetX()
+        y = page['Top'] / scale + rect.GetY()
+        
+        self.pdcPaper.BeginDrawing()
+        self.pdcPaper.RemoveId(self.pageId)
+        self.pdcPaper.SetId(self.pageId)
+        self.pdcPaper.SetPen(self.pen['paper'])
+        self.pdcPaper.SetBrush(self.brush['paper'])
+        self.pdcPaper.DrawRectangleRect(rect)
+        
+        self.pdcPaper.SetPen(self.pen['margins'])
+        self.pdcPaper.SetBrush(self.brush['margins'])
+        self.pdcPaper.DrawRectangle(x, y, w, h)
+        
+        self.pdcPaper.SetIdBounds(self.pageId, rect)
+        self.pdcPaper.EndDrawing()
+        self.Refresh()
+
         
     def ImageRect(self):
         """!Returns image centered in canvas, computes scale"""
@@ -1505,8 +1521,8 @@ class PsMapBufferedWindow(wx.Window):
             
     def ScaleRect(self, rect, scale):
         """! Scale rectangle"""
-        return wx.Rect(rect.GetX()*scale, rect.GetY()*scale,
-                    rect.GetWidth()*scale, rect.GetHeight()*scale)   
+        return wx.Rect(rect.GetLeft()*scale, rect.GetTop()*scale,
+                    rect.GetSize()[0]*scale, rect.GetSize()[1]*scale)   
                      
 def main():
     app = wx.PySimpleApp()

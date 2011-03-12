@@ -263,11 +263,6 @@ class Instruction:
             return inst[0]
         return inst
         
-
-    
-    def GetInfo(self):# just for debugging
-        for each in self.instruction:
-            print 'id:',each.id, 'type', each.type
             
 class InstructionObject:
     """!Abtract class representing single instruction"""
@@ -3146,7 +3141,6 @@ class LegendDialog(PsmapDialog):
                 # size estimation
                 vectors = self.instruction[self.vectorId]['list']
                 labels = [vector[4] for vector in vectors if vector[3] != 0]
-                print labels
                 extent = dc.GetTextExtent(max(labels, key = len))
                 wExtent = self.unitConv.convert(value = extent[0], fromUnit = 'pixel', toUnit = 'inch')
                 hExtent = self.unitConv.convert(value = extent[1], fromUnit = 'pixel', toUnit = 'inch')
