@@ -23,7 +23,7 @@ import string
 from math import ceil, floor
 from copy import deepcopy
 
-from grass.script import core as grass
+import grass.script as grass
 if int(grass.version()['version'].split('.')[0]) > 6:
     sys.path.append(os.path.join(os.getenv('GISBASE'), 'etc', 'gui', 'wxpython',
                                  'gui_modules'))
@@ -33,9 +33,7 @@ else:
 import globalvar
 import dbm_base
 from   gselect    import Select
-from   gcmd       import RunCommand
-from grass.script import core as grass
-from grass.script import vector as vgrass
+from   gcmd       import RunCommand, GError
 
 import wx
 import wx.lib.scrolledpanel as scrolled
@@ -48,6 +46,7 @@ try:
 except ImportError: # if it's not there locally, try the wxPython lib.
     import wx.lib.agw.flatnotebook as fnb
 
+grass.set_raise_on_error(True)
 
 class UnitConversion():
     """! Class for converting units"""
@@ -1524,9 +1523,12 @@ class VectorPanel(wx.Panel):
         """!Gets info about toplogy and enables/disables choices point/line/area"""
         vmap = self.select.GetValue()   
         try:     
-            topoInfo = vgrass.vector_info_topo(map = vmap)
-        except grass.ScriptException:
+            topoInfo = grass.vector_info_topo(map = vmap)
+        except grass.ScriptError, e:
+            GError(parent = self,
+                   message = e.value)
             return
+        
         self.vectorType.EnableItem(2, bool(topoInfo['areas']))
         self.vectorType.EnableItem(1, bool(topoInfo['boundaries']) or bool(topoInfo['lines']))
         self.vectorType.EnableItem(0, bool(topoInfo['centroids'] or bool(topoInfo['points']) ))
