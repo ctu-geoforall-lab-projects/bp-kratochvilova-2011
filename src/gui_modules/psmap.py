@@ -498,14 +498,17 @@ class PsMapFrame(wx.Frame):
         
         
         if mapId: # map exists
+             
+            self.toolbar.ToggleTool(self.actionOld, True)
+            self.toolbar.ToggleTool(self.toolbar.action['id'], False)
+            self.toolbar.action['id'] = self.actionOld
+            self.canvas.SetCursor(self.cursorOld) 
+   
             dlg = MapDialog(parent = self, id  = id, settings = self.instruction,
                             notebook = notebook)
             dlg.ShowModal()  
 
-            self.canvas.SetCursor(self.cursorOld)  
-            self.toolbar.ToggleTool(self.toolbar.action['id'], False)
-            self.toolbar.action['id'] = self.actionOld
-            self.toolbar.ToggleTool(self.actionOld, True)# bug, this should work
+
         else:    # sofar no map
             self.mouse["use"] = "addMap"
             self.canvas.SetCursor(self.cursors["cross"])
@@ -1150,21 +1153,24 @@ class PsMapBufferedWindow(wx.Window):
                 mapId = self.instruction.FindInstructionByType('map').id
                 
                 if self.dragId == mapId:
-                    # necessary to change either map frame (scaleType 0,1) or region (scaletype 2)
+                    # necessary to change either map frame (scaleType 0,1,2) or region (scaletype 3)
                     newRectCanvas = self.pdcObj.GetIdBounds(mapId)
                     newRectPaper = self.CanvasPaperCoordinates(rect = newRectCanvas, canvasToPaper = True)
                     self.instruction[mapId]['rect'] = newRectPaper
                     
-                    if self.instruction[mapId]['scaleType'] in (0,1):
+                    if self.instruction[mapId]['scaleType'] in (0, 1, 2):
                         if self.instruction[mapId]['scaleType'] == 0:
                             
-                            scale, rect = AutoAdjust(self, scaleType = 0,
+                            scale, foo, rect = AutoAdjust(self, scaleType = 0,
                                                         map = self.instruction[mapId]['map'],
                                                         mapType = self.instruction[mapId]['mapType'], 
                                                         rect = self.instruction[mapId]['rect'])
-                        else:
-                            scale, rect = AutoAdjust(self, scaleType = 1,
+                        if self.instruction[mapId]['scaleType'] == 1:
+                            scale, foo, rect = AutoAdjust(self, scaleType = 1,
                                                         region = self.instruction[mapId]['region'],
+                                                        rect = self.instruction[mapId]['rect'])
+                        else:
+                            scale, foo, rect = AutoAdjust(self, scaleType = 2,
                                                         rect = self.instruction[mapId]['rect'])
                         self.instruction[mapId]['rect'] = rect
                         self.instruction[mapId]['scale'] = scale
@@ -1173,7 +1179,7 @@ class PsMapBufferedWindow(wx.Window):
                         self.Draw(pen = self.pen['map'], brush = self.brush['map'],
                                     pdc = self.pdcObj, drawid = mapId, pdctype = 'rectText', bb = rectCanvas)
                                     
-                    elif self.instruction[mapId]['scaleType'] == 2:
+                    elif self.instruction[mapId]['scaleType'] == 3:
                         ComputeSetRegion(self, mapDict = self.instruction[mapId].GetInstruction())
                         
                     self.RedrawSelectBox(mapId)

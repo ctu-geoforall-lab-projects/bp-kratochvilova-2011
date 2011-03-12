@@ -321,6 +321,7 @@ class MapFrame(InstructionObject):
         
     def __str__(self):
         instr = ''
+        comment = ''
         #region settings
         if self.instruction['scaleType'] == 0: #match map
             map = self.instruction['map']
@@ -329,20 +330,20 @@ class MapFrame(InstructionObject):
         elif self.instruction['scaleType'] == 1:# saved region
             region = self.instruction['region']
             comment = "# set region: g.region region={0}\n".format(region)                
-        elif self.instruction['scaleType'] == 2: #fixed scale
+        elif self.instruction['scaleType'] == 3: #fixed scale
             region = grass.region()
             comment = "# set region: g.region n={n} s={s} e={e} w={w}\n".format(**region)
         instr += comment
         instr += '\n'
         # maploc
         maplocInstruction = "maploc {rect.x} {rect.y}".format(**self.instruction)
-        if self.instruction['scaleType'] != 2:
+        if self.instruction['scaleType'] != 3:
             maplocInstruction += "  {rect.width} {rect.height}".format(**self.instruction)
         instr += maplocInstruction
         instr += '\n'
         
         # scale
-        if self.instruction['scaleType'] == 2: #fixed scale
+        if self.instruction['scaleType'] == 3: #fixed scale
             scaleInstruction = "scale 1:{0:.0f}".format(1/self.instruction['scale'])
             instr += scaleInstruction
             instr += '\n'
@@ -972,8 +973,8 @@ class MapFramePanel(wx.Panel):
             
         self._layout()
 
-        self.scale = [None]*3
-        self.center = [None]*3
+        self.scale = [None]*4
+        self.center = [None]*4
         
         
         
@@ -1017,6 +1018,7 @@ class MapFramePanel(wx.Panel):
         frameText = wx.StaticText(self, id = wx.ID_ANY, label = _("Map frame options:"))
         scaleChoices = [_("fit frame to match selected map"),
                         _("fit frame to match saved region"),
+                        _("fit frame to match current computational region"),
                         _("fixed scale and map center")]
         self.scaleChoice = wx.Choice(self, id = wx.ID_ANY, choices = scaleChoices)
         
@@ -1036,7 +1038,7 @@ class MapFramePanel(wx.Panel):
         dc = wx.PaintDC(self)# determine size of labels
         width = max(dc.GetTextExtent(self.mapOrRegionText[0])[0], dc.GetTextExtent(self.mapOrRegionText[1])[0])
         self.mapText = wx.StaticText(self, id = wx.ID_ANY, label = self.mapOrRegionText[0], size = (width, -1))
-        self.select = Select(self, id = wx.ID_ANY,# size = globalvar.DIALOG_GSELECT_SIZE,
+        self.select = Select(self, id = wx.ID_ANY, size = globalvar.DIALOG_GSELECT_SIZE,
                              type = 'raster', multiple = False,
                              updateOnPopup = True, onPopup = None)
                             
@@ -1126,31 +1128,7 @@ class MapFramePanel(wx.Panel):
         self.Bind(wx.EVT_CHECKBOX, self.OnBorder, self.borderCheck)
         
         
-      
-    def RegionDict(self, scaleType):
-        """!Returns region dictionary according to selected type of scale"""
-        if scaleType == 0 and self.selectedMap: # automatic, region from raster
-            if self.mapType == 'raster':# raster or vector
-                res = grass.read_command("g.region", flags = 'gu', rast = self.selectedMap)
-            else:
-                res = grass.read_command("g.region", flags = 'gu', vect = self.selectedMap)
-            return grass.parse_key_val(res, val_type = float)
-        
-        elif scaleType == 1 and self.selectedRegion: # saved region
-            res = grass.read_command("g.region", flags = 'gu', region = self.selectedRegion)
-            return grass.parse_key_val(res, val_type = float)
-        
-        return None
-
-    def RegionCenter(self, regionDict):
-        """!Returnes map center coordinates of given region dictionary"""
-        
-        if regionDict:
-            cE = (regionDict['w'] + regionDict['e'])/2
-            cN = (regionDict['n'] + regionDict['s'])/2
-            return cE, cN
-        return None
-    
+     
     def OnMap(self, event):
         """!Selected map or region changing"""
         
@@ -1158,16 +1136,21 @@ class MapFramePanel(wx.Panel):
         if self.scaleChoice.GetSelection() == 0:
             self.selectedMap = self.selected
             mapType = 'raster' if self.rasterTypeRadio.GetValue() else 'vector'
-            self.scale[0], foo = AutoAdjust(self, scaleType = 0, map = self.selected,
+            self.scale[0], self.center[0], foo = AutoAdjust(self, scaleType = 0, map = self.selected,
                                                 mapType = mapType, rect = self.mapFrameDict['rect'])
-            self.center[0] = self.RegionCenter(self.RegionDict(scaleType = 0))
+            #self.center[0] = self.RegionCenter(self.RegionDict(scaleType = 0))
+
         elif self.scaleChoice.GetSelection() == 1:
             self.selectedRegion = self.selected
-            self.scale[1], foo = AutoAdjust(self, scaleType = 1, region = self.selected, rect = self.mapFrameDict['rect'])
-            self.center[1] = self.RegionCenter(self.RegionDict(scaleType = 1))
+            self.scale[1], self.center[1],  foo = AutoAdjust(self, scaleType = 1, region = self.selected, rect = self.mapFrameDict['rect'])
+            #self.center[1] = self.RegionCenter(self.RegionDict(scaleType = 1))
+        elif self.scaleChoice.GetSelection() == 2:
+            self.scale[2], self.center[2], foo = AutoAdjust(self, scaleType = 2, rect = self.mapFrameDict['rect'])
+            #self.center[2] = self.RegionCenter(self.RegionDict(scaleType = 2))
+            
         else:
-            self.scale[2] = None        
-            self.center[2] = None
+            self.scale[3] = None        
+            self.center[3] = None
             
         self.OnScaleChoice(None)
         
@@ -1206,6 +1189,17 @@ class MapFramePanel(wx.Panel):
             for each in self.centerSizer.GetChildren():
                 each.GetWindow().Disable()
                     
+            if self.scale[scaleType]:
+                self.scaleTextCtrl.SetValue("{0:.0f}".format(1/self.scale[scaleType]))
+            if self.center[scaleType]:
+                self.eastingTextCtrl.SetValue(str(self.center[scaleType][0]))
+                self.northingTextCtrl.SetValue(str(self.center[scaleType][1]))
+        elif scaleType == 2:
+            for each in self.mapSizer.GetChildren():
+                each.GetWindow().Disable()
+            for each in self.centerSizer.GetChildren():
+                each.GetWindow().Disable()
+                
             if self.scale[scaleType]:
                 self.scaleTextCtrl.SetValue("{0:.0f}".format(1/self.scale[scaleType]))
             if self.center[scaleType]:
@@ -1258,13 +1252,13 @@ class MapFramePanel(wx.Panel):
                 mapFrameDict['mapType'] = self.mapType
                 mapFrameDict['region'] = None
 
-                self.scale[0], self.rectAdjusted = AutoAdjust(self, scaleType = 0, map = mapFrameDict['map'],
+                self.scale[0], self.center[0], self.rectAdjusted = AutoAdjust(self, scaleType = 0, map = mapFrameDict['map'],
                                                                    mapType = self.mapType, rect = self.mapFrameDict['rect'])
                                                
                 mapFrameDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapFrameDict['rect']
                 mapFrameDict['scale'] = self.scale[0]
                 
-                mapFrameDict['center'] = self.center[scaleType]
+                mapFrameDict['center'] = self.center[0]
                 # set region
                 if self.mapType == 'raster':
                     RunCommand('g.region', rast = mapFrameDict['map'])
@@ -1286,11 +1280,11 @@ class MapFramePanel(wx.Panel):
                 mapFrameDict['map'] = None
                 mapFrameDict['mapType'] = None
                 mapFrameDict['region'] = self.select.GetValue()
-                self.scale[1], self.rectAdjusted = AutoAdjust(self, scaleType = 1, region = mapFrameDict['region'],
+                self.scale[1], self.center[1], self.rectAdjusted = AutoAdjust(self, scaleType = 1, region = mapFrameDict['region'],
                                                                                 rect = self.mapFrameDict['rect'])
                 mapFrameDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapFrameDict['rect']
-                mapFrameDict['scale'] = self.scale[scaleType]
-                mapFrameDict['center'] = self.center[scaleType]
+                mapFrameDict['scale'] = self.scale[1]
+                mapFrameDict['center'] = self.center[1]
                 # set region
                 RunCommand('g.region', region = mapFrameDict['region'])
             else:
@@ -1298,8 +1292,33 @@ class MapFramePanel(wx.Panel):
                                     caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
                 return False 
                                
-            
         elif scaleType == 2:
+            mapFrameDict['map'] = None
+            mapFrameDict['mapType'] = None
+            mapFrameDict['region'] = None
+            self.scale[2], self.center[2], self.rectAdjusted = AutoAdjust(self, scaleType = 2, rect = self.mapFrameDict['rect'])
+            mapFrameDict['rect'] = self.rectAdjusted if self.rectAdjusted else self.mapFrameDict['rect']
+            mapFrameDict['scale'] = self.scale[2]
+            mapFrameDict['center'] = self.center[2]
+            
+            env = grass.gisenv()
+            windFilePath = os.path.join(env['GISDBASE'], env['LOCATION_NAME'], env['MAPSET'], 'WIND')
+            try:
+                windFile = open(windFilePath, 'r').read()
+                region = grass.parse_key_val(windFile, sep = ':', val_type = float)
+            except IOError:
+                region = grass.region()
+            
+            raster = self.instruction.FindInstructionByType('raster')
+            rasterId = raster.id if raster else None
+            if rasterId: # because of resolution
+                RunCommand('g.region', n = region['north'], s = region['south'],
+                            e = region['east'], w = region['west'], rast = self.instruction[rasterId]['raster'])
+            else:
+                RunCommand('g.region',  n = region['north'], s = region['south'],
+                                        e = region['east'], w = region['west'])
+            
+        elif scaleType == 3:
             mapFrameDict['map'] = None
             mapFrameDict['mapType'] = None
             mapFrameDict['region'] = None
@@ -4011,7 +4030,7 @@ def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
     
     
 def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None):
-    """!Computes map scale and map frame rectangle to fit region (scale is not fixed)"""
+    """!Computes map scale, center and map frame rectangle to fit region (scale is not fixed)"""
     currRegionDict = {}
     if scaleType == 0 and map:# automatic, region from raster or vector
         res = ''
@@ -4023,8 +4042,20 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
     elif scaleType == 1 and region: # saved region
         res = grass.read_command("g.region", flags = 'gu', region = region)
         currRegionDict = grass.parse_key_val(res, val_type = float)
+    elif scaleType == 2: # current region
+        env = grass.gisenv()
+        windFilePath = os.path.join(env['GISDBASE'], env['LOCATION_NAME'], env['MAPSET'], 'WIND')
+        try:
+            windFile = open(windFilePath, 'r').read()
+        except IOError:
+            currRegionDict = grass.region()
+        regionDict = grass.parse_key_val(windFile, sep = ':', val_type = float)
+        region = grass.read_command("g.region", flags = 'gu', n = regionDict['north'], s = regionDict['south'],
+                                                                e = regionDict['east'], w = regionDict['west'])
+        currRegionDict = grass.parse_key_val(region, val_type = float)
+                                                                
     else:
-        return None, None
+        return None, None, None
     
     if not currRegionDict:
         return None, None
@@ -4054,12 +4085,15 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
         rHNew = rW*(mH/mW)
         rWNew = rW
 
-    return scale, wx.Rect2D(x, y, rWNew, rHNew) #inch
+    # center
+    cE = (currRegionDict['w'] + currRegionDict['e'])/2
+    cN = (currRegionDict['n'] + currRegionDict['s'])/2
+    return scale, (cE, cN), wx.Rect2D(x, y, rWNew, rHNew) #inch
 
 def ComputeSetRegion(self, mapDict):
     """!Computes and sets region from current scale, map center coordinates and map rectangle"""
 
-    if mapDict['scaleType'] == 2: # fixed scale
+    if mapDict['scaleType'] == 3: # fixed scale
         scale = mapDict['scale']
             
         if not hasattr(self, 'unitConv'):
