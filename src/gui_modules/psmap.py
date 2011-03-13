@@ -44,7 +44,6 @@ from   gselect    import Select
 from   toolbars   import AbstractToolbar
 from   icon       import Icons, MetaIcon, iconSet
 from   gcmd       import RunCommand, GError, GMessage
-from grass.script import core as grass
 from psmap_dialogs import *
 
 import wx
