@@ -251,9 +251,8 @@ class PsMapFrame(wx.Frame):
         self.objectId = []
         
         # instructions
-        self.instruction = Instruction(parent = self)
+        self.instruction = Instruction(parent = self, objectsToDraw = self.objectId)
         
-        self.pageId = (wx.NewId(), wx.NewId()) 
         self.pageId = wx.NewId()
         #current page of flatnotebook
         self.currentPage = 0
@@ -277,8 +276,9 @@ class PsMapFrame(wx.Frame):
                                                     pen = self.pen, brush = self.brush, preview = True)
         
         
-        # set WIND_OVERRIDE
 
+        
+        # set WIND_OVERRIDE
         grass.use_temp_region()
         
         # create queues
@@ -295,8 +295,11 @@ class PsMapFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(EVT_CMD_DONE, self.OnCmdDone)
         
-
-    
+        # load instructions
+##        self.readObjectId = []
+##        self.readInstruction = Instruction(parent = self, objectsToDraw = self.readObjectId)
+##        self.readInstruction.Read('/home/anna/Desktop/reading.txt')
+##        print '%%%%%%%%%%%%%%%%%%%\n',self.readInstruction
     
     def _layout(self):
         """!Do layout
@@ -648,25 +651,17 @@ class PsMapFrame(wx.Frame):
         instrFileFd.flush()
         instrFileFd.close()
         
-        try:
-            bb = map(float, RunCommand('ps.map', read = True,
-                                       flags = 'b',
-                                       input = instrFile).strip().split('=')[1].split(','))
-        except IndexError:
-            GError(parent = self,
-                   message = _("Unable to run ps.map -b "))
-            return 
+        mapInitRect = GetMapBounds(instrFile)
         grass.try_remove(instrFile)
-        mapInitRect = rect = wx.Rect2D(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])    
-
+        
         region = grass.region()
         units = UnitConversion(self)
         realWidth = units.convert(value = abs(region['w'] - region['e']), fromUnit = 'meter', toUnit = 'inch')
-        scale = (bb[2] - bb[0])/realWidth  
+        scale = mapInitRect.Get()[2]/realWidth  
         
         initMap = self.instruction.FindInstructionByType('initMap')
         id = initMap.id if initMap else None
-
+        
         if not id:
             id = wx.NewId()
             initMap = InitMap(id)
@@ -675,7 +670,7 @@ class PsMapFrame(wx.Frame):
 
     def OnDelete(self, event):
         if self.canvas.dragId != -1 and self.currentPage == 0:
-            if self.instruction.FindInstructionById(self.canvas.dragId).type == 'map':
+            if self.instruction[self.canvas.dragId].type == 'map':
                 self.deleteObject(self.canvas.dragId)
                 self.getInitMap()
                 self.canvas.RecalculateEN()
@@ -706,7 +701,7 @@ class PsMapFrame(wx.Frame):
         if type(id) == int:
             ids = [id]
         for id in ids:
-            itype = self.instruction.FindInstructionById(id).type
+            itype = self.instruction[id].type
             if itype in ('scalebar', 'mapinfo'):
                 drawRectangle = self.canvas.CanvasPaperCoordinates(
                                     rect = self.instruction[id]['rect'], canvasToPaper = False)
@@ -927,7 +922,6 @@ class PsMapBufferedWindow(wx.Window):
         
         fromU = 'pixel'
         toU = 'inch'
-        #pRect = self.pdcPaper.GetIdBounds(self.pageId[0])
         pRect = self.pdcPaper.GetIdBounds(self.pageId)
         pRectx, pRecty = pRect.x, pRect.y 
         scale = 1/self.currScale
@@ -1057,7 +1051,7 @@ class PsMapBufferedWindow(wx.Window):
                 elif found:
                     self.dragId = found[0]  
                     self.RedrawSelectBox(self.dragId)
-                    if self.instruction.FindInstructionById(self.dragId).type != 'map':
+                    if self.instruction[self.dragId].type != 'map':
                         self.pdcTmp.RemoveId(self.idResizeBoxTmp)
                         self.Refresh()
 
@@ -1094,7 +1088,7 @@ class PsMapBufferedWindow(wx.Window):
                 self.pdcObj.TranslateId(self.dragId, dx, dy)
                 self.pdcTmp.TranslateId(self.idBoxTmp, dx, dy)
                 self.pdcTmp.TranslateId(self.idResizeBoxTmp, dx, dy)
-                if self.instruction.FindInstructionById(self.dragId).type == 'text': 
+                if self.instruction[self.dragId].type == 'text': 
                     self.instruction[self.dragId]['coords'] = self.instruction[self.dragId]['coords'][0] + dx,\
                                                             self.instruction[self.dragId]['coords'][1] + dy
                 self.begin = event.GetPosition()
@@ -1103,7 +1097,7 @@ class PsMapBufferedWindow(wx.Window):
             # resize object
             if self.mouse['use'] == 'resize':
                 bounds = self.pdcObj.GetIdBounds(self.dragId)
-                type = self.instruction.FindInstructionById(self.dragId).type
+                type = self.instruction[self.dragId].type
                 self.mouse['end'] = event.GetPosition()
                 diffX = self.mouse['end'][0] - self.begin[0]
                 diffY = self.mouse['end'][1] - self.begin[1]
@@ -1201,7 +1195,7 @@ class PsMapBufferedWindow(wx.Window):
                             'scalebar': dict(event = None),
                             'rasterLegend': dict(event = None), 'vectorLegend': dict(event = None, page = 1),
                             'map': dict(event = None, notebook = True)}
-                type = self.instruction.FindInstructionById(self.dragId).type
+                type = self.instruction[self.dragId].type
                 itemCall[type](**itemArg[type])
 
                     
@@ -1209,7 +1203,7 @@ class PsMapBufferedWindow(wx.Window):
                 
     def RecalculatePosition(self, ids):
         for id in ids:
-            itype = self.instruction.FindInstructionById(id).type
+            itype = self.instruction[id].type
             if itype == 'map':
                         self.instruction[id]['rect'] = self.CanvasPaperCoordinates(rect = self.pdcObj.GetIdBounds(id),
                                                                     canvasToPaper = True)
@@ -1362,7 +1356,7 @@ class PsMapBufferedWindow(wx.Window):
             font.SetStyle(wx.ITALIC)
             dc.SetFont(font)
             pdc.SetFont(font)
-            text = '\n'.join(self.itemLabels[self.instruction.FindInstructionById(drawid).type])
+            text = '\n'.join(self.itemLabels[self.instruction[drawid].type])
             textExtent = dc.GetTextExtent(text)
             textRect = wx.Rect(0, 0, *textExtent).CenterIn(bb)
             r = map(int, bb)
@@ -1475,7 +1469,7 @@ class PsMapBufferedWindow(wx.Window):
             rect = [self.pdcObj.GetIdBounds(id).Inflate(3,3)]
             type = ['select']
             ids = [self.idBoxTmp]
-            if self.instruction.FindInstructionById(id).type == 'map':
+            if self.instruction[id].type == 'map':
                 controlP = self.pdcObj.GetIdBounds(id).GetBottomRight()
                 rect.append(wx.Rect(controlP.x, controlP.y, 10,10))
                 type.append('resize')

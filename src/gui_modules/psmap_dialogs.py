@@ -32,8 +32,9 @@ else:
                                  'gui_modules'))
 import globalvar
 import dbm_base
+from   utils      import CmdToTuple, GetCmdString
 from   gselect    import Select
-from   gcmd       import RunCommand, GError
+from   gcmd       import RunCommand, GError, GMessage
 
 import wx
 import wx.lib.scrolledpanel as scrolled
@@ -194,9 +195,10 @@ class CheckListCtrl(wx.ListCtrl, CheckListCtrlMixin, ListCtrlAutoWidthMixin):
         
 class Instruction:
     """!Class which represents instruction file"""
-    def __init__(self, parent):
+    def __init__(self, parent, objectsToDraw):
         
         self.parent = parent
+        self.objectsToDraw = objectsToDraw
         #here are kept objects like mapinfo, rasterlegend, etc.
         self.instruction = list()
         
@@ -235,22 +237,20 @@ class Instruction:
                             self.instruction.remove(item)
                             
                 self.instruction.remove(each)
-                if id in self.parent.objectId:
-                    self.parent.objectId.remove(id)
+                if id in self.objectsToDraw:
+                    self.objectsToDraw.remove(id)
                 return
             
     def AddInstruction(self, instruction):
         """!Add instruction"""
-        self.instruction.append(instruction)
+        if instruction.type == 'map':
+            self.instruction.insert(0, instruction)
+        else:
+            self.instruction.append(instruction)
         if instruction.type not in ('page', 'raster', 'vector', 'vProperties', 'initMap'):
-            self.parent.objectId.append(instruction.id)    
+            self.objectsToDraw.append(instruction.id)    
                 
-    def FindInstructionById(self, id):
-        """!Find instruction with the given id"""
-        for each in self.instruction:
-            if each.id == id:
-                return each
-        return None
+
             
     def FindInstructionByType(self, type, list = False):
         """!Find instruction(s) with the given type"""
@@ -262,7 +262,179 @@ class Instruction:
             return inst[0]
         return inst
         
+    def Read(self, filename):
+        """!Reads instruction file and creates instruction objects"""
+        print 'Starts to read...'
+        self.filename = filename
+        # open file
+        try:
+            file = open(filename, 'r')
+        except IOError:
+            GError(message = _("Unable to open file\n{0}").format(filename))
+            return
+        # first read file to get information about region and scaletype
+        isRegionComment = False
+        for line in file:
+            if '# g.region' in line:
+                self.SetRegion(regionInstruction = line)
+                isRegionComment = True
+                break
+        if not isRegionComment:
+            self.SetRegion(regionInstruction = None)
+        # then run ps.map -b to get information for maploc
+        # compute scale and center 
+        map = self.FindInstructionByType('map')
+        region = grass.region()
+        map['center'] = (region['n'] + region['s']) / 2, (region['w'] + region['e']) / 2
+        mapRect = GetMapBounds(self.filename)
+        map['rect'] = mapRect
+        proj = projInfo()
+        toM = 1.0
+        if proj['units']:
+            toM = float(proj['meters'])
+        units = UnitConversion(self.parent)
+        w = units.convert(value = mapRect.Get()[2], fromUnit = 'inch', toUnit = 'meter') / toM
+        map['scale'] = w / abs((region['w'] - region['e']))
+        
+        # read file again, now with information about map bounds
+        isBuffer = False
+        buffer = []
+        instruction = None
+        for line in file:
+            line = line.strip()
+            if isBuffer:
+                buffer.append(line)
+                if line.startswith('end'):
+                    isBuffer = False
+                    self.SendToRead(instruction, buffer)
+                    buffer = []
+                continue 
             
+            if line.startswith('paper'):
+                instruction = 'paper'
+                isBuffer = True
+                buffer.append(line)
+                continue
+            
+            if line.startswith('border'):
+                if line == 'border n':
+                    self.SendToRead('border', [line])
+                    continue
+                elif line == 'border y':
+                    instruction = 'border'
+                    isBuffer = True
+                    buffer.append(line)
+                    continue
+            
+            if line.startswith('scale'):
+                self.SendToRead('scale', line, isRegionComment = isRegionComment)
+                continue
+            
+            if line.startswith('maploc'):
+                self.SendToRead(instruction = 'maploc', text = line)
+                continue
+                
+            if line.startswith('raster'):
+                self.SendToRead(instruction = 'raster', text = line)
+                continue
+            
+            if line.startswith('mapinfo'):
+                instruction = 'mapinfo'
+                isBuffer = True
+                buffer.append(line)
+                continue
+            
+
+                
+        print 'end of reading'
+        
+        
+    def SendToRead(self, instruction, text, **kwargs):
+        #print 'send to read', instruction, text
+        psmapInstrDict = dict(  paper = ['page'],
+                                maploc = ['map'],
+                                scale = ['map'],
+                                border = ['map'],
+                                raster = ['raster'],
+                                mapinfo = ['mapinfo'],
+                                scalebar = ['scalebar'],
+                                text = ['text'],
+                                vpoints = ['vector', 'vProperties'],
+                                vlines = ['vector', 'vProperties'],
+                                vareas = ['vector', 'vProperties'],
+                                colortable = ['rasterLegend'],
+                                vlegend = ['vectorLegend']
+                            )
+        
+        myInstrDict = dict( page = PageSetup,
+                            map = MapFrame,
+                            raster = Raster,
+                            mapinfo = Mapinfo,
+                            scalebar = Scalebar,
+                            text = Text,
+                            rasterLegend = RasterLegend,
+                            vectorLegend = VectorLegend,
+                            vector = Vector,
+                            vProperties = VProperties
+                        )
+         
+        myInstruction = psmapInstrDict[instruction]
+        
+        for i in myInstruction:
+            instr = self.FindInstructionByType(i)
+            if i in ('text', 'vProperties') or not instr:
+                id = wx.NewId() #!vProperties expect subtype
+                newInstr = myInstrDict[i](id)
+                ok = newInstr.Read(instruction, text, **kwargs)
+                if ok:
+                    self.AddInstruction(newInstr)
+                else:
+                    GMessage(_("Failed to read"))
+                    
+            else:
+                ok = instr.Read(instruction, text, **kwargs)
+
+                if not ok:
+                    GMessage(_("Failed to read"))
+            
+              
+    def SetRegion(self, regionInstruction):
+        """!Sets region from file comment or sets current region in case of no comment"""
+        map = MapFrame(wx.NewId())
+        self.AddInstruction(map)
+        if regionInstruction:
+            cmd = CmdToTuple(regionInstruction.strip('# ').split())
+            
+            # define scaleType
+            if len(cmd[1]) == 1:
+                if 'rast' in cmd[1]:
+                    map['scaleType'] = 0
+                    map['mapType'] = 'raster'   
+                    map['map'] = cmd[1]['rast']     
+                elif 'vect' in cmd[1]:
+                    map['scaleType'] = 0
+                    map['mapType'] = 'vector' 
+                    map['map'] = cmd[1]['vect']  
+                elif 'region' in cmd[1]:
+                    map['scaleType'] = 1  
+                    map['region'] = cmd[1]['region']
+                    
+            else:
+                map['scaleType'] = 2  
+        else:
+            grass.del_temp_region()
+            region = grass.region()
+            grass.use_temp_region()    
+            cmd = ['g.region', region]
+        cmdString = GetCmdString(cmd).replace('g.region', '')
+        GMessage(_("Instruction file will be loaded with following region: {0}\n").format(cmdString))
+        try:
+            RunCommand(cmd[0], **cmd[1])
+        except ScriptError, e:
+            GError(_("Region cannot be set\n{0}").format(e))
+            return False
+        map['scaleType'] = 2  
+
 class InstructionObject:
     """!Abtract class representing single instruction"""
     def __init__(self, id): 
@@ -294,6 +466,10 @@ class InstructionObject:
         """!Set default values"""
         self.instruction = instruction
         
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save them"""
+        pass
+        
 class InitMap(InstructionObject):
     """!Class representing virtual map"""
     def __init__(self, id):
@@ -313,7 +489,7 @@ class MapFrame(InstructionObject):
         self.type = 'map'
         # default values
         self.defaultInstruction = dict( map = None, mapType = None, region = None,
-                                        rect = None, scaleType = 0, scale = None, center = None,
+                                        rect = wx.Rect2D(), scaleType = 0, scale = None, center = None,
                                         border = 'y', width = 1, color = '0:0:0') 
         # current values
         self.instruction = dict(self.defaultInstruction)
@@ -325,13 +501,13 @@ class MapFrame(InstructionObject):
         if self.instruction['scaleType'] == 0: #match map
             map = self.instruction['map']
             mapType = 'rast' if self.instruction['mapType'] == 'raster' else 'vect'
-            comment = "# set region: g.region {0}={1}\n".format(mapType, map)
+            comment = "# g.region {0}={1}\n".format(mapType, map)
         elif self.instruction['scaleType'] == 1:# saved region
             region = self.instruction['region']
-            comment = "# set region: g.region region={0}\n".format(region)                
-        elif self.instruction['scaleType'] == 3: #fixed scale
+            comment = "# g.region region={0}\n".format(region)                
+        elif self.instruction['scaleType'] in (2, 3): #current region, fixed scale
             region = grass.region()
-            comment = "# set region: g.region n={n} s={s} e={e} w={w}\n".format(**region)
+            comment = "# g.region n={n} s={s} e={e} w={w} rows={rows} cols={cols}\n".format(**region)
         instr += comment
         instr += '\n'
         # maploc
@@ -357,7 +533,80 @@ class MapFrame(InstructionObject):
         instr += borderInstruction
         instr += '\n'
 
-        return instr   
+        return instr  
+     
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        if 'isRegionComment' in kwargs:
+            isRegionComment = kwargs['isRegionComment']
+        instr = {}
+##        if instruction == 'gregion':
+##            start = text.find('g.region')
+##            cmd = text[start:].split()
+##            if len(cmd) == 2:
+##                if cmd[1].split('=')[0] == 'rast':
+##                    instr['scaleType'] = 0
+##                    instr['mapType'] = 'raster'   
+##                    instr['map'] = cmd[1].split('=')[1]  
+##                elif cmd[1].split('=')[0] == 'vect':
+##                    instr['scaleType'] = 0
+##                    instr['mapType'] = 'vector' 
+##                    instr['map'] = cmd[1].split('=')[1]  
+##                elif cmd[1].split('=')[0] == 'region':
+##                    instr['scaleType'] = 1  
+##                    instr['region'] = cmd[1].split('=')[1]
+##                    
+##            elif len(text[start:].split()[1:]) == 4:
+##                instr['scaleType'] = 3  
+##                region = grass.parse_key_val(text[start:].split(' ',1)[1], val_type = float, vsep = ' ')
+##                instr['center'] = (region['n'] + region['s']) / 2, (region['w'] + region['e']) / 2
+##
+##            cmd = CmdToTuple(cmd)
+##            RunCommand(cmd[0], **cmd[1])
+
+            
+        if instruction == 'border':
+            for line in text:
+                try:
+                    if line == 'border n':
+                        instr['border'] = 'n'
+                        break
+                    elif line == 'border y':
+                        instr['border'] = 'y'
+                    elif line.startswith('width'):
+                        instr['width'] = line.split()[1]
+                    elif line.startswith('color'):
+                        instr['color'] = line.split()[1]
+                except IndexError:
+                    GError(_("Failed to read instruction {0}").format(instruction))
+                    return False
+                    
+        elif instruction == 'scale':
+            try:
+                scaleText = text.strip('scale ').split(':')[1]
+                # when scale instruction given and region comment also, then scaletype is fixed scale
+                instr['scaleType'] = 2 if not isRegionComment else 3
+                instr['scale'] = 1/float(scaleText)
+                if abs(instr['scale'] - self.instruction['scale'])> 0.001:
+                    print "WARNING - scale is different", instr['scale'], self.instruction['scale']
+            except (ValueError, IndexError):
+                GError(_("Failed to read instruction {0}.\nUse 1:25000 notation.").format(instruction))
+                return False
+        
+        elif instruction == 'maploc':
+            maploc = text.strip('maploc ').split()
+            if len(maploc) >= 2:
+                if  abs(self.instruction['rect'].Get()[0] - float(maploc[0])) > 0.01 or \
+                    abs(self.instruction['rect'].Get()[1] - float(maploc[1])) > 0.01:
+                    print "WARNING - position is different", self.instruction['rect'].Get()[0:2], maploc[0:2]
+                instr['rect'] = wx.Rect2D(float(maploc[0]), float(maploc[1]), self.instruction['rect'][2], self.instruction['rect'][3])
+            if len(maploc) == 4:
+                if  abs(self.instruction['rect'].Get()[2] - float(maploc[2])) > 0.01 or \
+                    abs(self.instruction['rect'].Get()[3] - float(maploc[3])) > 0.01:
+                    print "WARNING - position is different", self.instruction['rect'].Get()[2:], maploc[2:]
+                instr['rect'] = wx.Rect2D(*map(float, maploc))
+        self.instruction.update(instr)   
+        return True 
     
 class PageSetup(InstructionObject):
     """!Class representing page instruction"""
@@ -379,8 +628,54 @@ class PageSetup(InstructionObject):
                             "    bottom {Bottom}\n    top {Top}\nend".format(**self.instruction)
 
         return instr
-        
-        
+    
+    def Read(self, instruction, text):
+        """!Read instruction and save information"""
+        instr = {}
+        self.cats = ['Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
+        self.subInstr = dict(zip(['width', 'height', 'left', 'right', 'top', 'bottom'], self.cats))
+
+        if instruction == 'paper': # just for sure
+            for line in text:
+                if line.startswith('paper'): 
+                    if len(line.split()) > 1:
+                        format = line.split()[1]
+                        availableFormats = self._toDict(grass.read_command('ps.map', flags = 'p'))
+                        # e.g. paper a3 
+                        try:
+                            instr['Format'] = format
+                            for key, value in availableFormats[format].iteritems():
+                                instr[key] = float(value)
+                            break
+                        except KeyError:
+                            GError(_("Failed to read instruction '{0}'.\nUnknown format {1}").format(instruction, format))
+                            return False
+                        
+                    else:
+                        # paper
+                        # width ...
+                        instr['Format'] = 'custom'
+                # read subinstructions
+                elif instr['Format'] == 'custom' and not line.startswith('end'):
+                    text = line.split()
+                    try:
+                        instr[self.subInstr[text[0]]] = float(text[1])
+                    except  (IndexError, KeyError):
+                        GError(_("Failed to read instruction '{0}'.").format(instruction))
+                        return False
+
+            self.instruction.update(instr)
+        return True  
+    
+    def _toDict(self, paperStr):    
+        sizeDict = dict()
+#     cats = self.subInstr[ 'Width', 'Height', 'Left', 'Right', 'Top', 'Bottom']
+        for line in paperStr.strip().split('\n'):
+            d = dict(zip(self.cats, line.split()[1:]))
+            sizeDict[line.split()[0]] = d
+       
+        return sizeDict    
+    
 class Mapinfo(InstructionObject):
     """!Class representing mapinfo instruction"""
     def __init__(self, id):
@@ -388,7 +683,7 @@ class Mapinfo(InstructionObject):
         self.type = 'mapinfo'
         # default values
         self.defaultInstruction = dict( unit = 'inch', where = (0, 0),
-                                            font = 'Sans', fontsize = 10, color = 'black', background = 'none', 
+                                            font = 'Helvetica', fontsize = 10, color = 'black', background = 'none', 
                                             #font = 'Sans', fontsize = 10, color = '0:0:0', background = 'none', 
                                             border = 'none', rect = None)
         # current values
@@ -402,13 +697,37 @@ class Mapinfo(InstructionObject):
         instr += "end"
         return instr
     
+    def Read(self, instruction, text):
+        """!Read instruction and save information"""
+        instr = {}
+        try:
+            for line in text:
+                sub = line.split(' ',1)
+                if sub[0] == 'font':
+                    instr['font'] = sub[1]
+                elif sub[0] == 'fontsize':
+                    instr['fontsize'] = int(sub[1])
+                elif sub[0] == 'color':
+                    instr['color'] = sub[1]
+                elif sub[0] == 'background':
+                    instr['background'] = sub[1]
+                elif sub[0] == 'border':
+                    instr['border'] = sub[1]
+                elif sub[0] == 'where':
+                    instr['where'] = tuple(sub[2].split())
+        except (ValueError, IndexError):
+            GError(_("Failed to read instruction {0}").format(instruction))
+        
+        self.instruction.update(instr)
+        return True
+    
 class Text(InstructionObject):
     """!Class representing text instruction"""
     def __init__(self, id):
         InstructionObject.__init__(self, id = id)
         self.type = 'text'
         # default values
-        self.defaultInstruction = dict(text = "", font = "Serif", fontsize = 10, color = 'black', background = 'none',
+        self.defaultInstruction = dict(text = "", font = "Helvetica", fontsize = 10, color = 'black', background = 'none',
                                         hcolor = 'none', hwidth = 1, border = 'none', width = '1', XY = True,
                                         where = (0,0), unit = 'inch', rotate = None, 
                                         ref = "center center", xoffset = 0, yoffset = 0, east = None, north = None)
@@ -535,7 +854,27 @@ class Raster(InstructionObject):
     def __str__(self):
         instr = "raster {raster}".format(**self.instruction)
         return instr
+    
+    def Read(self, instruction, text):
+        """!Read instruction and save information"""
+        instr = {}
+        instr['isRaster'] = True
+        try:
+            map = text.split()[1]
+        except IndexError:
+            GError(_("Failed to read instruction {0}").format(instruction))
+            return False
+        try:
+            info = grass.find_file(map, element = 'cell')
+        except grass.ScriptError, e:
+            GError(message = e.value)
+            return False
+        instr['raster'] = info['fullname']
+
         
+        self.instruction.update(instr)
+        return True
+    
 class Vector(InstructionObject):
     """!Class keeps vector layers"""
     def __init__(self, id):
@@ -673,39 +1012,41 @@ class PsmapDialog(wx.Dialog):
         
     def AddFont(self, parent, dialogDict, color = True):
         parent.font = dict()
-        parent.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Choose font:"))
-        parent.font['fontCtrl'] = wx.FontPickerCtrl(parent, id = wx.ID_ANY)
-        
-        parent.font['fontCtrl'].SetSelectedFont(
-                        wx.FontFromNativeInfoString(dialogDict['font'] + " " + str(dialogDict['fontsize'])))
-        parent.font['fontCtrl'].SetMaxPointSize(50)
-        
+##        parent.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Choose font:"))
+##        parent.font['fontCtrl'] = wx.FontPickerCtrl(parent, id = wx.ID_ANY)
+##        
+##        parent.font['fontCtrl'].SetSelectedFont(
+##                        wx.FontFromNativeInfoString(dialogDict['font'] + " " + str(dialogDict['fontsize'])))
+##        parent.font['fontCtrl'].SetMaxPointSize(50)
+##        
+##        if color:
+##            parent.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Choose color:"))
+##            parent.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY, style=wx.FNTP_FONTDESC_AS_LABEL)
+##            parent.font['colorCtrl'].SetColour(dialogDict['color'])
+           
+##        parent.font['colorCtrl'].SetColour(convertRGB(dialogDict['color'])) 
+           
+        parent.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font:"))
+        parent.font['fontSizeLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font size:"))
+        fontChoices = [ 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica',\
+                        'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier',\
+                        'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique'] 
+        parent.font['fontCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = fontChoices)
+        parent.font['fontCtrl'].SetStringSelection(dialogDict['font'])
+        parent.font['fontSizeCtrl']= wx.SpinCtrl(parent, id = wx.ID_ANY, min = 4, max = 50, initial = 10)
+        parent.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
+         
         if color:
             parent.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Choose color:"))
             parent.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY, style=wx.FNTP_FONTDESC_AS_LABEL)
             parent.font['colorCtrl'].SetColour(dialogDict['color'])
-           
-##        parent.font['colorCtrl'].SetColour(convertRGB(dialogDict['color'])) 
-           
-##        parent.font['fontLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font:"))
-##        parent.font['fontSizeLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Font size:"))
-##        parent.font['fontSizeUnitLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("points"))
-##        parent.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Color:"))
-##        fontChoices = [ 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica',\
-##                        'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier',\
-##                        'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique']
-##        colorChoices = [  'aqua', 'black', 'blue', 'brown', 'cyan', 'gray', 'green', 'indigo', 'magenta',\
-##                        'orange', 'purple', 'red', 'violet', 'white', 'yellow']
-##        parent.font['fontCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = fontChoices)
-##        parent.font['fontCtrl'].SetStringSelection(dialogDict['font'])
-##        parent.colorCtrl = wx.Choice(parent, id = wx.ID_ANY, choices = colorChoices)
-##        parent.colorCtrl.SetStringSelection(parent.rLegendDict['color'])
-##        parent.font['fontSizeCtrl']= wx.SpinCtrl(parent, id = wx.ID_ANY, min = 4, max = 50, initial = 10)
-##        parent.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
-##        parent.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
-##        parent.font['colorCtrl'].SetColour(dialogDict['color'])    
-
-       
+##            parent.font['colorLabel'] = wx.StaticText(parent, id = wx.ID_ANY, label = _("Color:"))
+##            colorChoices = [  'aqua', 'black', 'blue', 'brown', 'cyan', 'gray', 'green', 'indigo', 'magenta',\
+##                                'orange', 'purple', 'red', 'violet', 'white', 'yellow']
+##            parent.colorCtrl = wx.Choice(parent, id = wx.ID_ANY, choices = colorChoices)
+##            parent.colorCtrl.SetStringSelection(parent.rLegendDict['color'])
+##            parent.font['colorCtrl'] = wx.ColourPickerCtrl(parent, id = wx.ID_ANY)
+##            parent.font['colorCtrl'].SetColour(dialogDict['color'])   
     def OnApply(self, event):
         ok = self.update()
         if ok:
@@ -769,7 +1110,7 @@ class PageSetupDialog(PsmapDialog):
         self.paperTable = self._toList(paperString) 
         self.unitsList = self.unitConv.getPageUnits()
         pageId = id
-        self.pageSetupDict = settings.FindInstructionById(id = id).GetInstruction()
+        self.pageSetupDict = settings[id].GetInstruction()
 
         self._layout()
         
@@ -1326,7 +1667,7 @@ class MapFramePanel(wx.Panel):
                 scaleNumber = float(self.scaleTextCtrl.GetValue())
                 centerE = float(self.eastingTextCtrl.GetValue()) 
                 centerN = float(self.northingTextCtrl.GetValue())
-            except ValueError, SyntaxError:
+            except (ValueError, SyntaxError):
                 wx.MessageBox(message = _("Invalid scale or map center!"),
                                     caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
                 return False  
@@ -1746,11 +2087,15 @@ class VPropertiesDialog(PsmapDialog):
         self.SetTitle(self.vectorName + " "+ _("properties"))
         
         #vector map info
-        self.mapDBInfo = dbm_base.VectorDBInfo(self.vectorName)
-        self.layers = self.mapDBInfo.layers.keys()
         self.connection = True
-        if len(self.layers) == 0:
+        try:
+            self.mapDBInfo = dbm_base.VectorDBInfo(self.vectorName)
+            self.layers = self.mapDBInfo.layers.keys()
+        except grass.ScriptError:
             self.connection = False
+            self.layers = []
+
+            
         self.currLayer = self.vPropertiesDict['layer']
         
         #path to symbols, patterns
@@ -2807,6 +3152,8 @@ class LegendDialog(PsmapDialog):
             self.AddFont(parent = panel, dialogDict = legendDict, color = False)            
         flexSizer.Add(panel.font['fontLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexSizer.Add(panel.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(panel.font['fontSizeLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(panel.font['fontSizeCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         if legendType == 'raster':
             flexSizer.Add(panel.font['colorLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
             flexSizer.Add(panel.font['colorCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -2964,7 +3311,8 @@ class LegendDialog(PsmapDialog):
         self.panelVector.spanTextCtrl.Enable(self.panelVector.spanRadio.GetValue())
     def OnFont(self, event):
         """!Changes default width according to fontsize, width [inch] = fontsize[pt]/24"""   
-        fontsize = self.panelVector.font['fontCtrl'].GetSelectedFont().GetPointSize() 
+##        fontsize = self.panelVector.font['fontCtrl'].GetSelectedFont().GetPointSize() 
+        fontsize = self.panelVector.font['fontSizeCtrl'].GetValue()
         unit = self.panelVector.units['unitsCtrl'].GetStringSelection()
         w = fontsize/24.
         width = self.unitConv.convert(value = w, fromUnit = 'inch', toUnit = unit)
@@ -3012,13 +3360,16 @@ class LegendDialog(PsmapDialog):
                 self.rLegendDict['discrete'] = 'n'   
                     
             # font 
-            font = self.panelRaster.font['fontCtrl'].GetSelectedFont()
-            self.rLegendDict['font'] = font.GetFaceName()
-            self.rLegendDict['fontsize'] = font.GetPointSize()
+            self.rLegendDict['font'] = self.panelRaster.font['fontCtrl'].GetStringSelection()
+            self.rLegendDict['fontsize'] = self.panelRaster.font['fontSizeCtrl'].GetValue()
+##            font = self.panelRaster.font['fontCtrl'].GetSelectedFont()
+##            self.rLegendDict['font'] = font.GetFaceName()
+##            self.rLegendDict['fontsize'] = font.GetPointSize()
             self.rLegendDict['color'] = self.panelRaster.font['colorCtrl'].GetColour().GetAsString(wx.C2S_NAME)
             dc = wx.PaintDC(self)
-            dc.SetFont(font)#wx.Font(   pointSize = self.rLegendDict['fontsize'], family = font.GetFamily(),
-                                                #style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
+            font = dc.GetFont()
+            dc.SetFont(wx.Font(   pointSize = self.rLegendDict['fontsize'], family = font.GetFamily(),
+                                                style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
             # position
             x = self.unitConv.convert(value = float(self.panelRaster.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
             y = self.unitConv.convert(value = float(self.panelRaster.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
@@ -3144,11 +3495,14 @@ class LegendDialog(PsmapDialog):
                 self.vLegendDict['where'] = (x, y)
                 
                 # font 
-                font = self.panelVector.font['fontCtrl'].GetSelectedFont()
-                self.vLegendDict['font'] = font.GetFaceName()
-                self.vLegendDict['fontsize'] = font.GetPointSize()
+                self.vLegendDict['font'] = self.panelVector.font['fontCtrl'].GetStringSelection()
+                self.vLegendDict['fontsize'] = self.panelVector.font['fontSizeCtrl'].GetValue()
+##                self.vLegendDict['font'] = font.GetFaceName()
+##                self.vLegendDict['fontsize'] = font.GetPointSize()
                 dc = wx.PaintDC(self)
-                dc.SetFont(font)
+                font = dc.GetFont()
+                dc.SetFont(wx.Font(   pointSize = self.vLegendDict['fontsize'], family = font.GetFamily(),
+                                                style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
                 #size
                 width = self.unitConv.convert(value = float(self.panelVector.widthCtrl.GetValue()),
                                                         fromUnit = currUnit, toUnit = 'inch')
@@ -3253,12 +3607,17 @@ class MapinfoDialog(PsmapDialog):
         
         self.AddFont(parent = panel, dialogDict = self.mapinfoDict)#creates font color too, used below
         
+##        gridBagSizer.Add(panel.font['fontLabel'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(panel.font['fontCtrl'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##        gridBagSizer.Add(panel.font['colorLabel'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+##        gridBagSizer.Add(panel.font['colorCtrl'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+
         gridBagSizer.Add(panel.font['fontLabel'], pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         gridBagSizer.Add(panel.font['fontCtrl'], pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-        gridBagSizer.Add(panel.font['colorLabel'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
-        gridBagSizer.Add(panel.font['colorCtrl'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-
-
+        gridBagSizer.Add(panel.font['fontSizeLabel'], pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.font['fontSizeCtrl'], pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        gridBagSizer.Add(panel.font['colorLabel'], pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
+        gridBagSizer.Add(panel.font['colorCtrl'], pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         
         sizer.Add(item = gridBagSizer, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 1)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
@@ -3327,9 +3686,11 @@ class MapinfoDialog(PsmapDialog):
         y = self.unitConv.convert(value = float(self.panel.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
         self.mapinfoDict['where'] = (x, y)
         # font
-        font = self.panel.font['fontCtrl'].GetSelectedFont()
-        self.mapinfoDict['font'] = font.GetFaceName()
-        self.mapinfoDict['fontsize'] = font.GetPointSize()
+        self.mapinfoDict['font'] = font = self.panel.font['fontCtrl'].GetStringSelection()
+        self.mapinfoDict['fontsize'] = self.panel.font['fontSizeCtrl'].GetValue()
+##        font = self.panel.font['fontCtrl'].GetSelectedFont()
+##        self.mapinfoDict['font'] = font.GetFaceName()
+##        self.mapinfoDict['fontsize'] = font.GetPointSize()
         #colors
         self.mapinfoDict['color'] = self.panel.font['colorCtrl'].GetColour().GetAsString(flags=wx.C2S_NAME)
         self.mapinfoDict['background'] = self.colors['backgroundColor'].GetColour().GetAsString(flags=wx.C2S_NAME)\
@@ -3484,7 +3845,8 @@ class ScalebarDialog(PsmapDialog):
         sbTypeText = wx.StaticText(panel, id = wx.ID_ANY, label = _("Type:"))
         self.sbCombo = wx.combo.BitmapComboBox(panel, style = wx.CB_READONLY)
         # only temporary, images must be moved away
-        for item, path in [('fancy', './images/scalebar-fancy.png'), ('simple', './images/scalebar-simple.png')]:
+        imagePath = os.path.join(globalvar.ETCIMGDIR, "scalebar-fancy.png"), os.path.join(globalvar.ETCIMGDIR, "scalebar-simple.png") 
+        for item, path in zip(['fancy', 'simple'], imagePath):
             if not os.path.exists(path):
                 bitmap = wx.EmptyBitmap(0,0)
             else:
@@ -3554,7 +3916,7 @@ class ScalebarDialog(PsmapDialog):
         try:
             height = float(self.heightTextCtrl.GetValue())  
             height = self.unitConv.convert(value = height, fromUnit = self.scalebarDict['unitsHeight'], toUnit = 'inch') 
-        except ValueError, SyntaxError:
+        except (ValueError, SyntaxError):
             height = 0.1 #default in inch
         self.scalebarDict['height'] = height    
         
@@ -3567,7 +3929,7 @@ class ScalebarDialog(PsmapDialog):
         self.scalebarDict['unitsLength'] = selected
         try:
             length = float(self.lengthTextCtrl.GetValue())
-        except ValueError, SyntaxError:
+        except (ValueError, SyntaxError):
             wx.MessageBox(message = _("Length of scale bar is not defined"),
                                     caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
             return False
@@ -3665,13 +4027,15 @@ class TextDialog(PsmapDialog):
         
         box   = wx.StaticBox (parent = panel, id = wx.ID_ANY, label = " {0} ".format(_("Font settings")))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-        flexGridSizer = wx.FlexGridSizer (rows = 2, cols = 2, hgap = 5, vgap = 5)
+        flexGridSizer = wx.FlexGridSizer (rows = 3, cols = 2, hgap = 5, vgap = 5)
         flexGridSizer.AddGrowableCol(1)
         
         self.AddFont(parent = panel, dialogDict = self.textDict)
         
         flexGridSizer.Add(panel.font['fontLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexGridSizer.Add(panel.font['fontCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexGridSizer.Add(panel.font['fontSizeLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexGridSizer.Add(panel.font['fontSizeCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         flexGridSizer.Add(panel.font['colorLabel'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)        
         flexGridSizer.Add(panel.font['colorCtrl'], proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         
@@ -3928,9 +4292,11 @@ class TextDialog(PsmapDialog):
             return False
             
         #font
-        font = self.textPanel.font['fontCtrl'].GetSelectedFont()
-        self.textDict['font'] = font.GetFaceName()
-        self.textDict['fontsize'] = font.GetPointSize()
+        self.textDict['font'] = font = self.textPanel.font['fontCtrl'].GetStringSelection()
+        self.textDict['fontsize'] = self.textPanel.font['fontSizeCtrl'].GetValue()
+##        font = self.textPanel.font['fontCtrl'].GetSelectedFont()
+##        self.textDict['font'] = font.GetFaceName()
+##        self.textDict['fontsize'] = font.GetPointSize()
         self.textDict['color'] = self.textPanel.font['colorCtrl'].GetColour().GetAsString(flags=wx.C2S_NAME)
         #effects
         self.textDict['background'] = (convertRGB(self.effect['backgroundColor'].GetColour())
@@ -4147,3 +4513,14 @@ def projInfo():
             break
     
     return projinfo
+
+def GetMapBounds(filename):
+    """!Run ps.map -b to get information about map bounding box"""
+    try:
+        bb = map(float, grass.read_command('ps.map',
+                                        flags = 'b',
+                                        input = filename).strip().split('=')[1].split(','))
+    except (grass.ScriptError, IndexError):
+        GError(message = _("Unable to run ps.map -b "))
+        return None
+    return wx.Rect2D(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])
