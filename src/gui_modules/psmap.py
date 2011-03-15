@@ -981,7 +981,7 @@ class PsMapBufferedWindow(wx.Window):
             
         texts = self.instruction.FindInstructionByType('text', list = True)
         for text in texts:
-            e, n = PaperMapCoordinates(self, mapId = mapId, x = self.instruction[text.id]['where'][0],
+            e, n = PaperMapCoordinates(map = self.instruction[mapId], x = self.instruction[text.id]['where'][0],
                                                 y = self.instruction[text.id]['where'][1], paperToMap = True)
             self.instruction[text.id]['east'], self.instruction[text.id]['north'] = e, n
             

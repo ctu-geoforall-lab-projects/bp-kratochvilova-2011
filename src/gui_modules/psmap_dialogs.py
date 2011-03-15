@@ -34,7 +34,7 @@ import globalvar
 import dbm_base
 from   utils      import CmdToTuple, GetCmdString
 from   gselect    import Select
-from   gcmd       import RunCommand, GError, GMessage
+from   gcmd       import RunCommand, GError, GMessage, GWarning
 
 import wx
 import wx.lib.scrolledpanel as scrolled
@@ -49,11 +49,14 @@ except ImportError: # if it's not there locally, try the wxPython lib.
 
 grass.set_raise_on_error(True)
 
-class UnitConversion():
+class UnitConversion:
     """! Class for converting units"""
-    def __init__(self, parent):
+    def __init__(self, parent = None):
         self.parent = parent
-        ppi = wx.PaintDC(self.parent).GetPPI()
+        if self.parent:
+            ppi = wx.PaintDC(self.parent).GetPPI()
+        else: 
+            ppi = (72, 72)
         self._unitsPage = { 'inch' : 1.0,
                             'point' : 72.0,
                             'centimeter' : 2.54,
@@ -300,13 +303,21 @@ class Instruction:
         isBuffer = False
         buffer = []
         instruction = None
+        print 'Starts to read again...'
+        file.seek(0)
         for line in file:
+
             line = line.strip()
             if isBuffer:
                 buffer.append(line)
                 if line.startswith('end'):
                     isBuffer = False
-                    self.SendToRead(instruction, buffer)
+                    kwargs = {}
+                    if instruction == 'scalebar':
+                        kwargs['scale'] = map['scale']
+                    elif instruction == 'text':
+                        kwargs['mapInstruction'] = map
+                    self.SendToRead(instruction, buffer, **kwargs)
                     buffer = []
                 continue 
             
@@ -314,38 +325,45 @@ class Instruction:
                 instruction = 'paper'
                 isBuffer = True
                 buffer.append(line)
-                continue
             
-            if line.startswith('border'):
-                if line == 'border n':
+            elif line.startswith('border'):
+                if line.split()[1].lower() in ('n', 'no', 'none'):
                     self.SendToRead('border', [line])
-                    continue
-                elif line == 'border y':
+                elif line.split()[1].lower() in ('y', 'yes'):
                     instruction = 'border'
                     isBuffer = True
                     buffer.append(line)
-                    continue
             
-            if line.startswith('scale'):
+            elif line.startswith('scale '):
                 self.SendToRead('scale', line, isRegionComment = isRegionComment)
-                continue
             
-            if line.startswith('maploc'):
+            elif line.startswith('maploc'):
+                print 'send to read maploc'
                 self.SendToRead(instruction = 'maploc', text = line)
-                continue
                 
-            if line.startswith('raster'):
+            elif line.startswith('raster'):
                 self.SendToRead(instruction = 'raster', text = line)
-                continue
+            
+            elif line.startswith('mapinfo'):
+                instruction = 'mapinfo'
+                isBuffer = True
+                buffer.append(line)
             
             if line.startswith('mapinfo'):
                 instruction = 'mapinfo'
                 isBuffer = True
                 buffer.append(line)
-                continue
-            
 
-                
+            if line.startswith('scalebar'):
+                instruction = 'scalebar'
+                isBuffer = True
+                buffer.append(line) 
+            
+            if line.startswith('text'):
+                instruction = 'text'
+                isBuffer = True
+                buffer.append(line) 
+                   
         print 'end of reading'
         
         
@@ -443,7 +461,9 @@ class InstructionObject:
         # default values
         self.defaultInstruction = dict()
         # current values
-        self.instruction = self.defaultInstruction    
+        self.instruction = self.defaultInstruction   
+        # converting units
+        self.unitConv = UnitConversion() 
     
     def __str__(self):
         """!Returns particular part of text instruction"""
@@ -540,38 +560,16 @@ class MapFrame(InstructionObject):
         if 'isRegionComment' in kwargs:
             isRegionComment = kwargs['isRegionComment']
         instr = {}
-##        if instruction == 'gregion':
-##            start = text.find('g.region')
-##            cmd = text[start:].split()
-##            if len(cmd) == 2:
-##                if cmd[1].split('=')[0] == 'rast':
-##                    instr['scaleType'] = 0
-##                    instr['mapType'] = 'raster'   
-##                    instr['map'] = cmd[1].split('=')[1]  
-##                elif cmd[1].split('=')[0] == 'vect':
-##                    instr['scaleType'] = 0
-##                    instr['mapType'] = 'vector' 
-##                    instr['map'] = cmd[1].split('=')[1]  
-##                elif cmd[1].split('=')[0] == 'region':
-##                    instr['scaleType'] = 1  
-##                    instr['region'] = cmd[1].split('=')[1]
-##                    
-##            elif len(text[start:].split()[1:]) == 4:
-##                instr['scaleType'] = 3  
-##                region = grass.parse_key_val(text[start:].split(' ',1)[1], val_type = float, vsep = ' ')
-##                instr['center'] = (region['n'] + region['s']) / 2, (region['w'] + region['e']) / 2
-##
-##            cmd = CmdToTuple(cmd)
-##            RunCommand(cmd[0], **cmd[1])
-
             
         if instruction == 'border':
             for line in text:
+                if line.startswith('end'):
+                    break
                 try:
-                    if line == 'border n':
+                    if line.split()[1].lower() in ('n', 'no', 'none'):
                         instr['border'] = 'n'
                         break
-                    elif line == 'border y':
+                    elif line.split()[1].lower() in ('y', 'yes'):
                         instr['border'] = 'y'
                     elif line.startswith('width'):
                         instr['width'] = line.split()[1]
@@ -586,9 +584,9 @@ class MapFrame(InstructionObject):
                 scaleText = text.strip('scale ').split(':')[1]
                 # when scale instruction given and region comment also, then scaletype is fixed scale
                 instr['scaleType'] = 2 if not isRegionComment else 3
-                instr['scale'] = 1/float(scaleText)
-                if abs(instr['scale'] - self.instruction['scale'])> 0.001:
-                    print "WARNING - scale is different", instr['scale'], self.instruction['scale']
+                scale = 1/float(scaleText)
+                if abs(scale - self.instruction['scale']) > (0.01 * scale):
+                    GWarning(_("Scale has changed, old value: {0}\nnew value: {1}").format(scale, self.instruction['scale']))
             except (ValueError, IndexError):
                 GError(_("Failed to read instruction {0}.\nUse 1:25000 notation.").format(instruction))
                 return False
@@ -598,13 +596,16 @@ class MapFrame(InstructionObject):
             if len(maploc) >= 2:
                 if  abs(self.instruction['rect'].Get()[0] - float(maploc[0])) > 0.01 or \
                     abs(self.instruction['rect'].Get()[1] - float(maploc[1])) > 0.01:
-                    print "WARNING - position is different", self.instruction['rect'].Get()[0:2], maploc[0:2]
-                instr['rect'] = wx.Rect2D(float(maploc[0]), float(maploc[1]), self.instruction['rect'][2], self.instruction['rect'][3])
+                    GWarning(_("Map frame position changed, old value: {0} {1}\nnew value: {2} {3}").format(
+                                             maploc[0], maploc[1], *self.instruction['rect'].Get()[0:2]))
+                    
+                #instr['rect'] = wx.Rect2D(float(maploc[0]), float(maploc[1]), self.instruction['rect'][2], self.instruction['rect'][3])
             if len(maploc) == 4:
                 if  abs(self.instruction['rect'].Get()[2] - float(maploc[2])) > 0.01 or \
                     abs(self.instruction['rect'].Get()[3] - float(maploc[3])) > 0.01:
-                    print "WARNING - position is different", self.instruction['rect'].Get()[2:], maploc[2:]
-                instr['rect'] = wx.Rect2D(*map(float, maploc))
+                    GWarning(_("Map frame size changed, old value: {0} {1}\nnew value: {2} {3}").format(
+                                            maploc[2], maploc[3], *self.instruction['rect'].Get()[2:]))
+                #instr['rect'] = wx.Rect2D(*map(float, maploc))
         self.instruction.update(instr)   
         return True 
     
@@ -702,7 +703,7 @@ class Mapinfo(InstructionObject):
         instr = {}
         try:
             for line in text:
-                sub = line.split(' ',1)
+                sub = line.split(None,1)
                 if sub[0] == 'font':
                     instr['font'] = sub[1]
                 elif sub[0] == 'fontsize':
@@ -717,10 +718,18 @@ class Mapinfo(InstructionObject):
                     instr['where'] = tuple(sub[2].split())
         except (ValueError, IndexError):
             GError(_("Failed to read instruction {0}").format(instruction))
-        
         self.instruction.update(instr)
+        self.instruction['rect'] = self.EstimateRect(mapinfoDict = self.instruction)
         return True
     
+    def EstimateRect(self, mapinfoDict):
+        """!Estimate size to draw mapinfo"""
+        w = mapinfoDict['fontsize'] * 20 # any better estimation? 
+        h = mapinfoDict['fontsize'] * 7
+        width = self.unitConv.convert(value = w, fromUnit = 'point', toUnit = 'inch')
+        height = self.unitConv.convert(value = h, fromUnit = 'point', toUnit = 'inch')
+        return wx.Rect2D(x = mapinfoDict['where'][0], y = mapinfoDict['where'][1], w = width, h = height)
+        
 class Text(InstructionObject):
     """!Class representing text instruction"""
     def __init__(self, id):
@@ -755,6 +764,66 @@ class Text(InstructionObject):
         instr += "end"
         return instr
     
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        map = kwargs['mapInstruction']
+        instr = {}
+        for line in text:
+            try:
+                sub = line.split(None, 1)[0]
+                if sub == 'text':
+                    e, n = line.split(None, 3)[1:3]
+                    if '%' in e and '%' in n:
+                        instr['XY'] = True
+                        instr['east'], instr['north'] = self.PercentToReal(e, n)
+                    else:
+                        instr['XY'] = False
+                        instr['east'], instr['north'] = float(e), float(n)
+                        
+                    instr['text'] = line.split(None, 3)[3]
+                
+                elif sub == 'font':
+                    instr['font'] = line.split(None, 1)[1]
+                elif sub == 'fontsize':
+                    instr['fontsize'] = float(line.split(None, 1)[1])
+                elif sub == 'color':
+                    instr['color'] = line.split(None, 1)[1]
+                elif sub == 'width':
+                    instr['width'] = line.split(None, 1)[1]
+                elif sub == 'hcolor':
+                    instr['hcolor'] = line.split(None, 1)[1]
+                elif sub == 'hwidth':
+                    instr['hwidth'] = line.split(None, 1)[1]
+                elif sub == 'background':
+                    instr['background'] = line.split(None, 1)[1]
+                elif sub == 'border':
+                    instr['border'] = line.split(None, 1)[1]
+                elif sub == 'ref':
+                    instr['ref'] = line.split(None, 1)[1]
+                elif sub == 'rotate':
+                    instr['rotate'] = float(line.split(None, 1)[1])
+                elif sub == 'xoffset':
+                    instr['xoffset'] = float(line.split(None, 1)[1])
+                elif sub == 'yoffset':
+                    instr['yoffset'] = float(line.split(None, 1)[1])
+                elif sub == 'opaque':
+                    if line.split(None, 1)[1].lower() in ('n', 'none'):
+                        instr['background'] = 'none'
+         
+            except(IndexError, ValueError):
+                GError(_("Failed to read instruction {0}").format(instruction))
+        instr['where'] = PaperMapCoordinates(map = map, x = instr['east'], y = instr['north'], paperToMap = False)       
+        self.instruction.update(instr)
+
+        return True 
+    
+    def PercentToReal(self, e, n):
+        """!Converts text coordinates from percent of region to map coordinates"""
+        e, n = float(e.strip('%')), float(n.strip('%'))
+        region = grass.region()
+        N = region['s'] + (region['n'] - region['s']) / 100 * n
+        E = region['w'] + (region['e'] - region['w']) / 100 * e
+        return E, N
     
 class Scalebar(InstructionObject):
     """!Class representing scalebar instruction"""
@@ -762,7 +831,7 @@ class Scalebar(InstructionObject):
         InstructionObject.__init__(self, id = id)
         self.type = 'scalebar'
         # default values
-        self.defaultInstruction = dict( unit = 'inch', where = (0,0),
+        self.defaultInstruction = dict( unit = 'inch', where = (1,1),
                                             unitsLength = 'auto', unitsHeight = 'inch',
                                             length = None, height = 0.1, rect = None,
                                             fontsize = 10, background = 'y',
@@ -779,7 +848,63 @@ class Scalebar(InstructionObject):
         instr += "    fontsize {fontsize}\n    background {background}\n".format(**self.instruction)
         instr += "end"
         return instr
-        
+    
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        scale = kwargs['scale']
+        instr = {}
+        for line in text:
+            try:
+                if line.startswith('scalebar'):
+                    if 'scalebar s' in line:
+                        instr['scalebar'] = 's'
+                    else:
+                        instr['scalebar'] = 'f'
+                elif line.startswith('where'):
+                    instr['where'] = line.split()[1:3]
+                elif line.startswith('length'):
+                    instr['length'] = float(line.split()[1])
+                elif line.startswith('units'):
+                    if line.split()[1] in ['auto', 'meters', 'kilometers', 'feet', 'miles', 'nautmiles']:
+                        instr['unitsLength'] = line.split()[1]
+                elif line.startswith('height'):
+                    instr['height'] = float(line.split()[1])
+                elif line.startswith('fontsize'):
+                    instr['fontsize'] = float(line.split()[1])
+                elif line.startswith('numbers'):
+                    instr['numbers'] = int(line.split()[1])
+                elif line.startswith('segment'):
+                    instr['segment'] = int(line.split()[1])
+                elif line.startswith('background'):
+                    if line.split()[1].strip().lower() in ('y','yes'):
+                        instr['background'] = 'y'
+                    elif line.split()[1].strip().lower() in ('n','no', 'none'):
+                        instr['background'] = 'n'
+            except(IndexError, ValueError):
+                GError(_("Failed to read instruction {0}").format(instruction))
+                
+        self.instruction.update(instr)
+        w, h = self.EstimateSize(scalebarDict = self.instruction, scale = scale)
+        x = float(self.instruction['where'][0]) - w / 2 
+        y = float(self.instruction['where'][1]) - h / 2
+        self.instruction['rect'] = wx.Rect2D(x, y, w, h)
+        return True 
+    
+    def EstimateSize(self, scalebarDict, scale):
+        """!Estimate size to draw scalebar"""
+        units = projInfo()['units']
+        if not units or units not in self.unitConv.getAllUnits():
+            units = 'meters'
+        if scalebarDict['unitsLength'] != 'auto':
+            length = self.unitConv.convert(value = scalebarDict['length'], fromUnit = scalebarDict['unitsLength'], toUnit = 'inch')
+        else:
+            length = self.unitConv.convert(value = scalebarDict['length'], fromUnit = units, toUnit = 'inch')
+            
+        length *= scale
+        length *= 1.1 #for numbers on the edge
+        height = scalebarDict['height'] + 2 * self.unitConv.convert(value = scalebarDict['fontsize'], fromUnit = 'point', toUnit = 'inch')     
+        return (length, height)
+    
 class RasterLegend(InstructionObject):
     """!Class representing colortable instruction"""
     def __init__(self, id):
@@ -1032,8 +1157,11 @@ class PsmapDialog(wx.Dialog):
                         'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier',\
                         'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique'] 
         parent.font['fontCtrl'] = wx.Choice(parent, id = wx.ID_ANY, choices = fontChoices)
-        parent.font['fontCtrl'].SetStringSelection(dialogDict['font'])
-        parent.font['fontSizeCtrl']= wx.SpinCtrl(parent, id = wx.ID_ANY, min = 4, max = 50, initial = 10)
+        if dialogDict['font'] in fontChoices:
+            parent.font['fontCtrl'].SetStringSelection(dialogDict['font'])
+        else:
+            parent.font['fontCtrl'].SetStringSelection('Helvetica')
+        parent.font['fontSizeCtrl'] = wx.SpinCtrl(parent, id = wx.ID_ANY, min = 4, max = 50, initial = 10)
         parent.font['fontSizeCtrl'].SetValue(dialogDict['fontsize'])
          
         if color:
@@ -3557,12 +3685,13 @@ class MapinfoDialog(PsmapDialog):
         PsmapDialog.__init__(self, parent = parent, id = id, title = "Mapinfo settings", settings = settings)
         self.instruction = settings
         if self.id is not None:
-            self.mapinfoDict = self.instruction[id].GetInstruction()
+            self.mapinfo = self.instruction[self.id]
+            self.mapinfoDict = self.mapinfo.GetInstruction()
         else:
             self.id = wx.NewId()
-            mapinfo = Mapinfo(self.id)
+            self.mapinfo = Mapinfo(self.id)
 
-            self.mapinfoDict = mapinfo.GetInstruction()
+            self.mapinfoDict = self.mapinfo.GetInstruction()
             page = self.instruction.FindInstructionByType('page').GetInstruction()
             self.mapinfoDict['where'] = page['Left'], page['Top']
 
@@ -3703,11 +3832,8 @@ class MapinfoDialog(PsmapDialog):
 ##                                        if self.colors['borderCtrl'].GetValue() else 'none')
         
         # estimation of size
-        w = self.mapinfoDict['fontsize'] * 20 # any better estimation? 
-        h = self.mapinfoDict['fontsize'] * 7
-        width = self.unitConv.convert(value = w, fromUnit = 'point', toUnit = 'inch')
-        height = self.unitConv.convert(value = h, fromUnit = 'point', toUnit = 'inch')
-        self.mapinfoDict['rect'] = wx.Rect2D(x = x, y = y, w = width, h = height)
+        self.mapinfoDict['rect'] = self.mapinfo.EstimateRect(self.mapinfoDict)
+
         
         if self.id not in self.instruction:
             mapinfo = Mapinfo(self.id)
@@ -3726,11 +3852,12 @@ class ScalebarDialog(PsmapDialog):
         PsmapDialog.__init__(self, parent = parent, id = id, title = "Scale bar settings", settings = settings)
         self.instruction = settings
         if self.id is not None:
-            self.scalebarDict = self.instruction[id].GetInstruction()
+            self.scalebar = self.instruction[id]
+            self.scalebarDict = self.scalebar.GetInstruction()
         else:
             self.id = wx.NewId()
-            scalebar = Scalebar(self.id)
-            self.scalebarDict = scalebar.GetInstruction()
+            self.scalebar = Scalebar(self.id)
+            self.scalebarDict = self.scalebar.GetInstruction()
             page = self.instruction.FindInstructionByType('page').GetInstruction()
             self.scalebarDict['where'] = page['Left'], page['Top']
 
@@ -3908,6 +4035,13 @@ class ScalebarDialog(PsmapDialog):
         x = self.unitConv.convert(value = float(self.panel.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
         y = self.unitConv.convert(value = float(self.panel.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
         
+        #style
+        
+        self.scalebarDict['scalebar'] = self.sbCombo.GetClientData(self.sbCombo.GetSelection())
+        self.scalebarDict['segment'] = self.sbSegmentsCtrl.GetValue()
+        self.scalebarDict['numbers'] = self.sbLabelsCtrl.GetValue()
+        self.scalebarDict['fontsize'] = self.fontsizeCtrl.GetValue()
+        self.scalebarDict['background'] = 'n' if self.backgroundCheck.GetValue() else 'y'
         
         # size
         
@@ -3935,31 +4069,28 @@ class ScalebarDialog(PsmapDialog):
             return False
         self.scalebarDict['length'] = length
         
-        if self.scalebarDict['unitsLength'] != 'auto':
-            length = self.unitConv.convert(value = length, fromUnit = self.unitsLength.GetStringSelection(), toUnit = 'inch')
-        else:
-            length = self.unitConv.convert(value = length, fromUnit = self.mapUnit, toUnit = 'inch')
+##        if self.scalebarDict['unitsLength'] != 'auto':
+##            length = self.unitConv.convert(value = length, fromUnit = self.unitsLength.GetStringSelection(), toUnit = 'inch')
+##        else:
+##            length = self.unitConv.convert(value = length, fromUnit = self.mapUnit, toUnit = 'inch')
+            
         # estimation of size
         map = self.instruction.FindInstructionByType('map')
         if not map:
             map = self.instruction.FindInstructionByType('initMap')
         mapId = map.id
-
-        length *= self.instruction[mapId]['scale']
-        length *= 1.1 #for numbers on the edge
-        fontsize = 10
-        height = height + 2 * self.unitConv.convert(value = fontsize, fromUnit = 'point', toUnit = 'inch') 
-        self.scalebarDict['rect'] = wx.Rect2D(x, y, length, height)
+##
+##        length *= self.instruction[mapId]['scale']
+##        length *= 1.1 #for numbers on the edge
+##        height = height + 2 * self.unitConv.convert(value = self.scalebarDict['fontsize'], fromUnit = 'point', toUnit = 'inch') 
+##        self.scalebarDict['rect'] = wx.Rect2D(x, y, length, height)
           
-        
-        self.scalebarDict['where'] = self.scalebarDict['rect'].GetCentre()  
+         
+        rectSize = self.scalebar.EstimateSize( scalebarDict = self.scalebarDict,
+                                                                scale = self.instruction[mapId]['scale'])
+        self.scalebarDict['rect'] = wx.Rect2D(x = x, y = y, w = rectSize[0], h = rectSize[1])
+        self.scalebarDict['where'] = self.scalebarDict['rect'].GetCentre() 
 
-        #style
-        self.scalebarDict['scalebar'] = self.sbCombo.GetClientData(self.sbCombo.GetSelection())
-        self.scalebarDict['segment'] = self.sbSegmentsCtrl.GetValue()
-        self.scalebarDict['numbers'] = self.sbLabelsCtrl.GetValue()
-        self.scalebarDict['fontsize'] = self.fontsizeCtrl.GetValue()
-        self.scalebarDict['background'] = 'n' if self.backgroundCheck.GetValue() else 'y'
 
 
         if self.id not in self.instruction:
@@ -3991,7 +4122,7 @@ class TextDialog(PsmapDialog):
         self.mapId = map.id
 
 
-        self.textDict['east'], self.textDict['north'] = PaperMapCoordinates(self, mapId = self.mapId, x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
+        self.textDict['east'], self.textDict['north'] = PaperMapCoordinates(map = map, x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
         
         notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)     
         self.textPanel = self._textPanel(notebook)
@@ -4054,12 +4185,12 @@ class TextDialog(PsmapDialog):
         
         self.effect['highlightCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("highlight"))
         self.effect['highlightColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
-        self.effect['highlightWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY, size = self.spinCtrlSize, value = 'pts',min = 0, max = 5, initial = 1)
+        self.effect['highlightWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY, size = self.spinCtrlSize, min = 0, max = 5, initial = 1)
         self.effect['highlightWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
         
         self.effect['borderCtrl'] = wx.CheckBox(panel, id = wx.ID_ANY, label = _("text border"))
         self.effect['borderColor'] = wx.ColourPickerCtrl(panel, id = wx.ID_ANY)
-        self.effect['borderWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY, size = self.spinCtrlSize, value = 'pts',min = 1, max = 25, initial = 1)
+        self.effect['borderWidth'] = wx.SpinCtrl(panel, id = wx.ID_ANY, size = self.spinCtrlSize, min = 1, max = 25, initial = 1)
         self.effect['borderWidthLabel'] = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width (pts):"))
         #set values
         self.effect['backgroundCtrl'].SetValue(True if self.textDict['background'] != 'none' else False)
@@ -4154,7 +4285,7 @@ class TextDialog(PsmapDialog):
         self.northingLabel  = wx.StaticText(panel, id = wx.ID_ANY, label = "N:")
         self.eastingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
         self.northingCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = "")
-        east, north = PaperMapCoordinates(self, mapId = self.mapId, x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
+        east, north = PaperMapCoordinates(map = self.instruction[self.mapId], x = self.textDict['where'][0], y = self.textDict['where'][1], paperToMap = True)
         self.eastingCtrl.SetValue(str(east))
         self.northingCtrl.SetValue(str(north))
         
@@ -4321,12 +4452,12 @@ class TextDialog(PsmapDialog):
             x = self.unitConv.convert(value = float(x), fromUnit = currUnit, toUnit = 'inch')
             y = self.unitConv.convert(value = float(y), fromUnit = currUnit, toUnit = 'inch')
             self.textDict['where'] = x, y
-            self.textDict['east'], self.textDict['north'] = PaperMapCoordinates(self, self.mapId, x, y, paperToMap = True)
+            self.textDict['east'], self.textDict['north'] = PaperMapCoordinates( self.instruction[self.mapId], x, y, paperToMap = True)
         else:
             self.textDict['XY'] = False
             self.textDict['east'] = self.eastingCtrl.GetValue() if self.eastingCtrl.GetValue() else self.textDict['east']
             self.textDict['north'] = self.northingCtrl.GetValue() if self.northingCtrl.GetValue() else self.textDict['north']
-            self.textDict['where'] = PaperMapCoordinates(self, mapId = self.mapId, x = float(self.textDict['east']),
+            self.textDict['where'] = PaperMapCoordinates(map = self.instruction[self.mapId], x = float(self.textDict['east']),
                                                             y = float(self.textDict['north']), paperToMap = False)
         #rotation
         if self.rotCtrl.GetValue():
@@ -4349,13 +4480,6 @@ class TextDialog(PsmapDialog):
         return True
     
     
-    
-def find_key(dic, val, multiple = False):
-    """!Return the key of dictionary given the value"""
-    result = [k for k, v in dic.iteritems() if v == val]
-    if len(result) == 0 and not multiple:
-        return None
-    return sorted(result) if multiple else result[0]
 
 def convertRGB(rgb):
     """!Converts wx.Colour(255,255,255,255) and string '255:255:255',
@@ -4366,15 +4490,15 @@ def convertRGB(rgb):
         return wx.Colour(*map(int, rgb.split(':')))
         
         
-def PaperMapCoordinates(self, mapId, x, y, paperToMap = True):
+def PaperMapCoordinates(map, x, y, paperToMap = True):
     """!Converts paper (inch) coordinates -> map coordinates"""
-    unitConv = UnitConversion(self)
+    unitConv = UnitConversion()
     currRegionDict = grass.region()
     cornerEasting, cornerNorthing = currRegionDict['w'], currRegionDict['n']
-    xMap = self.instruction[mapId]['rect'][0]
-    yMap = self.instruction[mapId]['rect'][1]
-    widthMap = self.instruction[mapId]['rect'][2] * 0.0254 # to meter
-    heightMap = self.instruction[mapId]['rect'][3] * 0.0254
+    xMap = map['rect'][0]
+    yMap = map['rect'][1]
+    widthMap = map['rect'][2] * 0.0254 # to meter
+    heightMap = map['rect'][3] * 0.0254
     xScale = widthMap / abs(currRegionDict['w'] - currRegionDict['e'])
     yScale = heightMap / abs(currRegionDict['n'] - currRegionDict['s'])
     currScale = (xScale + yScale) / 2
