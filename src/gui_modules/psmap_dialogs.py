@@ -267,7 +267,6 @@ class Instruction:
         
     def Read(self, filename):
         """!Reads instruction file and creates instruction objects"""
-        print 'Starts to read...'
         self.filename = filename
         # open file
         try:
@@ -303,7 +302,7 @@ class Instruction:
         isBuffer = False
         buffer = []
         instruction = None
-        print 'Starts to read again...'
+        vectorMapNumber = 1
         file.seek(0)
         for line in file:
 
@@ -317,32 +316,40 @@ class Instruction:
                         kwargs['scale'] = map['scale']
                     elif instruction == 'text':
                         kwargs['mapInstruction'] = map
-                    self.SendToRead(instruction, buffer, **kwargs)
+                    elif instruction in ('vpoints', 'vlines', 'vareas'):
+                        kwargs['id'] = wx.NewId()
+                        kwargs['vectorMapNumber'] = vectorMapNumber
+                        vectorMapNumber += 1
+                    ok = self.SendToRead(instruction, buffer, **kwargs)
+                    if not ok: return False
                     buffer = []
                 continue 
             
-            if line.startswith('paper'):
+            elif line.startswith('paper'):
                 instruction = 'paper'
                 isBuffer = True
                 buffer.append(line)
             
             elif line.startswith('border'):
                 if line.split()[1].lower() in ('n', 'no', 'none'):
-                    self.SendToRead('border', [line])
+                    ok = self.SendToRead('border', [line])
+                    if not ok: return False
                 elif line.split()[1].lower() in ('y', 'yes'):
                     instruction = 'border'
                     isBuffer = True
                     buffer.append(line)
             
             elif line.startswith('scale '):
-                self.SendToRead('scale', line, isRegionComment = isRegionComment)
+                ok = self.SendToRead('scale', line, isRegionComment = isRegionComment)
+                if not ok: return False
             
             elif line.startswith('maploc'):
-                print 'send to read maploc'
-                self.SendToRead(instruction = 'maploc', text = line)
+                ok = self.SendToRead(instruction = 'maploc', text = line)
+                if not ok: return False
                 
             elif line.startswith('raster'):
-                self.SendToRead(instruction = 'raster', text = line)
+                ok = self.SendToRead(instruction = 'raster', text = line)
+                if not ok: return False
             
             elif line.startswith('mapinfo'):
                 instruction = 'mapinfo'
@@ -363,9 +370,84 @@ class Instruction:
                 instruction = 'text'
                 isBuffer = True
                 buffer.append(line) 
-                   
-        print 'end of reading'
+            
+            if line.startswith('colortable'):
+                if len(line.split()) == 2 and line.split()[1].lower() in ('n', 'no', 'none'):
+                    break
+                instruction = 'colortable'
+                isBuffer = True
+                buffer.append(line) 
         
+            if line.startswith('vlegend'):
+                instruction = 'vlegend'
+                isBuffer = True
+                buffer.append(line) 
+                
+            if line.startswith('vpoints'):
+                instruction = 'vpoints'
+                isBuffer = True
+                buffer.append(line) 
+                
+            if line.startswith('vlines'):
+                instruction = 'vlines'
+                isBuffer = True
+                buffer.append(line)
+                
+            if line.startswith('vareas'):
+                instruction = 'vareas'
+                isBuffer = True
+                buffer.append(line)                
+        # rasterLegend
+        rasterLegend = self.FindInstructionByType('rasterLegend')
+        raster = self.FindInstructionByType('raster')
+        page = self.FindInstructionByType('page')
+        if rasterLegend:
+            if rasterLegend['rasterDefault'] and raster['raster']:
+                rasterLegend['raster'] = raster['raster']
+                if not rasterLegend['discrete']:
+                    rasterType = getRasterType(map = rasterLegend['raster'])
+                    if rasterType == 'CELL':
+                        rasterLegend['discrete'] = 'y'
+                    else:
+                        rasterLegend['discrete'] = 'n'
+            
+            #estimate size
+            height = rasterLegend.EstimateHeight(raster = rasterLegend['raster'], discrete = rasterLegend['discrete'], 
+                                        fontsize = rasterLegend['fontsize'],
+                                        cols = rasterLegend['cols'], 
+                                        height = rasterLegend['height'])
+            width = rasterLegend.EstimateWidth(raster = rasterLegend['raster'], discrete = rasterLegend['discrete'], 
+                                        fontsize = rasterLegend['fontsize'],
+                                        cols = rasterLegend['cols'] , 
+                                        width = rasterLegend['width'],
+                                        paperInstr = page)
+            rasterLegend['rect'] = wx.Rect2D(x = float(rasterLegend['where'][0]), y = float(rasterLegend['where'][1]),
+                                                w = width, h = height)
+                
+        # vectors, vlegend        
+        vector = self.FindInstructionByType('vector')
+        vectorLegend = self.FindInstructionByType('vectorLegend')
+        vectorMaps = self.FindInstructionByType('vProperties', list = True)
+        if vector:
+            for vmap in vectorMaps:
+                for i, each in enumerate(vector['list']):
+                    if each[2] == vmap.id:
+                        
+                        vector['list'][i][4] = vmap['label']
+                        vector['list'][i][3] = vmap['lpos']
+            if vectorLegend:
+                size = vectorLegend.EstimateSize(vectorInstr = vector, fontsize = vectorLegend['fontsize'],
+                                            width = vectorLegend['width'], cols = vectorLegend['cols'])                            
+                vectorLegend['rect'] = wx.Rect2D(x = float(vectorLegend['where'][0]), y = float(vectorLegend['where'][1]),
+                                                    w = size[0], h = size[1])
+        
+        
+        page = self.FindInstructionByType('page')
+        if not page:
+            page = PageSetup(wx.NewId())
+            self.AddInstruction(page)
+
+        return True
         
     def SendToRead(self, instruction, text, **kwargs):
         #print 'send to read', instruction, text
@@ -401,21 +483,26 @@ class Instruction:
         for i in myInstruction:
             instr = self.FindInstructionByType(i)
             if i in ('text', 'vProperties') or not instr:
+                
                 id = wx.NewId() #!vProperties expect subtype
-                newInstr = myInstrDict[i](id)
+                if i == 'vProperties':
+                    id = kwargs['id']
+                    newInstr = myInstrDict[i](id, subType = instruction[1:])
+                else:
+                    newInstr = myInstrDict[i](id)
                 ok = newInstr.Read(instruction, text, **kwargs)
                 if ok:
                     self.AddInstruction(newInstr)
                 else:
-                    GMessage(_("Failed to read"))
-                    
+                    return False
+
             else:
                 ok = instr.Read(instruction, text, **kwargs)
 
                 if not ok:
-                    GMessage(_("Failed to read"))
-            
-              
+                    return False
+        return True
+          
     def SetRegion(self, regionInstruction):
         """!Sets region from file comment or sets current region in case of no comment"""
         map = MapFrame(wx.NewId())
@@ -428,7 +515,7 @@ class Instruction:
                 if 'rast' in cmd[1]:
                     map['scaleType'] = 0
                     map['mapType'] = 'raster'   
-                    map['map'] = cmd[1]['rast']     
+                    map['map'] = cmd[1]['rast']  
                 elif 'vect' in cmd[1]:
                     map['scaleType'] = 0
                     map['mapType'] = 'vector' 
@@ -440,6 +527,7 @@ class Instruction:
             else:
                 map['scaleType'] = 2  
         else:
+            map['scaleType'] = 2
             grass.del_temp_region()
             region = grass.region()
             grass.use_temp_region()    
@@ -448,10 +536,11 @@ class Instruction:
         GMessage(_("Instruction file will be loaded with following region: {0}\n").format(cmdString))
         try:
             RunCommand(cmd[0], **cmd[1])
+            
         except ScriptError, e:
             GError(_("Region cannot be set\n{0}").format(e))
             return False
-        map['scaleType'] = 2  
+          
 
 class InstructionObject:
     """!Abtract class representing single instruction"""
@@ -594,15 +683,15 @@ class MapFrame(InstructionObject):
         elif instruction == 'maploc':
             maploc = text.strip('maploc ').split()
             if len(maploc) >= 2:
-                if  abs(self.instruction['rect'].Get()[0] - float(maploc[0])) > 0.01 or \
-                    abs(self.instruction['rect'].Get()[1] - float(maploc[1])) > 0.01:
+                if  abs(self.instruction['rect'].Get()[0] - float(maploc[0])) > 0.5 or \
+                    abs(self.instruction['rect'].Get()[1] - float(maploc[1])) > 0.5:
                     GWarning(_("Map frame position changed, old value: {0} {1}\nnew value: {2} {3}").format(
                                              maploc[0], maploc[1], *self.instruction['rect'].Get()[0:2]))
                     
                 #instr['rect'] = wx.Rect2D(float(maploc[0]), float(maploc[1]), self.instruction['rect'][2], self.instruction['rect'][3])
             if len(maploc) == 4:
-                if  abs(self.instruction['rect'].Get()[2] - float(maploc[2])) > 0.01 or \
-                    abs(self.instruction['rect'].Get()[3] - float(maploc[3])) > 0.01:
+                if  abs(self.instruction['rect'].Get()[2] - float(maploc[2])) > 0.5 or \
+                    abs(self.instruction['rect'].Get()[3] - float(maploc[3])) > 0.5:
                     GWarning(_("Map frame size changed, old value: {0} {1}\nnew value: {2} {3}").format(
                                             maploc[2], maploc[3], *self.instruction['rect'].Get()[2:]))
                 #instr['rect'] = wx.Rect2D(*map(float, maploc))
@@ -715,9 +804,10 @@ class Mapinfo(InstructionObject):
                 elif sub[0] == 'border':
                     instr['border'] = sub[1]
                 elif sub[0] == 'where':
-                    instr['where'] = tuple(sub[2].split())
+                    instr['where'] = tuple(sub[1].split())
         except (ValueError, IndexError):
             GError(_("Failed to read instruction {0}").format(instruction))
+            return False
         self.instruction.update(instr)
         self.instruction['rect'] = self.EstimateRect(mapinfoDict = self.instruction)
         return True
@@ -728,7 +818,7 @@ class Mapinfo(InstructionObject):
         h = mapinfoDict['fontsize'] * 7
         width = self.unitConv.convert(value = w, fromUnit = 'point', toUnit = 'inch')
         height = self.unitConv.convert(value = h, fromUnit = 'point', toUnit = 'inch')
-        return wx.Rect2D(x = mapinfoDict['where'][0], y = mapinfoDict['where'][1], w = width, h = height)
+        return wx.Rect2D(x = float(mapinfoDict['where'][0]), y = float(mapinfoDict['where'][1]), w = width, h = height)
         
 class Text(InstructionObject):
     """!Class representing text instruction"""
@@ -812,6 +902,7 @@ class Text(InstructionObject):
          
             except(IndexError, ValueError):
                 GError(_("Failed to read instruction {0}").format(instruction))
+                return False
         instr['where'] = PaperMapCoordinates(map = map, x = instr['east'], y = instr['north'], paperToMap = False)       
         self.instruction.update(instr)
 
@@ -882,6 +973,7 @@ class Scalebar(InstructionObject):
                         instr['background'] = 'n'
             except(IndexError, ValueError):
                 GError(_("Failed to read instruction {0}").format(instruction))
+                return False
                 
         self.instruction.update(instr)
         w, h = self.EstimateSize(scalebarDict = self.instruction, scale = scale)
@@ -913,11 +1005,11 @@ class RasterLegend(InstructionObject):
         # default values
         self.defaultInstruction = dict(rLegend = False, unit = 'inch', rasterDefault = True, raster = None,
                                                 discrete = None, type = None,
-                                                where = (0, 0), defaultSize = True,
-                                                width = 0, height = 0, cols = 1, font = "Serif", fontsize = 10,
+                                                where = (0, 0),
+                                                width = None, height = None, cols = 1, font = "Helvetica", fontsize = 10,
                                                 #color = '0:0:0', tickbar = False, range = False, min = 0, max = 0,
-                                                color = 'black', tickbar = False, range = False, min = 0, max = 0,
-                                                nodata = False)
+                                                color = 'black', tickbar = 'n', range = False, min = 0, max = 0,
+                                                nodata = 'n')
         # current values
         self.instruction = dict(self.defaultInstruction)
         
@@ -925,11 +1017,11 @@ class RasterLegend(InstructionObject):
         instr = "colortable y\n"
         instr += "    raster {raster}\n".format(**self.instruction)
         instr += "    where {where[0]} {where[1]}\n".format(**self.instruction)
-        if not self.instruction['defaultSize']:
+        if self.instruction['width']:
             instr += "    width {width}\n".format(**self.instruction)
         instr += "    discrete {discrete}\n".format(**self.instruction)
         if self.instruction['discrete'] == 'n':
-            if not self.instruction['defaultSize']:
+            if self.instruction['height']:
                 instr += "    height {height}\n".format(**self.instruction)
             instr += "    tickbar {tickbar}\n".format(**self.instruction)
             if self.instruction['range']:
@@ -941,8 +1033,122 @@ class RasterLegend(InstructionObject):
                                 .format(**self.instruction)
         instr += "end"
         return instr    
-  
+    
+    
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        instr = {}
+        instr['rLegend'] = True
+        for line in text:
+            try:
+                if line.startswith('where'):
+                    instr['where'] = line.split()[1:3]
+                elif line.startswith('font '):
+                    instr['font'] = line.split()[1]
+                elif line.startswith('fontsize'):
+                    instr['fontsize'] = float(line.split()[1])
+                elif line.startswith('color '):
+                    instr['color'] = line.split()[1]
+                elif line.startswith('raster'):
+                    instr['raster'] = line.split()[1]
+                elif line.startswith('width'):
+                    instr['width'] = float(line.split()[1])
+                elif line.startswith('height'):
+                    instr['height'] = float(line.split()[1])
+                elif line.startswith('cols'):
+                    instr['cols'] = int(line.split()[1])                    
+                elif line.startswith('range'):
+                    instr['range'] = True
+                    instr['min'] = float(line.split()[1])
+                    instr['max'] = float(line.split()[2])
+                elif line.startswith('nodata'):
+                    if line.split()[1].strip().lower() in ('y','yes'):
+                        instr['nodata'] = 'y'
+                    elif line.split()[1].strip().lower() in ('n','no', 'none'):
+                        instr['nodata'] = 'n'
+                elif line.startswith('tickbar'):
+                    if line.split()[1].strip().lower() in ('y','yes'):
+                        instr['tickbar'] = 'y'
+                    elif line.split()[1].strip().lower() in ('n','no', 'none'):
+                        instr['tickbar'] = 'n'
+                elif line.startswith('discrete'):
+                    if line.split()[1].strip().lower() in ('y','yes'):
+                        instr['discrete'] = 'y'
+                    elif line.split()[1].strip().lower() in ('n','no', 'none'):
+                        instr['discrete'] = 'n'            
 
+            except(IndexError, ValueError):
+                GError(_("Failed to read instruction {0}").format(instruction))
+                return False
+            
+        if 'raster' in instr:
+            instr['rasterDefault'] = False
+            if 'discrete' not in instr:
+                rasterType = getRasterType(map = instr['raster'])
+                instr['type'] = rasterType
+                if rasterType == 'CELL':
+                    instr['discrete'] = 'y'
+                else:
+                    instr['discrete'] = 'n'
+            
+        else:
+            instr['rasterDefault'] = True
+        self.instruction.update(instr)
+        # add 'rect' in the end
+            
+        return True 
+    
+    def EstimateHeight(self, raster, discrete, fontsize, cols = None,  height = None):
+        """!Estimate height to draw raster legend"""
+        if discrete == 'n':
+            if height:
+                height = height
+            else:
+                height = self.unitConv.convert(value = fontsize * 10,
+                                                    fromUnit = 'point', toUnit = 'inch')
+                                                    
+        if discrete == 'y':
+            cols = cols if cols else 1 
+            try:
+                cat = grass.read_command('r.category', map = raster,
+                                        fs = ':').strip().split('\n')
+                rows = ceil( float(len(cat)) / cols )
+            except grass.ScriptError:
+                range = grass.read_command('r.info', flags = 'r', map = raster).strip().split('\n')
+                minim, maxim = range[0].split('=')[1], range[1].split('=')[1]
+                rows = ceil( float(maxim) / cols )
+                            
+                
+            height = self.unitConv.convert(value =  1.5 * rows * fontsize, fromUnit = 'point', toUnit = 'inch')
+            
+        return height
+        
+    def EstimateWidth(self, raster, discrete, fontsize, cols = None, width = None, paperInstr = None):
+        """!Estimate size to draw raster legend"""
+        
+        if discrete == 'n':
+            range = grass.read_command('r.info', flags = 'r', map = raster).strip().split('\n')
+            minim, maxim = range[0].split('=')[1], range[1].split('=')[1]
+            if width:
+                width = width
+            else:
+                width = self.unitConv.convert(value = fontsize * 2,
+                                                    fromUnit = 'point', toUnit = 'inch')
+            text = len(max(minim, maxim, key = len))
+            textPart = self.unitConv.convert(value = text * fontsize / 2,
+                                                    fromUnit = 'point', toUnit = 'inch')
+            width += textPart
+                                                    
+        elif discrete == 'y':
+            cols = cols if cols else 1    
+            if width:
+                width = width
+            else:
+                paperWidth = paperInstr['Width'] - paperInstr['Right'] - paperInstr['Left']
+                width = (paperWidth / cols) * (cols - 1) + 1
+                
+        return width    
+             
 class VectorLegend(InstructionObject):
     """!Class representing colortable instruction"""
     def __init__(self, id):
@@ -950,7 +1156,8 @@ class VectorLegend(InstructionObject):
         self.type = 'vectorLegend'
         # default values
         self.defaultInstruction = dict(vLegend = False, unit = 'inch', where = (0, 0),
-                                                defaultSize = True, width = 0.4, cols = 1, span = None, font = "Serif", fontsize = 10,
+                                                defaultSize = True, width = 0.4, cols = 1, span = None,
+                                                font = "Helvetica", fontsize = 10,
                                                 border = 'none')
         # current values
         self.instruction = dict(self.defaultInstruction)
@@ -965,7 +1172,51 @@ class VectorLegend(InstructionObject):
         instr += "    border {border}\n".format(**self.instruction)  
         instr += "end"  
         return instr
-          
+
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        instr = {}
+        instr['vLegend'] = True
+        for line in text:
+            try:
+                if line.startswith('where'):
+                    instr['where'] = line.split()[1:3]
+                elif line.startswith('font '):
+                    instr['font'] = line.split()[1]
+                elif line.startswith('fontsize'):
+                    instr['fontsize'] = float(line.split()[1])
+                elif line.startswith('width'):
+                    instr['width'] = float(line.split()[1])
+                elif line.startswith('cols'):
+                    instr['cols'] = int(line.split()[1]) 
+                elif line.startswith('span'):
+                    instr['span'] = float(line.split()[1])
+                elif line.startswith('border'):
+                    instr['border'] = line.split()[1]
+                    
+            except(IndexError, ValueError):
+                GError(_("Failed to read instruction {0}").format(instruction))
+                return False
+            
+        self.instruction.update(instr)
+            
+        return True 
+    
+    def EstimateSize(self, vectorInstr, fontsize, width = None, cols = None):
+        """!Estimate size to draw vector legend"""
+        width = width if width else fontsize/24.0
+        cols = cols if cols else 1
+        vectors = vectorInstr['list']
+        labels = [vector[4] for vector in vectors if vector[3] != 0]
+        extent = (len(max(labels, key = len)) * fontsize / 2, fontsize)
+        wExtent = self.unitConv.convert(value = extent[0], fromUnit = 'point', toUnit = 'inch')
+        hExtent = self.unitConv.convert(value = extent[1], fromUnit = 'point', toUnit = 'inch')
+        w = (width + wExtent) * cols
+        h = len(labels) * hExtent / cols
+        h *= 1.1
+        return (w, h)
+            
+   
 class Raster(InstructionObject):
     """!Class representing raster instruction"""
     def __init__(self, id):
@@ -1006,12 +1257,47 @@ class Vector(InstructionObject):
         InstructionObject.__init__(self, id = id)
         self.type = 'vector'
         # default values
-        self.defaultInstruction = dict(list = None)
+        self.defaultInstruction = dict(list = None)# [vmap, type, id, lpos, label] 
         # current values
         self.instruction = dict(self.defaultInstruction)
     def __str__(self):
         return ''
+    
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        instr = {}
         
+        for line in text:
+            if line.startswith('vpoints') or line.startswith('vlines') or line.startswith('vareas'):
+                # subtype
+                if line.startswith('vpoints'):
+                    subType = 'points'
+                elif line.startswith('vlines'):
+                    subType = 'lines'
+                elif line.startswith('vareas'):
+                    subType = 'areas'
+                # name of vector map
+                vmap = line.split()[1]
+                try:
+                    info = grass.find_file(vmap, element = 'vector')
+                except grass.ScriptError, e:
+                    GError(message = e.value)
+                    return False
+                vmap = info['fullname']
+                # id
+                id = kwargs['id']
+                # lpos
+                lpos = kwargs['vectorMapNumber']
+                #label
+                label = '('.join(vmap.split('@')) + ')'
+                break
+        instr = [vmap, subType, id, lpos, label] 
+        if not self.instruction['list']:
+            self.instruction['list'] = []
+        self.instruction['list'].append(instr)
+        
+        return True    
+    
 class VProperties(InstructionObject):
     """!Class represents instructions vareas, vlines, vpoints"""
     def __init__(self, id, subType):
@@ -1020,17 +1306,20 @@ class VProperties(InstructionObject):
         self.subType = subType
         # default values
         if self.subType == 'points':
-            dd = dict(subType  = 'points', name = None, type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
+            dd = dict(subType  = 'points', name = None, type = 'point or centroid', connection = False, layer = '1',
+                        masked = 'n', color = '0:0:0', width = 1,
                         fcolor = '255:0:0', rgbcolumn = None, symbol = os.path.join('basic', 'x'), eps = None,
                         size = 5, sizecolumn = None, scale = None,
                         rotation = False, rotate = 0, rotatecolumn = None, label = None, lpos = None)
         elif self.subType == 'lines':
-            dd = dict(subType = 'lines', name = None, type = 'line or boundary', connection = False, layer = '1', masked = 'n', color = '0:0:0', hwidth = 1,
+            dd = dict(subType = 'lines', name = None, type = 'line or boundary', connection = False, layer = '1',
+                        masked = 'n', color = '0:0:0', hwidth = 1,
                         hcolor = 'none', rgbcolumn = None,
                         width = 1, cwidth = None,
                         style = 'solid', linecap = 'butt', label = None, lpos = None)
         else: # areas
-            dd = dict(subType = 'areas', name = None, type = 'point or centroid', connection = False, layer = '1', masked = 'n', color = '0:0:0', width = 1,
+            dd = dict(subType = 'areas', name = None, connection = False, layer = '1',    
+                        masked = 'n', color = '0:0:0', width = 1,
                         fcolor = 'none', rgbcolumn = None,
                         pat = None, pwidth = 1, scale = 1, label = None, lpos = None)
         self.defaultInstruction = dd
@@ -1101,6 +1390,119 @@ class VProperties(InstructionObject):
         vInstruction += "end"
         return vInstruction
     
+    def Read(self, instruction, text, **kwargs):
+        """!Read instruction and save information"""
+        instr = {}
+        try:
+            info = grass.find_file(name = text[0].split()[1], element = 'vector')
+        except grass.ScriptError, e:
+            GError(message = e.value)
+            return False
+        instr['name'] = info['fullname']
+        #connection
+        instr['connection'] = True
+        try:
+            self.mapDBInfo = dbm_base.VectorDBInfo(instr['name'])
+        except grass.ScriptError:
+            instr['connection'] = False
+            
+        # points
+        if text[0].startswith('vpoints'):
+            for line in text[1:]:
+                if line.startswith('type'):
+                    tp = []
+                    if line.find('point') != -1:
+                        tp.append('point')
+                    if line.find('centroid') != -1:
+                        tp.append('centroid')
+                    instr['type'] = ' or '.join(tp)
+                elif line.startswith('fcolor'):
+                    instr['fcolor'] = line.split()[1]
+                elif line.startswith('rgbcolumn'):
+                    instr['rgbcolumn'] = line.split()[1]
+                elif line.startswith('symbol'):
+                    instr['symbol'] = line.split()[1]
+                elif line.startswith('eps'):
+                    instr['eps'] = line.split()[1]
+                elif line.startswith('size '):
+                    instr['size'] = line.split()[1]
+                elif line.startswith('sizecolumn'):
+                    instr['size'] = None
+                    instr['sizecolumn'] = line.split()[1]
+                elif line.startswith('scale '):
+                    instr['scale'] = float(line.split()[1])
+                elif line.startswith('rotate '):
+                    instr['rotation'] = True
+                    instr['rotate'] = line.split()[1]
+                elif line.startswith('rotatecolumn'):
+                    instr['rotatecolumn'] = line.split()[1]
+                    instr['rotation'] = True
+                    instr['rotate'] = None
+                    
+        # lines            
+        elif text[0].startswith('vlines'):
+            for line in text[1:]:
+                if line.startswith('type'):
+                    tp = []
+                    if line.find('line') != -1:
+                        tp.append('line')
+                    if line.find('boundary') != -1:
+                        tp.append('boundary')
+                    instr['type'] = ' or '.join(tp)
+                elif line.startswith('hwidth'):
+                    instr['hwidth'] = float(line.split()[1])
+                elif line.startswith('hcolor'):
+                    instr['hcolor'] = line.split()[1]
+                elif line.startswith('rgbcolumn'):
+                    instr['rgbcolumn'] = line.split()[1]                    
+                elif line.startswith('cwidth'):
+                    instr['cwidth'] = float(line.split()[1])
+                    instr['width'] = None
+                elif line.startswith('style'):
+                    instr['style'] = line.split()[1]       
+                elif line.startswith('linecap'):
+                    instr['linecap'] = line.split()[1]
+         
+        elif text[0].startswith('vareas'):
+            for line in text[1:]:
+                if line.startswith('fcolor'):
+                    instr['fcolor'] = line.split()[1]    
+                elif line.startswith('pat'):
+                    instr['pat'] = line.split()[1]
+                elif line.startswith('pwidth'):
+                    instr['pwidth'] = float(line.split()[1])
+                elif line.startswith('scale'):
+                    instr['scale'] = float(line.split()[1])
+            
+            
+        # same properties for all    
+        for line in text[1:]:
+            if line.startswith('lpos'):
+                instr['lpos'] = int(line.split()[1])
+            elif line.startswith('label'):
+                instr['label'] = line.split()[1]
+            elif line.startswith('layer'):
+                instr['layer'] = int(line.split()[1])
+            elif line.startswith('masked'):
+                if line.split()[1].lower() in ('y', 'yes'):
+                    instr['masked'] = 'y'
+                else:
+                    instr['masked'] = 'n'
+            elif line.startswith('color'):
+                instr['color'] = line.split()[1]
+            elif line.startswith('rgbcolumn'):
+                instr['rgbcolumn'] = line.split()[1] 
+            elif line.startswith('width'):
+                instr['width'] = float(line.split()[1])
+                
+        if 'label' not in instr:
+            instr['label'] = '('.join(instr['name'].split('@')) + ')'
+        if 'lpos' not in instr:
+            instr['lpos'] = kwargs['vectorMapNumber']
+        self.instruction.update(instr)
+        
+        return True
+        
 class PsmapDialog(wx.Dialog):
     def __init__(self, parent, id,  title, settings, apply = True):
         wx.Dialog.__init__(self, parent = parent, id = wx.ID_ANY, 
@@ -2046,7 +2448,6 @@ class VectorPanel(wx.Panel):
             self.listbox.InsertItems([record], 0)
             
             vector = VProperties(id, type)
-            #self.instruction.AddInstruction(vector)
             self.tmpDialogDict[id] = vector.GetInstruction()
             self.tmpDialogDict[id]['name'] = vmap
 
@@ -2942,11 +3343,12 @@ class LegendDialog(PsmapDialog):
         currPage = self.instruction[self.pageId].GetInstruction()
         #raster legend
         if self.id[0] is not None:
-            self.rLegendDict = self.instruction[self.id[0]].GetInstruction()
+            self.rasterLegend = self.instruction[self.id[0]]
+            self.rLegendDict = self.rasterLegend.GetInstruction()
         else:
             self.id[0] = wx.NewId()
-            rasterLegend = RasterLegend(self.id[0])
-            self.rLegendDict = rasterLegend.GetInstruction()
+            self.rasterLegend = RasterLegend(self.id[0])
+            self.rLegendDict = self.rasterLegend.GetInstruction()
             self.rLegendDict['where'] = currPage['Left'], currPage['Top']
             
             
@@ -2967,7 +3369,7 @@ class LegendDialog(PsmapDialog):
         self.notebook = wx.Notebook(parent = self, id = wx.ID_ANY, style = wx.BK_DEFAULT)
         self.panelRaster = self._rasterLegend(self.notebook)
         self.panelVector = self._vectorLegend(self.notebook)  
-        self.OnDefaultSize(None)
+##        self.OnDefaultSize(None)
         self.OnRaster(None)
         self.OnRange(None)
         self.OnIsLegend(None)
@@ -3001,7 +3403,7 @@ class LegendDialog(PsmapDialog):
         self.rasterDefault.SetValue(self.rLegendDict['rasterDefault'])#
         self.rasterOther.SetValue(not self.rLegendDict['rasterDefault'])#
 
-        rasterType = self.getRasterType(map = self.currRaster)
+        rasterType = getRasterType(map = self.currRaster)
 
         self.rasterCurrent = wx.StaticText(panel, id = wx.ID_ANY, label = _("{0}: type {1}").format(self.currRaster, str(rasterType)))
         self.rasterSelect = Select( panel, id = wx.ID_ANY, size = globalvar.DIALOG_GSELECT_SIZE,
@@ -3079,7 +3481,7 @@ class LegendDialog(PsmapDialog):
         self.Bind(wx.EVT_CHECKBOX, self.OnIsLegend, self.isRLegend)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnDiscrete, self.discrete)
         self.Bind(wx.EVT_RADIOBUTTON, self.OnDiscrete, self.continuous)
-        self.Bind(wx.EVT_CHECKBOX, self.OnDefaultSize, panel.defaultSize)
+##        self.Bind(wx.EVT_CHECKBOX, self.OnDefaultSize, panel.defaultSize)
         self.Bind(wx.EVT_CHECKBOX, self.OnRange, self.range)
         self.rasterSelect.GetTextCtrl().Bind(wx.EVT_TEXT, self.OnRaster)
         
@@ -3210,23 +3612,29 @@ class LegendDialog(PsmapDialog):
         
         #size
         width = wx.StaticText(panel, id = wx.ID_ANY, label = _("Width:"))
-        w = self.unitConv.convert(value = float(legendDict['width']), fromUnit = 'inch', toUnit = legendDict['unit'])
+        if legendDict['width']:
+            w = self.unitConv.convert(value = float(legendDict['width']), fromUnit = 'inch', toUnit = legendDict['unit'])
+        else: 
+            w = ''
         panel.widthCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(w), validator = TCValidator("DIGIT_ONLY"))
         
         if legendType == 'raster':
-            panel.defaultSize = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Use default size"))
-            panel.defaultSize.SetValue(legendDict['defaultSize'])
+##            panel.defaultSize = wx.CheckBox(panel, id = wx.ID_ANY, label = _("Use default size"))
+##            panel.defaultSize.SetValue(legendDict['defaultSize'])
             
             panel.heightOrColumnsLabel = wx.StaticText(panel, id = wx.ID_ANY, label = _("Height:"))
-            h = self.unitConv.convert(value = float(legendDict['height']), fromUnit = 'inch', toUnit = legendDict['unit'])
+            if legendDict['height']:
+                h = self.unitConv.convert(value = float(legendDict['height']), fromUnit = 'inch', toUnit = legendDict['unit'])
+            else:
+                h = ''
             panel.heightOrColumnsCtrl = wx.TextCtrl(panel, id = wx.ID_ANY, value = str(h), validator = TCValidator("DIGIT_ONLY"))
             
             self.rSizeGBSizer = wx.GridBagSizer(hgap = 5, vgap = 5)
-            self.rSizeGBSizer.Add(panel.defaultSize, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-            self.rSizeGBSizer.Add(width, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-            self.rSizeGBSizer.Add(panel.widthCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-            self.rSizeGBSizer.Add(panel.heightOrColumnsLabel, pos = (2,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
-            self.rSizeGBSizer.Add(panel.heightOrColumnsCtrl, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+##            self.rSizeGBSizer.Add(panel.defaultSize, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            self.rSizeGBSizer.Add(width, pos = (0,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            self.rSizeGBSizer.Add(panel.widthCtrl, pos = (0,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            self.rSizeGBSizer.Add(panel.heightOrColumnsLabel, pos = (1,0), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+            self.rSizeGBSizer.Add(panel.heightOrColumnsCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
             sizeSizer.Add(self.rSizeGBSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
             
         if legendType == 'vector':
@@ -3303,7 +3711,6 @@ class LegendDialog(PsmapDialog):
                 for i,widget in enumerate(children):
                         widget.Enable()
                 self.OnRaster(None)
-                self.OnDefaultSize(None)
                 self.OnRange(None)
                 self.OnDiscrete(None)
             else:
@@ -3325,11 +3732,11 @@ class LegendDialog(PsmapDialog):
     def OnRaster(self, event):
         if self.rasterDefault.GetValue():#default
             self.rasterSelect.Disable()
-            type = self.getRasterType(self.currRaster)
+            type = getRasterType(self.currRaster)
         else:#select raster
             self.rasterSelect.Enable()
             map = self.rasterSelect.GetValue()
-            type = self.getRasterType(map)
+            type = getRasterType(map)
   
         if type == 'CELL':
             self.discrete.SetValue(True)
@@ -3359,7 +3766,10 @@ class LegendDialog(PsmapDialog):
             self.ticks.Disable()
         else:
             self.panelRaster.heightOrColumnsLabel.SetLabel(_("Height:"))
-            h = self.unitConv.convert(value = float(self.rLegendDict['height']), fromUnit = 'inch', toUnit = self.rLegendDict['unit'])
+            if self.rLegendDict['height']:
+                h = self.unitConv.convert(value = float(self.rLegendDict['height']), fromUnit = 'inch', toUnit = self.rLegendDict['unit'])
+            else:
+                h = ''
             self.panelRaster.heightOrColumnsCtrl = wx.TextCtrl(self.panelRaster, id = wx.ID_ANY,
                                                     value = str(h), validator = TCValidator("DIGIT_ONLY"))
             self.panelRaster.heightOrColumnsCtrl.Enable(enabledSize)
@@ -3372,18 +3782,18 @@ class LegendDialog(PsmapDialog):
                 self.max.Enable()
             self.ticks.Enable()
         
-        self.rSizeGBSizer.Add(self.panelRaster.heightOrColumnsCtrl, pos = (2,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.rSizeGBSizer.Add(self.panelRaster.heightOrColumnsCtrl, pos = (1,1), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
         self.panelRaster.Layout()
         self.panelRaster.Fit()
         
         
-    def OnDefaultSize(self, event):
-        if self.panelRaster.defaultSize.GetValue():
-            self.panelRaster.widthCtrl.Disable()
-            self.panelRaster.heightOrColumnsCtrl.Disable()        
-        else:    
-            self.panelRaster.widthCtrl.Enable()
-            self.panelRaster.heightOrColumnsCtrl.Enable()
+##    def OnDefaultSize(self, event):
+##        if self.panelRaster.defaultSize.GetValue():
+##            self.panelRaster.widthCtrl.Disable()
+##            self.panelRaster.heightOrColumnsCtrl.Disable()        
+##        else:    
+##            self.panelRaster.widthCtrl.Enable()
+##            self.panelRaster.heightOrColumnsCtrl.Enable()
         
     def OnRange(self, event):
         if not self.range.GetValue():
@@ -3475,7 +3885,7 @@ class LegendDialog(PsmapDialog):
             
         if self.rLegendDict['raster']:
             # type and range of map
-            rasterType = self.getRasterType(self.rLegendDict['raster'])
+            rasterType = getRasterType(self.rLegendDict['raster'])
             self.rLegendDict['type'] = rasterType
             
             range = RunCommand('r.info', flags = 'r', read = True, map = self.rLegendDict['raster']).strip().split('\n')
@@ -3494,62 +3904,86 @@ class LegendDialog(PsmapDialog):
 ##            self.rLegendDict['font'] = font.GetFaceName()
 ##            self.rLegendDict['fontsize'] = font.GetPointSize()
             self.rLegendDict['color'] = self.panelRaster.font['colorCtrl'].GetColour().GetAsString(wx.C2S_NAME)
-            dc = wx.PaintDC(self)
-            font = dc.GetFont()
-            dc.SetFont(wx.Font(   pointSize = self.rLegendDict['fontsize'], family = font.GetFamily(),
-                                                style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
+##            dc = wx.PaintDC(self)
+##            font = dc.GetFont()
+##            dc.SetFont(wx.Font(   pointSize = self.rLegendDict['fontsize'], family = font.GetFamily(),
+##                                                style = font.GetStyle(), weight = wx.FONTWEIGHT_NORMAL))
             # position
             x = self.unitConv.convert(value = float(self.panelRaster.position['xCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
             y = self.unitConv.convert(value = float(self.panelRaster.position['yCtrl'].GetValue()), fromUnit = currUnit, toUnit = 'inch')
             self.rLegendDict['where'] = (x, y)
             # estimated size
-            if not self.panelRaster.defaultSize.GetValue():
-                self.rLegendDict['defaultSize'] = False
-            
-                width = self.unitConv.convert(value = float(self.panelRaster.widthCtrl.GetValue()), fromUnit = currUnit, toUnit = 'inch')
-                height = self.unitConv.convert(value = float(self.panelRaster.heightOrColumnsCtrl.GetValue()), fromUnit = currUnit, toUnit = 'inch')
-            
-                if self.rLegendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
-                    self.rLegendDict['width'] = width 
-                    self.rLegendDict['height'] = height
-                    textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
-                    drawWidth = width + textPart
-                    drawHeight = height
-                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
-                else: #categorical map
-                    self.rLegendDict['width'] = width 
-                    self.rLegendDict['cols'] = self.panelRaster.heightOrColumnsCtrl.GetValue() 
-                    cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
-                                        fs = ':').strip().split('\n')
-                    rows = ceil(float(len(cat))/self.rLegendDict['cols'])
-
-                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'], fromUnit = 'point', toUnit = 'inch')
-                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = width, h = drawHeight)
-
+##            if not self.panelRaster.defaultSize.GetValue():
+##                self.rLegendDict['defaultSize'] = False
+            width = self.panelRaster.widthCtrl.GetValue()
+            try:
+                width = float(width)
+                width = self.unitConv.convert(value = width, fromUnit = currUnit, toUnit = 'inch')
+            except ValueError:
+                width = None
+            self.rLegendDict['width'] = width
+            if self.rLegendDict['discrete'] == 'n':
+                height = self.panelRaster.heightOrColumnsCtrl.GetValue()    
+                try:
+                    height = float(height)
+                    height = self.unitConv.convert(value = height, fromUnit = currUnit, toUnit = 'inch')
+                except ValueError:
+                    height = None
+                self.rLegendDict['height'] = height
             else:
-                self.rLegendDict['defaultSize'] = True
-                if self.rLegendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
-                    textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
-                    drawWidth = self.unitConv.convert( value = self.rLegendDict['fontsize'] * 2, 
-                                                    fromUnit = 'point', toUnit = 'inch') + textPart
-                                
-                    drawHeight = self.unitConv.convert(value = self.rLegendDict['fontsize'] * 10,
-                                                    fromUnit = 'point', toUnit = 'inch')
-                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
-                else:#categorical map
-                    self.rLegendDict['cols'] = self.panelRaster.heightOrColumnsCtrl.GetValue()
-                    cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
-                                        fs = ':').strip().split('\n')
-                    if len(cat) == 1:# for discrete FCELL
-                        rows = float(maxim)
-                    else:
-                        rows = ceil(float(len(cat))/self.rLegendDict['cols'])
-                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'],
-                                                    fromUnit = 'point', toUnit = 'inch')
-                    paperWidth = self.instruction[self.pageId]['Width']- self.instruction[self.pageId]['Right']\
-                                                                        - self.instruction[self.pageId]['Left']
-                    drawWidth = (paperWidth / self.rLegendDict['cols']) * (self.rLegendDict['cols'] - 1) + 1
-                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
+                cols = self.panelRaster.heightOrColumnsCtrl.GetValue()
+                self.rLegendDict['cols'] = cols
+            drawHeight = self.rasterLegend.EstimateHeight(raster = self.rLegendDict['raster'], discrete = self.rLegendDict['discrete'],
+                                            fontsize = self.rLegendDict['fontsize'], cols = self.rLegendDict['cols'],
+                                            height = self.rLegendDict['height'])
+            drawWidth = self.rasterLegend.EstimateWidth(raster = self.rLegendDict['raster'], discrete = self.rLegendDict['discrete'],
+                                            fontsize = self.rLegendDict['fontsize'], cols = self.rLegendDict['cols'],
+                                            width = self.rLegendDict['width'], paperInstr = self.instruction[self.pageId])
+            self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
+                
+            
+##                if self.rLegendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
+##                    self.rLegendDict['width'] = width 
+##                    self.rLegendDict['height'] = height
+##                    textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
+##                    drawWidth = width + textPart
+##                    drawHeight = height
+##                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
+##                else: #categorical map
+##                    self.rLegendDict['width'] = width 
+##                    self.rLegendDict['cols'] = self.panelRaster.heightOrColumnsCtrl.GetValue() 
+##                    cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
+##                                        fs = ':').strip().split('\n')
+##                    
+##                    rows = ceil(float(len(cat))/self.rLegendDict['cols'])
+##
+##                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'], fromUnit = 'point', toUnit = 'inch')
+##                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = width, h = drawHeight)
+##
+##            else:
+##                self.rLegendDict['defaultSize'] = True
+##                if self.rLegendDict['discrete'] == 'n':  #rasterType in ('FCELL', 'DCELL'):
+##                    textPart = self.unitConv.convert(value = dc.GetTextExtent(maxim)[0], fromUnit = 'pixel', toUnit = 'inch')
+##                    drawWidth = self.unitConv.convert( value = self.rLegendDict['fontsize'] * 2, 
+##                                                    fromUnit = 'point', toUnit = 'inch') + textPart
+##                                
+##                    drawHeight = self.unitConv.convert(value = self.rLegendDict['fontsize'] * 10,
+##                                                    fromUnit = 'point', toUnit = 'inch')
+##                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
+##                else:#categorical map
+##                    self.rLegendDict['cols'] = self.panelRaster.heightOrColumnsCtrl.GetValue()
+##                    cat = RunCommand(   'r.category', read = True, map = self.rLegendDict['raster'],
+##                                        fs = ':').strip().split('\n')
+##                    if len(cat) == 1:# for discrete FCELL
+##                        rows = float(maxim)
+##                    else:
+##                        rows = ceil(float(len(cat))/self.rLegendDict['cols'])
+##                    drawHeight = self.unitConv.convert(value =  1.5 *rows * self.rLegendDict['fontsize'],
+##                                                    fromUnit = 'point', toUnit = 'inch')
+##                    paperWidth = self.instruction[self.pageId]['Width']- self.instruction[self.pageId]['Right']\
+##                                                                        - self.instruction[self.pageId]['Left']
+##                    drawWidth = (paperWidth / self.rLegendDict['cols']) * (self.rLegendDict['cols'] - 1) + 1
+##                    self.rLegendDict['rect'] = wx.Rect2D(x = x, y = y, w = drawWidth, h = drawHeight)
 
 
                          
@@ -3581,7 +4015,8 @@ class LegendDialog(PsmapDialog):
         if self.id[0] not in self.parent.objectId:
             self.parent.objectId.append(self.id[0])
         return True
-                    
+    
+
     def updateVectorLegend(self):
         """!Save information from vector legend dialog to dictionary"""
 
@@ -3673,10 +4108,7 @@ class LegendDialog(PsmapDialog):
             return True
         return False
         
-    def getRasterType(self, map):
-        rasterType = RunCommand('r.info', flags = 't', read = True, 
-                                map = map).strip().split('=')
-        return (rasterType[1] if rasterType[0] else None)
+    
         
 
              
@@ -4527,7 +4959,10 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
     if scaleType == 0 and map:# automatic, region from raster or vector
         res = ''
         if mapType == 'raster': 
-            res = grass.read_command("g.region", flags = 'gu', rast = map)
+            try:
+                res = grass.read_command("g.region", flags = 'gu', rast = map)
+            except grass.ScriptError:
+                pass
         elif mapType == 'vector':
             res = grass.read_command("g.region", flags = 'gu', vect = map)
         currRegionDict = grass.parse_key_val(res, val_type = float)
@@ -4550,7 +4985,7 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
         return None, None, None
     
     if not currRegionDict:
-        return None, None
+        return None, None, None
     rX = rect.x
     rY = rect.y
     rW = rect.width
@@ -4648,3 +5083,13 @@ def GetMapBounds(filename):
         GError(message = _("Unable to run ps.map -b "))
         return None
     return wx.Rect2D(bb[0], bb[3], bb[2] - bb[0], bb[1] - bb[3])
+
+def getRasterType(map):
+    """!Returns type of raster map (CELL, FCELL, DCELL)"""
+    try:
+        rasterType = RunCommand('r.info', flags = 't', read = True, 
+                                map = map).strip().split('=')
+    except ScriptError:
+        GError(_("Unable to get type of raster map"))
+        return None
+    return (rasterType[1] if rasterType[0] else None)
