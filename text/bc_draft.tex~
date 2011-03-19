@@ -1,0 +1,166 @@
+\documentclass[a4paper,12pt,draft]{article}
+\usepackage{a4wide}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{subfigure}
+\usepackage{xcolor}
+\usepackage[czech]{babel}
+\usepackage[pdftex, final]{graphicx}
+\usepackage[pdftex, final]{hyperref}
+\usepackage{verbatim}
+\parskip=0.8ex plus 0.4ex minus 0.1 ex
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[final]{listings}
+
+\definecolor{lightGrey}{RGB}{250,250,250}
+\definecolor{darkGrey}{RGB}{100,100,100}
+\lstdefinelanguage{psmap}
+{morekeywords={scale, mapinfo, maploc, where, end, font, fontsize, color, border, raster, width, paper,
+               vpoints, vareas, vlines, symbol, size},
+morekeywords=[2]{y, n, none},
+morecomment=[l]{\#},
+}
+\lstdefinestyle{psmap}{
+   language=psmap,
+   basicstyle={\sffamily},
+   keywordstyle=[1]{\bfseries},
+   keywordstyle=[2]{\color{darkGrey}},
+   commentstyle={\itshape},
+   frame=lines,
+   backgroundcolor=\color{lightGrey},
+}
+\lstdefinestyle{psmapInline}{
+   language=psmap,
+   basicstyle={\sffamily},
+   keywordstyle=[1]{},
+   keywordstyle=[2]{\bfseries\color{darkGrey}},
+   commentstyle={\itshape},
+   frame=lines,
+   backgroundcolor=\color{lightGrey},
+}
+\lstnewenvironment{psmap}[1][]
+{\lstset{style=psmap,
+   #1}}
+   {}
+
+\newcommand{\modul}[1]{\emph{#1}}
+\newcommand{\instr}[1]{\lstinline[style=psmapInline]{#1}}
+\author{Anna Kratochvílová}
+
+
+\begin{document}
+
+\section{Úvod}
+\section{Tvorba mapových výstupů}
+
+\subsection{Porovnání možností programů pro tvorbu mapových výstupů}
+\subsubsection{ArcGIS}
+\subsubsection{QGis}
+\subsubsection{gvSIG}
+\subsubsection{GRASS GIS -- ps.map}
+\label{sec:porovnani:psmap}
+
+\section{Zásady tvorby grafického uživatelského rozhraní}
+\subsection{Čeho se vyvarovat}
+\subsection{Co je vhodné}
+
+
+\section{Systém GRASS GIS}
+
+\subsection{Grafické rozhraní systému GRASS GIS}
+
+\section{Modul ps.map}
+
+Modul \modul{ps.map} lze jako většinu modulů používat z příkazové řádky GRASSu nebo pro\-střed\-nic\-tvím wxGUI. Grafické rozhraní je vytvořeno stejným způsobem jako u většiny ostatních modulů, dovoluje tedy zadat parametry příkazu v dialogu. V tomto případě ale spouštění přes grafické rozhraní neskýtá mimořádnou výhodu, jelikož v zásadě většinou stačí zadat jméno již připraveného konfiguračního souboru a souboru výstupního, což je pro mnohé uživatele pohodlnější prostřednictvím příkazové řádky. V příkazové řádce vypadá spuštění \modul{ps.map} takto:
+\begin{verbatim}
+ ps.map input=/konfiguracni/soubor.txt output=/vystupni/soubor.ps   
+\end{verbatim}
+
+Jak již bylo zmíněno v části \ref{sec:porovnani:psmap}, modul vytváří mapový výstup na základě konfiguračního souboru, což je obyčejný textový soubor s instrukcemi. Vytvořit tento soubor je většinou poměrně pracné, umisťování mapových prvků na vhodnou pozici se často neobejde bez vedlejších výpočtů, což ke konformitě používání příliš nepřispívá. Z toho je zřejmé, že v současnosti \modul{ps.map} využívá pouze poměrně úzká komunita uživatelů GRASSu. Nové grafické rozhraní přímo vytváří konfigurační soubor, na základě něhož poté \modul{ps.map} vygeneruje mapový výstup. Není pak třeba se konfiguračním souborem zabývat, což může zpříjemnit používání tohoto modulu, a tím i rozšířit řady jeho uživatelů. 
+
+\subsection{Konfigurační soubor}
+Konfigurační soubor má poměrně jednoduchou strukturu. Skládá se z instrukcí, které musí být na samostatných řádcích. Instrukce mohou obsahovat další dílčí instrukce umístěné opět na samostatných řádcích. Tyto víceřádkové instrukce musí být ukončeny  instrukcí \instr|end|, která musí být uvedena i na konci celého konfiguračního souboru. Komentáře lze zapisovat pomocí znaku \#, prázdné řádky jsou ignorovány. Pořadí instrukcí většinou nehraje roli s výjimkou instrukcí \instr|vpoints|, \instr|vlines| a \instr|vareas|, které vykreslují vektorové vrstvy. První uvedená vektorová vrstva bude vykreslena nejvýše. Více napoví ukázka jednoduchého konfiguračního souboru:
+\begin{psmap}
+paper a3
+end
+raster soils            # priklad jednoradkove instrukce
+border y                # priklad viceradkove instrukce ...
+   color 255:0:0
+   width 3
+end                     # ... ukoncene instrukci end
+vpoints archsites
+   symbol basic/diamond
+   size 10
+end
+end                     # konec instrukci
+\end{psmap}
+Význam jednotlivých instrukcí je popsán v manuálové stránce k modulu, která je dostupná buď z dosavadního GUI nebo na internetových stránkách \cite{manual}.
+
+\subsection{Volba rozsahu zobrazovaného území}
+V konfiguračním souboru lze nastavit velikost mapového okna, čímž je myšlen obdélník s vykreslenou rastrovou či vektorovou mapou.  K nastavení slouží jednořádková instrukce \lstinline[style=psmap]{maploc}, která umístí levý horní roh okna na dané místo a volitelně nastaví i šířku a výšku mapového okna. Rozměry lze nepřímo ovlivnit také instrukcí \lstinline[style=psmap]{scale}, která na základě měřítka upraví rozměry okna. 
+
+Nicméně při jakýchkoli rozměrech a umístění mapového okna, se vykresluje stále stejný územní rozsah. Ten je dán tzv. \emph{výpočetním regionem}. Proto je třeba před vlastním generováním mapového výstupu nastavit výpočetní region tak, aby odpovídal území, které chceme zobrazit. K tomu slouží modul \modul{g.region}. V konfiguračním souboru tedy nelze rozsah území ovlivnit.
+Modul \modul{ps.map} tedy nejprve zjistí požadované rozměry a měřítko z konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí aplikovat na rozměry současného výpočetního regionu. Když by se mapové okno při požadovaném měřítku nevešlo na daný formát papíru, modul měřítko upraví. Podobně upraví rozměry mapového okna, aby se vešlo do zadaných rozměrů.
+
+Nové grafické rozhraní \modul{ps.map} řeší volbu zobrazovaného území ve vlastní režii, není tedy třeba volat modul \modul{g.region} a zároveň se nemění současný výpočetní region pro ostatí moduly. %Více v oddíle 
+
+\subsubsection{Nekonzistence a chyby v modulu ps.map}
+Při tvorbě grafického rozhraní bylo nutné prozkoumat chování modulu \modul{ps.map} o něco detailněji, než je nutné pro jeho běžné užívání. Vycházela jsem především z manuálové stránky \cite{manual} a vlastního experimentování s modulem. 
+
+\paragraph*{Souřadnicové systémy a jednotky}
+Jedním z nejnepříjemnějších problémů, se kterými bylo třeba se při tvorbě GUI vypořádat, byla nekonzistence v jednotkách a souřadnicových sytémech. Modul \modul{ps.map} totiž pro umístění jednotlivých prvků (jako legenda, text, měřítko) používá dva různé systémy, viz obr. č. \ref{fig:sour_systemy}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.2\textheight]{./sour_systemy.pdf}
+    \caption{Souřadnicové systémy používané modulem \modul{ps.map}\label{fig:sour_systemy}}
+\end{figure}
+
+
+První z nich -- souřadnicový systém papíru -- má počátek v levém horním rohu, kladná osa \emph{x} směřuje doprava a osa \emph{y} směrem dolů (tedy odpovídá systému obvyklému v počítačové grafice). 
+Je-li poloha určena v tomto sytému, očekávanou jednotkou je inch\footnote{ česky palec, odpovídá $2{},54$ cm}.
+
+Druhý systém -- systém mapového okna -- má počátek souřadnic v levém dolním rohu mapového okna s pravotočivou orientací os obvyklou v matematice. Souřadnice lze v tomto systému zadávat dvěma způsoby. Buď v procentech výpočetního regionu nebo přímo v souřadnicích mapy. Například, při souřadnicích [100\%, 0\%] je objekt umístěn v pravém dolním rohu mapového okna, ať už je mapové okno na papíře umístěno kdekoli. Alternativně bychom toho samého umístění dosáhli zadáním mapových souřadnic bodu položeného co nejvíce na východ a jih v rozsahu výpočetního regionu. Oběma způsoby lze dosáhnout i umístění objektu mimo mapové okno, a to zadáním záporné hodnoty nebo hodnoty větší než 100 u procent, případně mapových souřadnic mimo výpočetní region.
+
+Různé způsoby určení polohy mají své opodstatnění. V některých případech je výhodné umístit popisek k určitému místu, jehož mapové souřadnice známe, a jeho poloha vzhledem k papíru není podstatná. Pozicování pomocí procent je vhodné například pro nadpis mapy, který chceme umístit přesně doprostřed nad mapové okno. 
+
+Problém nastává v případě, když chce uživatel určit polohu objektu relativně k papíru a tento objekt podporuje umístění pouze relativně k mapovému oknu, případně naopak. Bylo by proto vhodné, aby všechny objekty podporovaly umístění všemi těmito způsoby. Uživatel by si pak mohl vybrat, který z nich je pro danou situaci nejvhodnější.
+
+\paragraph*{Referenční bod objektu}
+\label{sec:psmap:referencepoint}
+Modul \modul{ps.map} u většiny objektů nepodporuje volbu referenčního bodu, tedy bodu objektu, ke kterému se vztahuje zadaná poloha. Výjimkou je text, u nějž si lze vybrat jeden z devíti referenčních bodů. Je zřejmé, že u textu má tato volba smysl, u ostatních objektů je otázka, zda by tato vlastnost byla využívaná. 
+U ostatních objektů je referenční bod dán a nelze měnit. Uživatele však může překvapit, že není u všech objektů stejný. Ve většině případů se poloha vztahuje k levému hornímu rohu objektu, nicméně grafické měřítko (instrukce \instr{scalebar}) má referenční bod ve středu. Bylo by vhodné tento přístup sjednotit, na druhou stranu nejde o nijak zásadní problém. 
+
+\paragraph*{Volba barev}
+\label{sec:psmap:color}
+V mnoha instrukcích se vyskytuje nastavení barvy. Bohužel velká část instrukcí omezuje výběr barev tím, že vyžaduje zadat barvu ve formě jejího jména, tedy např. \emph{aqua}, \emph{black}, \emph{blue}, \ldots Některé jiné instrukce však umožňují zadat barvu i ve tvaru R:G:B. Bylo by proto logické, kdyby RGB podporovaly všechny instrukce.
+
+\paragraph*{Jednořádkové a víceřádkové instrukce}
+\label{sec:psmap:singleline}
+Instrukce \instr{border} (ohraničení mapového okna) a \instr{colortable} (rastrová legenda) mohou být jednořádkové i víceřádkové, což mimo jiné znamená, že někdy je \instr{end} za příkazem vyžadováno a někdy naopak následovat nesmí. Záleží, zda za zmíněné instrukce do stejného řádku napíšeme \instr{y} nebo \instr{n}, tím ji lze zapnout a vypnout. 
+\begin{psmap}
+border n    # jednoradkova instrukce - nesmi nasledovat end
+
+border y    # viceradkova instrukce - musi nasledovat end
+   width 2
+end
+\end{psmap}
+Je nepříjemné, že si uživatel musí být vědom tohoto chování, jinak by se mu mohlo snadno stát, že napíše instrukci \instr{end}, kde být nemá a \modul{ps.map} to bude považovat za konec souboru a další instrukce bude ignorovat.
+Navíc u \instr{colortable} nemá možnost zapínání a vypínání valného smyslu, když tuto instrukci neuvedu, legenda se prostě nevykreslí.
+
+\subsubsection{Tvorba grafického rozhraní}
+% pozdeji nekam zaradit
+% Jelikož interaktivní umisťování objektů na stránce je jednou hlavních výhod nového grafického rozhraní, bylo nutné problém nejednotností systémů a jednotek řešit vlastními přepočty v programu tak, aby byl od něj uživatel co nejvíce odstíněn. Na druhou stranu by bylo logičtější, aby potřebné výpočty prováděl už samotný modul \modul{ps.map}, který stejně už podobné výpočty provádí, stačilo by je pouze rozšířit. V důsledku toho se zřejmě určité výpočty provádí dvakrát -- v \modul{ps.map} a v GUI. 
+\subsubsection{Ukázky}
+
+\section{Závěr}
+
+\begin{thebibliography}{9}
+\label{literatura}
+\bibitem{manual} GRASS Development Team. \textit{GRASS GIS 7.0.svn Reference Manual} [online], c2003-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.fbk.eu/grass70/manuals/html70_user/ps.map.html}
+\end{thebibliography}
+\end{document}
+
+
+
