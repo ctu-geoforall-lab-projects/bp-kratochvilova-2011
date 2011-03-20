@@ -17,7 +17,7 @@
 \definecolor{darkGrey}{RGB}{100,100,100}
 \lstdefinelanguage{psmap}
 {morekeywords={scale, mapinfo, maploc, where, end, font, fontsize, color, border, raster, width, paper,
-               vpoints, vareas, vlines, symbol, size},
+vpoints, vareas, vlines, symbol, size, rgbcolumn, sizecolumn, cwidth, rotatecolumn, },
 morekeywords=[2]{y, n, none},
 morecomment=[l]{\#},
 }
@@ -45,12 +45,12 @@ morecomment=[l]{\#},
    {}
 
 \newcommand{\modul}[1]{\emph{#1}}
-\newcommand{\instr}[1]{\lstinline[style=psmapInline]{#1}}
+\newcommand{\instr}[1]{\lstinline[style=psmapInline]|#1|}
 \author{Anna Kratochvílová}
 
 
 \begin{document}
-
+\tableofcontents
 \section{Úvod}
 \section{Tvorba mapových výstupů}
 
@@ -71,7 +71,7 @@ morecomment=[l]{\#},
 \subsection{Grafické rozhraní systému GRASS GIS}
 
 \section{Modul ps.map}
-
+\label{sec:psmap}
 Modul \modul{ps.map} lze jako většinu modulů používat z příkazové řádky GRASSu nebo pro\-střed\-nic\-tvím wxGUI. Grafické rozhraní je vytvořeno stejným způsobem jako u většiny ostatních modulů, dovoluje tedy zadat parametry příkazu v dialogu. V tomto případě ale spouštění přes grafické rozhraní neskýtá mimořádnou výhodu, jelikož v zásadě většinou stačí zadat jméno již připraveného konfiguračního souboru a souboru výstupního, což je pro mnohé uživatele pohodlnější prostřednictvím příkazové řádky. V příkazové řádce vypadá spuštění \modul{ps.map} takto:
 \begin{verbatim}
  ps.map input=/konfiguracni/soubor.txt output=/vystupni/soubor.ps   
@@ -80,7 +80,7 @@ Modul \modul{ps.map} lze jako většinu modulů používat z příkazové řádk
 Jak již bylo zmíněno v části \ref{sec:porovnani:psmap}, modul vytváří mapový výstup na základě konfiguračního souboru, což je obyčejný textový soubor s instrukcemi. Vytvořit tento soubor je většinou poměrně pracné, umisťování mapových prvků na vhodnou pozici se často neobejde bez vedlejších výpočtů, což ke konformitě používání příliš nepřispívá. Z toho je zřejmé, že v současnosti \modul{ps.map} využívá pouze poměrně úzká komunita uživatelů GRASSu. Nové grafické rozhraní přímo vytváří konfigurační soubor, na základě něhož poté \modul{ps.map} vygeneruje mapový výstup. Není pak třeba se konfiguračním souborem zabývat, což může zpříjemnit používání tohoto modulu, a tím i rozšířit řady jeho uživatelů. 
 
 \subsection{Konfigurační soubor}
-Konfigurační soubor má poměrně jednoduchou strukturu. Skládá se z instrukcí, které musí být na samostatných řádcích. Instrukce mohou obsahovat další dílčí instrukce umístěné opět na samostatných řádcích. Tyto víceřádkové instrukce musí být ukončeny  instrukcí \instr|end|, která musí být uvedena i na konci celého konfiguračního souboru. Komentáře lze zapisovat pomocí znaku \#, prázdné řádky jsou ignorovány. Pořadí instrukcí většinou nehraje roli s výjimkou instrukcí \instr|vpoints|, \instr|vlines| a \instr|vareas|, které vykreslují vektorové vrstvy. První uvedená vektorová vrstva bude vykreslena nejvýše. Více napoví ukázka jednoduchého konfiguračního souboru:
+Konfigurační soubor má poměrně jednoduchou strukturu. Skládá se z instrukcí, které musí být na samostatných řádcích. Instrukce mohou obsahovat další dílčí instrukce umístěné opět na samostatných řádcích. Tyto víceřádkové instrukce musí být ukončeny  instrukcí \instr{end}, která musí být uvedena i na konci celého konfiguračního souboru. Komentáře lze zapisovat pomocí znaku \#, prázdné řádky jsou ignorovány. Pořadí instrukcí většinou nehraje roli s výjimkou instrukcí \instr{vpoints}, \instr{vlines} a \instr{vareas}, které vykreslují vektorové vrstvy. První uvedená vektorová vrstva bude vykreslena nejvýše. Více napoví ukázka jednoduchého konfiguračního souboru:
 \begin{psmap}
 paper a3
 end
@@ -98,17 +98,20 @@ end                     # konec instrukci
 Význam jednotlivých instrukcí je popsán v manuálové stránce k modulu, která je dostupná buď z dosavadního GUI nebo na internetových stránkách \cite{manual}.
 
 \subsection{Volba rozsahu zobrazovaného území}
-V konfiguračním souboru lze nastavit velikost mapového okna, čímž je myšlen obdélník s vykreslenou rastrovou či vektorovou mapou.  K nastavení slouží jednořádková instrukce \lstinline[style=psmap]{maploc}, která umístí levý horní roh okna na dané místo a volitelně nastaví i šířku a výšku mapového okna. Rozměry lze nepřímo ovlivnit také instrukcí \lstinline[style=psmap]{scale}, která na základě měřítka upraví rozměry okna. 
+\label{sec:psmap:rozsah}
+V konfiguračním souboru lze nastavit velikost mapového okna, čímž je myšlen obdélník s vykreslenou rastrovou či vektorovou mapou.  K nastavení slouží jednořádková instrukce \instr{maploc}, která umístí levý horní roh okna na dané místo a volitelně nastaví i šířku a výšku mapového okna. Rozměry lze nepřímo ovlivnit také instrukcí \instr{scale}, která na základě měřítka upraví rozměry okna. 
 
 Nicméně při jakýchkoli rozměrech a umístění mapového okna, se vykresluje stále stejný územní rozsah. Ten je dán tzv. \emph{výpočetním regionem}. Proto je třeba před vlastním generováním mapového výstupu nastavit výpočetní region tak, aby odpovídal území, které chceme zobrazit. K tomu slouží modul \modul{g.region}. V konfiguračním souboru tedy nelze rozsah území ovlivnit.
 Modul \modul{ps.map} tedy nejprve zjistí požadované rozměry a měřítko z konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí aplikovat na rozměry současného výpočetního regionu. Když by se mapové okno při požadovaném měřítku nevešlo na daný formát papíru, modul měřítko upraví. Podobně upraví rozměry mapového okna, aby se vešlo do zadaných rozměrů.
 
 Nové grafické rozhraní \modul{ps.map} řeší volbu zobrazovaného území ve vlastní režii, není tedy třeba volat modul \modul{g.region} a zároveň se nemění současný výpočetní region pro ostatí moduly. %Více v oddíle 
 
-\subsubsection{Nekonzistence a chyby v modulu ps.map}
+\subsection{Nekonzistence a chyby v modulu ps.map}
+\label{sec:psmap:chyby}
 Při tvorbě grafického rozhraní bylo nutné prozkoumat chování modulu \modul{ps.map} o něco detailněji, než je nutné pro jeho běžné užívání. Vycházela jsem především z manuálové stránky \cite{manual} a vlastního experimentování s modulem. 
 
 \paragraph*{Souřadnicové systémy a jednotky}
+\label{sec:psmap:sour_systemy}
 Jedním z nejnepříjemnějších problémů, se kterými bylo třeba se při tvorbě GUI vypořádat, byla nekonzistence v jednotkách a souřadnicových sytémech. Modul \modul{ps.map} totiž pro umístění jednotlivých prvků (jako legenda, text, měřítko) používá dva různé systémy, viz obr. č. \ref{fig:sour_systemy}.
 
 \begin{figure}[h!]
@@ -149,16 +152,54 @@ end
 Je nepříjemné, že si uživatel musí být vědom tohoto chování, jinak by se mu mohlo snadno stát, že napíše instrukci \instr{end}, kde být nemá, a \modul{ps.map} to bude považovat za konec souboru a další instrukce bude ignorovat.
 Navíc u \instr{colortable} nemá možnost zapínání a vypínání valného smyslu, když tuto instrukci neuvedu, legenda se prostě nevykreslí.
 
-\subsubsection{Tvorba grafického rozhraní}
-% pozdeji nekam zaradit
-% Jelikož interaktivní umisťování objektů na stránce je jednou hlavních výhod nového grafického rozhraní, bylo nutné problém nejednotností systémů a jednotek řešit vlastními přepočty v programu tak, aby byl od něj uživatel co nejvíce odstíněn. Na druhou stranu by bylo logičtější, aby potřebné výpočty prováděl už samotný modul \modul{ps.map}, který stejně už podobné výpočty provádí, stačilo by je pouze rozšířit. V důsledku toho se zřejmě určité výpočty provádí dvakrát -- v \modul{ps.map} a v GUI. 
-\subsubsection{Ukázky}
+\paragraph*{Mapinfo}
+\label{sec:psmap:mapinfo}
+Mapový prvek \emph{mapinfo}, se v některých případech špatně vykreslí. Problém nastává, když jej uživatel chce umístit nalevo od mapového okna. Modul \modul{ps.map} přesune mapinfo tak, že se vertikálně zarovná k mapovému oknu, neboli převezme \emph{x}-ovou sořadnici okna. Další chybou je špatné barevné vykreslení barvy pozadí a ohraničující linie. Barvy se nevykreslí, když je mapinfo  mimo mapové okno. 
+
+\paragraph*{Nekonzistence u instrukce \instr{vlines}}
+\label{sec:psmap:vlines}
+U instrukce \instr{vlines} která přidává liniovou vektorovou vrstvu, lze použít dílčí instrukci \instr{rgbcolumn}. Ta vykreslí   linii barvou uvedenou ve zvoleném sloupci atributové tabulky na příslušném řádku. Podobně lze použít dílčí instrukci \instr{cwidth}, která ovlivňuje šířku vykreslené linie. Šířka je pak určena zadanou hodnotou pronásobenou číslem kategorie (sloupec \emph{cat} v atributové tabulce), do níž linie patří. V tomto případě si tedy uživatel nemůže zvolit, podle jakého atributu se bude šířka řídit, což v prvním případě jde. Bylo by vhodné tento přístup sjednotit. 
+
+\paragraph*{Nepřesnosti v dokumentaci}
+\label{sec:psmap:manual}
+Manuálová stránka \cite{manual} k modulu \modul{ps.map} je poměrně podrobná a vyčerpávající, přesto lze narazit na některé nepřesnosti. Například u instrukce \instr{text} je k popisu dílčí instrukce \instr{width} napsáno:
+ \begin{quotation}\it
+width of the lines used to draw the text to make thicker letters
+\end{quotation}
+Prakticky však tato instrukce ovlivňuje šířku rámečku kolem textu.
+
+Popis instrukce \instr{colortable} (vytváří rastrovou legendu) je místy matoucí. Jsou totiž dva typy rastrové legendy, což záleží na typu dat (\emph{CELL} -- celočíselný rastr a \emph{FCELL, DCELL} -- neceločíselný rastr). Některé dílčí instrukce mají pak smysl pouze pro jeden typ, případně se jejich význam pro jednotlivé typy liší. Situace se dále komplikuje dílčí instrukcí \instr{discrete}, která umožňuje změnit typ legendy. Manuál se sice snaží problematiku vysvětlit, ale ne příliš úspěšně, účinější je prakticky vše vyzkoušet.
+
+
+\section{Grafické rozhraní pro modul \modul{ps.map}}
+\label{sec:gui}
+Nové grafické uživatelské rozhraní pro modul \modul{ps.map} bylo vyvinuto pomocí knihovny wxPython, 
+% Důvody, proč je nové GUI zapotřebí, jsou zmíněny již v části \ref{sec:psmap}. Účelem je především oprostit uživatele od nutnosti ručně vytvářet konfigurační soubor. 
+proto bylo nutné se s knihovnou podrobněji seznámit. Jedním z nejvýznamnějších zdrojů informací je demo pro wxPython \cite{demo}, ve kterém je názorně ukázáno chování všech dostupných widgetů. Při hledání vhodného widgetu pro aplikaci je demo velice užitečné. 
+
+Při psaní programu jsem pracovala s knihovnou \emph{GRASS Python Scripting Library} \cite{script}, která umožňuje a zjednodušuje volání modulů GRASSu. Zdrojem informací mi byly také již napsané GRASS wxGUI moduly. Seznámila jsem se také s moduly GRASSu, zjišťovala jsem především, co umožňují, a jak je mohu pro práci využít. 
+
+% Práce s GUI vypadá tak, že uživatel na stránku umístí zvolené mapové prvky, provede nastavení jejich vlastností v dialozích a nechá si vykreslit výsledek. Program na základě zvolených nastavení vytvoří konfigurační soubor, se kterým poté spustí modul \modul{ps.map}. Výstupem může být konfigurační soubor, PS soubor (případně EPS) a výsledek je viditelný i přímo v GUI.
+
+\subsection{Problémy při tvorbě GUI pro \modul{ps.map}}
+\label{sec:gui:problemy}
+Při práci jsem narazila na několik problematických oblastí, které se částečně kryjí se záležitostmi popsanými v části \ref{sec:psmap:rozsah} a \ref{sec:psmap:chyby}. 
+
+Připomeňme, že modul \modul{ps.map} pracuje s aktuálním výpočetním regionem a vykresluje mapy pouze v tomto rozsahu. Jelikož by bylo nepohodlné, kdyby uživatel musel při práci v novém \modul{ps.map} GUI nastavovat region externě pomocí GRASS modulu \modul{g.region}, je vše řešeno v rámci této aplikace. Uživatel si v aplikaci určitým způsobem nastaví region, který pak \modul{ps.map} použije k zobrazení. Stávající výpočetní region, který mezitím mohou používat další moduly GRASSu, zůstane nezměněný. Když si uživatel nechá vygenerovat konfigurační soubor, který chce dále editovat ručně, je v záhlaví v komentáři napsán příkaz pro modul \modul{g.region}, který informuje o výpočetním regionu nastaveném v době vzniku souboru. Tato informace se využívá i při čtení konfiguračního souboru vytvořeného touto aplikací. 
+
+Nepříjemným problémem byly používané souřadnicové systémy a jednotky (viz část \ref{sec:psmap:sour_systemy} na straně \pageref{sec:psmap:sour_systemy}).
+ Jelikož interaktivní umisťování objektů na stránce je jednou hlavních výhod grafického rozhraní, bylo nutné problém nejednotností systémů a jednotek řešit vlastními přepočty v programu tak, aby byl od něj uživatel co nejvíce odstíněn. Na druhou stranu by bylo logičtější, aby potřebné výpočty prováděl už samotný modul \modul{ps.map}, který stejně už podobné výpočty provádí, stačilo by je pouze rozšířit. V důsledku toho se zřejmě určité výpočty provádí dvakrát -- v \modul{ps.map} a v GUI.
+ 
+\subsection{Funkcionalita}
+\subsection{Ukázky}
 
 \section{Závěr}
 
 \begin{thebibliography}{9}
 \label{literatura}
 \bibitem{manual} GRASS Development Team. \textit{GRASS GIS 7.0.svn Reference Manual} [online], c2003-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.fbk.eu/grass70/manuals/html70_user/ps.map.html}
+\bibitem{script} GRASS Development Team. \textit{GRASS 7 Programmer's Manual} [online], c2000-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.osgeo.org/programming7/}
+\bibitem{demo} Robin Dunn and Total Control Software. \textit{wxPython demo} [program], c1997-2006 [cit. 2011-03-19].\\ URL: \url{http://downloads.sourceforge.net/wxpython/wxPython-demo-2.8.11.0.tar.bz2}
 \end{thebibliography}
 \end{document}
 
