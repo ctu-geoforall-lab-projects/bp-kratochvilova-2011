@@ -9,13 +9,9 @@
 \usepackage[pdftex, final, colorlinks=true]{hyperref}
 \usepackage{verbatim}
 \usepackage{mdwlist}
-\usepackage{varioref}
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
 
 
-\renewcommand\reftextbefore {na předchozí straně}
-\renewcommand\reftextafter {na následující straně}
-\renewcommand{\reftextfaraway}[1]{strana~\pageref{#1}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[final]{listings}
 
@@ -58,14 +54,28 @@ morecomment=[l]{\#},
 \begin{document}
 \tableofcontents
 \section{Úvod}
+
 \section{Tvorba mapových výstupů}
 
 \subsection{Porovnání možností programů pro tvorbu mapových výstupů}
+
 \subsubsection{ArcGIS}
+
 \subsubsection{QGis}
+
 \subsubsection{gvSIG}
+
 \subsubsection{GRASS GIS -- ps.map}
 \label{sec:porovnani:psmap}
+GRASS GIS jakožto významný představitel open source geografických informačních systémů má v tvorbě mapových výstupů značné rezervy. Prakticky jediným vhodným nástrojem, kterým GRASS GIS v současnosti disponuje, je modul \modul{ps.map}\footnote{V současné době je vyvíjen modul \modul{ps.output}, který rozšiřuje možnosti \modul{ps.map} a možná jej v budoucnu nahradí, nicméně zatím je k dispozici jen v grass-addons.}.
+
+Pro uživatele je základním rozdílem mezi \modul{ps.map} a ostatními programy pro tvorbu mapových výstupů  absence grafického uživatelského rozhraní. To je pro většinu uživatelů velký problém, proto není tento modul příliš využívaný. Mapový výstup je ovládán konfiguračním souborem, což je obyčejný textový soubor s instrukcemi, co se má kam vykreslit. Podrobněji je tento modul popsán v oddíle \nameref{sec:psmap}.
+
+Mapový výstup \modul{ps.map} obsahuje většinu standardních mapových prvků. Možnosti nastavení jejich vzhledu nejsou v zásadě tak široké, na druhou stranu lze zde najít i několik vlastností, které u ostatních programů chybí.
+
+\paragraph*{Mapové okno}
+Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových oken. V jednom mapovém výstupu lze tak zobrazit pouze jednu oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou, ale to není dostatečně komfortní řešení.}. Dalším omezením je vykreslení maximálně jedné rastrové mapy (případně ).
+
 
 \section{Zásady tvorby grafického uživatelského rozhraní}
 \subsection{Čeho se vyvarovat}
@@ -73,17 +83,20 @@ morecomment=[l]{\#},
 
 
 \section{Systém GRASS GIS}
+% co je region, lokace,mapset
 
 \subsection{Grafické rozhraní systému GRASS GIS}
 
 \subsection{Modul ps.map}
 \label{sec:psmap}
+Modul \modul{ps.map} je v současnosti nejvhodnější prostředek pro tvorbu mapových výstupů v GRASSu. Další alternativou je zobrazit si potřebné mapové vrstvy v mapovém okně\footnote{\emph{Map Display Window} - jedna ze dvou hlavních komponent wxGUI} a upravit jejich vzhled, případně zobrazit i legendu či měřítko. Zde jsou možnosti poměrně omezené, navíc lze výstup uložit pouze jako rastrový obrázek a celkově tento způsob není příliš vhodný pro tvorbu mapového výstupu.
+
 Modul \modul{ps.map} lze jako většinu modulů používat z příkazové řádky GRASSu nebo pro\-střed\-nic\-tvím wxGUI. Grafické rozhraní je vytvořeno stejným způsobem jako u většiny ostatních modulů, dovoluje tedy zadat parametry příkazu v dialogu. V tomto případě ale spouštění přes grafické rozhraní neskýtá mimořádnou výhodu, jelikož v zásadě většinou stačí zadat jméno již připraveného konfiguračního souboru a souboru výstupního, což je pro mnohé uživatele pohodlnější prostřednictvím příkazové řádky. V příkazové řádce vypadá spuštění \modul{ps.map} takto:
 \begin{verbatim}
  ps.map input=/konfiguracni/soubor.txt output=/vystupni/soubor.ps   
 \end{verbatim}
 
-Jak již bylo zmíněno v části \ref{sec:porovnani:psmap}, modul vytváří mapový výstup na základě konfiguračního souboru, což je obyčejný textový soubor s instrukcemi. Vytvořit tento soubor je většinou poměrně pracné, umisťování mapových prvků na vhodnou pozici se často neobejde bez vedlejších výpočtů, což ke konformitě používání příliš nepřispívá. Z toho je zřejmé, že v současnosti \modul{ps.map} využívá pouze poměrně úzká komunita uživatelů GRASSu. Nové grafické rozhraní přímo vytváří konfigurační soubor, na základě něhož poté \modul{ps.map} vygeneruje mapový výstup. Není pak třeba se konfiguračním souborem zabývat, což může zpříjemnit používání tohoto modulu, a tím i rozšířit řady jeho uživatelů. 
+Jak již bylo zmíněno v části \ref{sec:porovnani:psmap}, modul vytváří mapový výstup na základě konfiguračního souboru, což je obyčejný textový soubor s instrukcemi. Vytvořit tento soubor je většinou poměrně pracné, umisťování mapových prvků na vhodnou pozici se často neobejde bez vedlejších výpočtů, což ke konformitě používání příliš nepřispívá. Z toho je zřejmé, že v současnosti \modul{ps.map} využívá pouze poměrně úzká komunita uživatelů GRASSu. Nové grafické rozhraní \emph{wx.pasmap} přímo vytváří konfigurační soubor, na základě něhož poté \modul{ps.map} vygeneruje mapový výstup. Není pak třeba se konfiguračním souborem zabývat, což může zpříjemnit používání tohoto modulu, a tím i rozšířit řady jeho uživatelů. 
 
 \subsubsection{Konfigurační soubor}
 Konfigurační soubor má poměrně jednoduchou strukturu. Skládá se z instrukcí, které musí být na samostatných řádcích. Instrukce mohou obsahovat další dílčí instrukce umístěné opět na samostatných řádcích. Tyto víceřádkové instrukce musí být ukončeny  instrukcí \instr{end}, která musí být uvedena i na konci celého konfiguračního souboru. Dílčí instrukce je možné ve většině případů vynechat a pro nastavení dané vlastnosti se použije implicitní hodnota. Komentáře lze zapisovat pomocí znaku \#, prázdné řádky jsou ignorovány. Pořadí instrukcí většinou nehraje roli s výjimkou instrukcí \instr{vpoints}, \instr{vlines} a \instr{vareas}, které vykreslují vektorové vrstvy. První uvedená vektorová vrstva bude vykreslena nejvýše. Více napoví ukázka jednoduchého konfiguračního souboru:
@@ -110,7 +123,7 @@ V konfiguračním souboru lze nastavit velikost mapového okna, čímž je myšl
 Nicméně při jakýchkoli rozměrech a umístění mapového okna, se vykresluje stále stejný územní rozsah. Ten je dán tzv. \emph{výpočetním regionem}. Proto je třeba před vlastním generováním mapového výstupu nastavit výpočetní region tak, aby odpovídal území, které chceme zobrazit. K tomu slouží modul \modul{g.region}. V konfiguračním souboru tedy nelze rozsah území ovlivnit.
 Modul \modul{ps.map} tedy nejprve zjistí požadované rozměry a měřítko z konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí aplikovat na rozměry současného výpočetního regionu. Když by se mapové okno při požadovaném měřítku nevešlo na daný formát papíru, modul měřítko upraví. Podobně upraví rozměry mapového okna, aby se vešlo do zadaných rozměrů.
 
-Nové grafické rozhraní \modul{ps.map} řeší volbu zobrazovaného území ve vlastní režii, není tedy třeba volat modul \modul{g.region} a zároveň se nemění současný výpočetní region pro ostatí moduly. %Více v oddíle 
+Nové grafické rozhraní wx.psmap řeší volbu zobrazovaného území ve vlastní režii, není tedy třeba volat modul \modul{g.region} a zároveň se nemění současný výpočetní region pro ostatí moduly. %Více v oddíle 
 
 \subsubsection{Nekonzistence a chyby v modulu ps.map}
 \label{sec:psmap:chyby}
@@ -122,7 +135,7 @@ Jedním z nejnepříjemnějších problémů, se kterými bylo třeba se při tv
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=0.2\textheight]{./sour_systemy.pdf}
+    \includegraphics[width=0.2\textheight]{sour_systemy.pdf}
     \caption{Souřadnicové systémy používané modulem \modul{ps.map}\label{fig:sour_systemy}}
 \end{figure}
 
@@ -143,7 +156,7 @@ U ostatních objektů je referenční bod dán a nelze měnit. Uživatele však 
 
 \paragraph*{Volba barev}
 \label{sec:psmap:color}
-V mnoha instrukcích se vyskytuje nastavení barvy. Bohužel velká část instrukcí omezuje výběr barev tím, že vyžaduje zadat barvu ve formě jejího jména, tedy např. \emph{aqua}, \emph{black}, \emph{blue}, \ldots Některé jiné instrukce však umožňují zadat barvu i ve tvaru R:G:B. Bylo by proto logické, kdyby RGB podporovaly všechny instrukce.
+V mnoha instrukcích se vyskytuje nastavení barvy. Bohužel velká část instrukcí omezuje výběr barev tím, že vyžaduje zadat barvu ve formě jejího jména, tedy např. \emph{aqua}, \emph{black}, \emph{blue}, \ldots Některé jiné instrukce však umožňují zadat barvu i ve tvaru R:G:B. Bylo by proto logické, kdyby RGB podporovaly všechny instrukce\footnote{Tyto problémy jsou již v současnosti vyřešené, alespoň pro instrukce, které wx.psmap podporuje}. 
 
 \paragraph*{Jednořádkové a víceřádkové instrukce}
 \label{sec:psmap:singleline}
@@ -182,40 +195,49 @@ Volbu orientace stránky zajišťuje přepínač \emph{-r} (rotate), který je-l
 \paragraph*{Titulek výstupního souboru}
 Výstupní soubor má titulek \emph{Mapset = \textless aktuální mapset\textgreater}, což mnoho neříká a navíc rovnítko v titulku nepůsobí hezky. Uživatel by mohl mít možnost změnit titulek, případně by se titulek měl převzít z aktuálního rastru, případně vektoru\footnote{GUI aplikace by sice mohla napravit tento nedostatek, nicméně je vhodnější toto upravit přímo v modulu \modul{ps.map}.}.
 
-\section{Grafické rozhraní pro modul \modul{ps.map}}
+\section{Grafické rozhraní  wx.psmap pro modul \modul{ps.map}}
 \label{sec:gui}
 
-Důvody, proč je nové grafické rozhraní pro modul \modul{ps.map} zapotřebí, jsou zmíněny již v části \ref{sec:psmap}. Účelem je především oprostit uživatele od nutnosti ručně vytvářet konfigurační soubor. 
+Důvody, proč je nové grafické rozhraní \emph{wx.psmap} pro modul \modul{ps.map} zapotřebí, jsou zmíněny již v části \ref{sec:psmap}. Účelem je především oprostit uživatele od nutnosti ručně vytvářet konfigurační soubor. 
 
-\subsection{Stažení programu z repozitáře add-ons}
+\subsection{Instalace wx.psmap}
 % Aplikace je napsána primárně pro GRASS 7 a měla by fungovat i v GRASS 6.5. %a testována pod operačním systémem Linux, distribuce Ubuntu 10.04 LTS.
 % Popíši postup pro GRASS 7. 
 \subsection{Podklady a použité knihovny}
-Nové grafické uživatelské rozhraní pro modul \modul{ps.map} bylo vyvinuto pomocí knihovny wxPython, 
+Nové grafické uživatelské rozhraní wx.psmap bylo vyvinuto pomocí knihovny wxPython, 
 proto bylo nutné se s knihovnou podrobněji seznámit. Jedním z nejvýznamnějších zdrojů informací je demo pro wxPython \cite{demo}, ve kterém je názorně ukázáno chování všech dostupných widgetů. Při hledání vhodného widgetu pro aplikaci je demo velice užitečné. 
 
 Při psaní programu jsem pracovala s knihovnou \emph{GRASS Python Scripting Library} \cite{script}, která umožňuje a zjednodušuje volání modulů GRASSu. Zdrojem informací mi byly také již napsané GRASS wxGUI moduly. Seznámila jsem se také s moduly GRASSu, zjišťovala jsem především, co umožňují, a jak je mohu pro práci využít. 
 
 \subsection{Funkcionalita aplikace}
-V následujícím textu jsou shrnuty hlavní vlastnosti GUI aplikace a možnosti jejího využití.
+V následujícím textu jsou shrnuty hlavní vlastnosti wx.psmap a možnosti jejího využití.
+
 \paragraph*{Podporované instrukce}
-    Aplikace v současné době podporuje pouze vybrané instrukce, a to: \instr{border}, \instr{colortable}, \instr{mapinfo}, \instr{maploc}, \instr{paper}, \instr{raster}, \instr{scale}, \instr{scalebar}, \instr{text}, \instr{vareas}, \instr{vlines}, \instr{vpoints} a \instr{vlegend}. V budoucnu se počítá s podporou dalších instrukcí. Pokud uživatel potřebuje použít některé dosud nepodporované instrukce, má možnost část práce vykonat v GUI aplikaci a nechat si vygenerovat konfigurační soubor. Tam tyto instrukce doplní a spustí přímo modul \modul{ps.map}.
+    Aplikace v současné době podporuje pouze vybrané instrukce, a to: \instr{border}, \instr{colortable}, \instr{mapinfo}, \instr{maploc}, \instr{paper}, \instr{raster}, \instr{scale}, \instr{scalebar}, \instr{text}, \instr{vareas}, \instr{vlines}, \instr{vpoints} a \instr{vlegend}. Prakticky to znamená, že mapový výstup může obsahovat rastrovou mapu, libovolný počet map vektorových, legendu (pro rastr a pro vektorovou mapu), grafické měřítko, informace o regionu s číselným měřítkem a libovolné množství textu. V budoucnu se počítá s podporou dalších instrukcí. Pokud uživatel potřebuje použít některé dosud nepodporované instrukce, má možnost část práce vykonat v GUI aplikaci a nechat si vygenerovat konfigurační soubor. Tam tyto instrukce doplní a spustí přímo modul \modul{ps.map}.
+    
 \paragraph*{Možné výstupy aplikace}
-Výsledkem práce s GUI aplikací je mapový výstup ve formátu PostScript, případně Encapsulated PostScript, který je vygenerován modulem \modul{ps.map} na základě konfiguračního souboru vytvořeném GUI aplikací. Dalším možným výstupem je konfigurační soubor samotný, který lze dále zpracovávat.
+Výsledkem práce s wx.psmap je mapový výstup ve formátu PostScript, případně Encapsulated PostScript, který je vygenerován modulem \modul{ps.map} na základě konfiguračního souboru vytvořeném GUI aplikací. Dalším možným výstupem je konfigurační soubor samotný, který lze dále zpracovávat. Konfigurační soubor vytvořený pomocí wx.psmap má navíc v hlavičce informace o datumu, použité lokaci a mapsetu a především o nastavení regionu.
 
 \paragraph*{Čtení konfiguračních souborů}
 Aplikace umožňuje také konfigurační soubory načítat. Vhodnější je ale načítat soubor vytvořený touto aplikací. To dáno tím, že aplikace při vytváření konfiguračního souboru zapisuje i informace o regionu do komentáře, což není standardní součástí konfiguračního souboru. Navíc je aplikace více otestovaná právě pro načítání vlastních souborů\footnote{Je nutné podotknout, že si aplikace nevytváří žádný vlastní odlišný formát.}. 
 
 \paragraph*{Koncept a náhled}
 Aplikace rozlišuje dva módy -- koncept a náhled (\emph{Draft mode} a \emph{Preview mode}). 
-Uživatel vytváří mapový výstup v módu konceptu, což znamená, že jednotlivé vykreslované prvky jako legenda či mapové okno jsou představovány pouze barevným obdélníkem s popisem typu objektu. Jejich vzhled tedy nijak nesouvisí se jejich skutečným vykreslením modulem \modul{ps.map}, s výjimkou jejich rozměrů. Ty odpovídají rozměrům skutečným (alespoň se o to snaží, viz část \nameref{sec:gui:problemy}). Objekty lze posunovat po papíře, s výjimkou mapového okna však nelze měnit jejich rozměry.
-Při práci lze průběžně kontrolovat výsledek pomocí módu náhledu. Na pozadí je spuštěn modul \modul{ps.map}, který vygeneruje dočasný PostScript soubor, ten je překonvertován do PNG a zobrazen v GUI aplikaci. To vše samozřejmě zabere poměrně dost času, záleží na složitosti mapového výstupu. Konverze do PNG je také poměrně časově náročná. Proto 
-% dvě roviny, vykresleni v GUI a vykreslení skutečné
+Uživatel vytváří mapový výstup v módu konceptu, což znamená, že jednotlivé vykreslované prvky jako legenda či mapové okno jsou představovány pouze barevným obdélníkem s popisem typu objektu. Jejich vzhled tedy nijak nesouvisí se jejich skutečným vykreslením modulem \modul{ps.map}, s výjimkou jejich rozměrů. Ty odpovídají rozměrům skutečným (alespoň se o to snaží, viz část \nameref{sec:gui:problemy}). 
 
-\subsection{Základní práce s GUI aplikací}
+Jiný případ nastává při zobrazení textu v konceptu, text je zde zobrazen v zadané velikost fontu (ne však zadaným fontem). Zvolená barva písma se také zobrazí správně, nicméně je-li nastavena barva pozadí, vykreslí se pouze barva bílá. Pravděpodobně jde o problém knihovny wxPython, je možné, že na jiných platformách k tomuto problému nedochází. Stejně tak ostatní efekty textu jako zvýraznění a rámeček se v konceptu nezobrazují (bylo by to složité a zbytečné). Raději dodávám, že všechny tyto nastavené vlastnosti textu se ve výsledném mapovém výstupu zobrazí správně.
+
+V konceptu lze označené objekty posunovat tažením kurzoru, polohu lze zadat také v příslušném dialogu objektu. S výjimkou mapového okna nelze měnit rozměry objektů interaktivně, viz \nameref{sec:gui:problemy}
+
+Při práci lze průběžně kontrolovat výsledek pomocí módu náhledu. Na pozadí je spuštěn modul \modul{ps.map}, který vygeneruje dočasný PostScript soubor, ten je překonvertován do PNG a zobrazen v GUI aplikaci. To vše samozřejmě zabere poměrně dost času, záleží na složitosti mapového výstupu. Konverze do PNG je také poměrně časově náročná. Proto může být lepší si vygenerovat přímo PS soubor a ten si zobrazit v externím prohlížeči.
+
+\paragraph*{Ovládání pohledu}
+Aplikace wx.psmap umožňuje měnit přiblížení a posunovat papír s vykreslenými objekty, a to jak v konceptu, tak v náhledu. Přibližování resp. oddalování je dostupné několika způsoby. Lze jej zvolit na panelu nástrojů, v tom případě stačí kliknout na přibližované místo nebo táhnutím zvolit výřez, na nějž bude přiblíženo. Další alternativou je použití kolečka myši. K posunu slouží další z tlačítek na panelu nástrojů, kliknutím a táhnutím pak měníte aktuální výřez v okně. Celkově je ovládání obdobné jaku u ostatních podobných programů.
+
+\subsection{Základní práce s wx.psmap}
 % Práce s GUI vypadá tak, že uživatel na stránku umístí zvolené mapové prvky, provede nastavení jejich vlastností v dialozích a nechá si vykreslit výsledek. Program na základě zvolených nastavení vytvoří konfigurační soubor, se kterým poté spustí modul \modul{ps.map}. Výstupem může být konfigurační soubor, PS soubor (případně EPS) a výsledek je viditelný i přímo v GUI.
 
-\subsection[Problémy při tvorbě GUI]{Problémy při tvorbě GUI pro \modul{ps.map} a jejich řešení}
+\subsection[Problémy při tvorbě wx.psmap]{Problémy při tvorbě wx.psmap a jejich řešení}
 \label{sec:gui:problemy}
 Při práci jsem narazila na několik problematických oblastí, které se částečně kryjí se záležitostmi popsanými v části \ref{sec:psmap:rozsah} a \ref{sec:psmap:chyby}. 
 
@@ -242,6 +264,10 @@ Při práci jsem narazila na několik problematických oblastí, které se čás
  \paragraph*{Tvorba dialogů}
  Každý mapový prvek jako např. mapinfo, grafické měřítko či legenda mají vlastní dialog, kde se nastavují jejich vlastnosti. Dialogy jsou různě rozsáhlé, ale mají podobný vzhled. Problém při tvorbě dialogů byla celková nejednotnost v nastavitelných vlastnostech dialogů. Například, rastrová legenda umožňuje změnit barvu písma a neumožňuje vykreslit ohraničení (\emph{border}), zatímco u vektorové legendy je to přesně naopak. Takových případů je víc a značně komplikují snahy o ujednocení vzhledu dialogů. Proto by bylo příliš náročné vytvořit jakýsi jednotný dialog pro nastavení vlastností objektů, pravděpodobně by to vedlo k větší nepřehlednosti. 
  
+ \paragraph*{Určení rozměru mapových prvků}
+ V módu konceptu se jednotlivé mapové prvky zobrazují na stránce jako obdélníky, které se od sebe liší barvou popiskem a rozměrem. Právě určení rozměru prvku je problém, který není uspokojivě vyřešen. Velikost mapového prvku je totiž v zásadě dána velikostí fontu, ale i dalšími parametry, například počet sloupců a počet kategorií u legendy. Aplikace wx.psmap na základě těchto vlastností odhaduje přibližné rozměry, ty se ovšem do jisté míry mohou lišit od rozměrů výsledného objektu vykresleného modulem \modul{ps.map}. Ve wx.psmap tak opět dochází ke zbytečnému (a ne tak přesnému) opakování výpočtů, které provádí modul. Je třeba tudíž rozměry objektů v konceptu brát jako orientační, s výjimkou mapového okna, jehož rozměry lze určit přesně.
+ 
+ Důsledkem tohoto problému je nemožnost měnit rozměry objektů interaktivně (pomocí myši), jako je to obvyklé v podobných programech. Teoreticky by to možné sice bylo, ale pouze za cenu dalších neprůhledných výpočtů, které by navíc nedávaly přesný výsledek. Pokud tedy chce uživatel změnit velikost objektů, je třeba v příslušném dialogu vyplnit velikost fontu a další parametry ovlivňující rozměry, jsou-li k dispozici. Opět je výjimkou mapové okno, jehož rozměry lze měnit interaktivně. Při označení objektu se objeví v pravém dolním rohu značka, když se na ní najede kurzorem a podrží se levé tlačítko myši, mapové okno mění své rozměry. Jde sice o jednoduchý způsob, ale snad dostatečný.
  
 
 \subsection{Ukázky}
