@@ -52,16 +52,18 @@ morecomment=[l]{\#},
 
 
 \begin{document}
+
+\renewcommand{\refname}{Použité zdroje}
 \tableofcontents
 \section{Úvod}
 
-\section{Tvorba mapových výstupů}
+\section{Programy pro tvorbu mapových výstupů}
 
 \subsection{Porovnání možností programů pro tvorbu mapových výstupů}
 
 \subsubsection{ArcGIS}
 
-\subsubsection{QGis}
+\subsubsection{QGIS}
 
 \subsubsection{gvSIG}
 
@@ -71,15 +73,46 @@ GRASS GIS jakožto významný představitel open source geografických informač
 
 Pro uživatele je základním rozdílem mezi \modul{ps.map} a ostatními programy pro tvorbu mapových výstupů  absence grafického uživatelského rozhraní. To je pro většinu uživatelů velký problém, proto není tento modul příliš využívaný. Mapový výstup je ovládán konfiguračním souborem, což je obyčejný textový soubor s instrukcemi, co se má kam vykreslit. Podrobněji je tento modul popsán v oddíle \nameref{sec:psmap}.
 
-Mapový výstup \modul{ps.map} obsahuje většinu standardních mapových prvků. Možnosti nastavení jejich vzhledu nejsou v zásadě tak široké, na druhou stranu lze zde najít i několik vlastností, které u ostatních programů chybí.
+Mapový výstup \modul{ps.map} obsahuje většinu standardních prvků jako legenda apod. Možnosti nastavení jejich vzhledu nejsou v zásadě tak široké, což ale mnohdy nevadí, naopak to příspívá k jednoduššímu ovládání.
 
 \paragraph*{Mapové okno}
-Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových oken. V jednom mapovém výstupu lze tak zobrazit pouze jednu oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou, ale to není dostatečně komfortní řešení.}. Dalším omezením je vykreslení maximálně jedné rastrové mapy (případně složené 3 vrstvy jako RGB). Vektorových map lze nicméně přidat libovolný počet.
+Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových oken. V jednom mapovém výstupu lze tak zobrazit pouze jednu oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou, ale to není dostatečně komfortní řešení.}. Dalším omezením je vykreslení maximálně jedné rastrové mapy (případně složené 3 vrstvy jako RGB). Vektorových map lze nicméně přidat libovolný počet. Lze u nich nastavit vzhled (symboly, styl čáry, barevnost, výplň, ...) a také například omezit zobrazené prvky atributovým dotazem. 
 
+V mapovém okně lze dále zobrazit zeměpisnou síť (grid), popisky (labels) nebo zvýraznit uložený region s menším rozsahem.
 
-\section{Zásady tvorby grafického uživatelského rozhraní}
-\subsection{Čeho se vyvarovat}
-\subsection{Co je vhodné}
+\paragraph*{Legenda}
+Vzhled legendy \modul{ps.map} se v zásadě příliš neliší od ostatních programů. V podstatě jediným podstatnějším rozdílem je fakt, že \modul{ps.map} striktně rozlišuje rastrovou a vektorou legendu. Jde o dva oddělené objekty, což není obvyklé a asi ani žádoucí řešení. Vzhled rastrové legendy závisí na typu dat, je buď spojitá, nebo rozdělená podle kategorií, což se používá i v ostatních programech.
+
+\paragraph*{Měřítko}
+Je třeba odlišit grafické a číselné měřítko, opět jde o dva odlišné objekty.
+U grafického měřítka sice modul nenabízí takové množství různých stylů (pouze dva) jako např. ArcGIS, nicméně stojí za zmínku způsob, jakým se určuje velikost měřítka. Jeho délka je totiž dána zadanou délkou v mapových jednotkách. Podobný způsob sice ArcGIS, QGIS i gvSIG umožňují také, ale zvláště v případě ArcGISu je pro uživatele těžké se v nastavení vyznat a vybrat to správné. U \modul{ps.map} proto můžeme považovat jednoduchost nastavení za výhodu, pro většinu mapových výstupů navíc jednoduchý vzhled grafického měřítka postačuje.
+
+Klasické číselné měřítko modul nenabízí. Je totiž součástí objektu \emph{mapinfo}, který obsahuje informace o aktuálním zobrazovaném regionu, zobrazované zeměpisné síti a měřítku, viz obr. č. \ref{fig:mapinfo}. Mapinfo nemá v ostatních programech obdobu, snad kromě ArcGISu, kde lze podobně zobrazit informace o souřadnicovém systému pomocí automaticky generovaného textu (\emph{Dynamic text}). 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.2\textheight]{./mapinfo.pdf}
+    \caption{Mapinfo}
+    \label{fig:mapinfo}
+\end{figure}
+
+\paragraph*{Značka severu}
+Symbol severu v modulu \modul{ps.map} vůbec není k dispozici, což je velkou nevýhodou, jelikož určení severu je v mapových výstupech obvyklé. Tento problém lze řešit buď přidáním obrázku ve formátu EPS, případně lze šipku vytvořit složením z jiných grafických objektů (postup lze najít na webové stránce \cite{wiki_psmap_north}).
+
+\paragraph*{Další možnosti}
+Modul dále umožňuje kreslit základní tvary jako obdélník, linii a bod. K mapovému výstupu lze připojit hlavičku, kde jsou uvedeny základní informace o mapě. Text hlavičky je uložen v externím souboru, používá speciální formátovací značky pro vložení aktuálního data, názvu rastru, lokaci apod. Jinak samozřejmě mapový výstup může obsahovat jakékoli množství textu, ten lze různě barevně zvýrazňovat.
+
+\subsection{Porovnání programů pro tvorbu mapových výstupů z hlediska uživatelského rozhraní }
+\subsubsection{Obecné zásady grafického uživatelského rozhraní}
+\subsubsection{ArcGIS}
+
+\subsubsection{QGIS}
+
+\subsubsection{gvSIG}
+
+\subsubsection{GRASS -- wx.psmap}
+% \section{Zásady tvorby grafického uživatelského rozhraní}
+% \subsection{Čeho se vyvarovat}
+% \subsection{Co je vhodné}
 
 
 \section{Systém GRASS GIS}
@@ -195,16 +228,19 @@ Volbu orientace stránky zajišťuje přepínač \emph{-r} (rotate), který je-l
 \paragraph*{Titulek výstupního souboru}
 Výstupní soubor má titulek \emph{Mapset = \textless aktuální mapset\textgreater}, což mnoho neříká a navíc rovnítko v titulku nepůsobí hezky. Uživatel by mohl mít možnost změnit titulek, případně by se titulek měl převzít z aktuálního rastru, případně vektoru\footnote{GUI aplikace by sice mohla napravit tento nedostatek, nicméně je vhodnější toto upravit přímo v modulu \modul{ps.map}.}.
 
+
+
 \section{Grafické rozhraní  wx.psmap pro modul \modul{ps.map}}
 \label{sec:gui}
 
-Důvody, proč je nové grafické rozhraní \emph{wx.psmap} pro modul \modul{ps.map} zapotřebí, jsou zmíněny již v části \ref{sec:psmap}. Účelem je především oprostit uživatele od nutnosti ručně vytvářet konfigurační soubor. 
+Důvody, proč je nové grafické rozhraní \emph{wx.psmap} pro modul \modul{ps.map} zapotřebí, jsou zmíněny již v části \ref{sec:psmap}. Účelem je především oprostit uživatele od nutnosti ručně vytvářet konfigurační soubor. Grafické rozhraní uživatelsky přívětivým způsobem zpřístupňuje základní funkčnost modulu \modul{ps.map} a zároveň se tak snaží rozšířit možnosti vytváření mapových výstupů v GRASSu.
 
 \subsection{Instalace wx.psmap}
+Pro fungování wx.psmap je potřeba mít nainstalovanou verzi GRASS 6.5 a vyšší. Na operačním systému MS Windows je wx.psmap součástí instalačních souborů, na Linuxu lze wx.psmap instalovat buď prostřednictvím wxGUI GRASSu nebo z příkazové řádky GRASSu. Konkrétní postup je uveden na GRASS-Wiki na stránce tohoto projektu \cite{wiki_wxpsmap} 
 % Aplikace je napsána primárně pro GRASS 7 a měla by fungovat i v GRASS 6.5. %a testována pod operačním systémem Linux, distribuce Ubuntu 10.04 LTS.
 % Popíši postup pro GRASS 7. 
 \subsection{Podklady a použité knihovny}
-Nové grafické uživatelské rozhraní wx.psmap bylo vyvinuto pomocí knihovny wxPython, 
+Nové grafické uživatelské rozhraní wx.psmap bylo stejně jako wxGUI GRASSu vyvinuto pomocí knihovny wxPython, 
 proto bylo nutné se s knihovnou podrobněji seznámit. Jedním z nejvýznamnějších zdrojů informací je demo pro wxPython \cite{demo}, ve kterém je názorně ukázáno chování všech dostupných widgetů. Při hledání vhodného widgetu pro aplikaci je demo velice užitečné. 
 
 Při psaní programu jsem pracovala s knihovnou \emph{GRASS Python Scripting Library} \cite{script}, která umožňuje a zjednodušuje volání modulů GRASSu. Zdrojem informací mi byly také již napsané GRASS wxGUI moduly. Seznámila jsem se také s moduly GRASSu, zjišťovala jsem především, co umožňují, a jak je mohu pro práci využít. 
@@ -234,8 +270,20 @@ Při práci lze průběžně kontrolovat výsledek pomocí módu náhledu. Na po
 \paragraph*{Ovládání pohledu}
 Aplikace wx.psmap umožňuje měnit přiblížení a posunovat papír s vykreslenými objekty, a to jak v konceptu, tak v náhledu. Přibližování resp. oddalování je dostupné několika způsoby. Lze jej zvolit na panelu nástrojů, v tom případě stačí kliknout na přibližované místo nebo táhnutím zvolit výřez, na nějž bude přiblíženo. Další alternativou je použití kolečka myši. K posunu slouží další z tlačítek na panelu nástrojů, kliknutím a táhnutím pak měníte aktuální výřez v okně. Celkově je ovládání obdobné jaku u ostatních podobných programů.
 
-\subsection{Základní práce s wx.psmap}
-% Práce s GUI vypadá tak, že uživatel na stránku umístí zvolené mapové prvky, provede nastavení jejich vlastností v dialozích a nechá si vykreslit výsledek. Program na základě zvolených nastavení vytvoří konfigurační soubor, se kterým poté spustí modul \modul{ps.map}. Výstupem může být konfigurační soubor, PS soubor (případně EPS) a výsledek je viditelný i přímo v GUI.
+\subsection{Vzhled a ovládání wx.psmap}
+Při spuštění programu se otevře okno s ovládacími prvky -- hlavní nabídka a panel nástrojů v horní části, dvě záložky pro volbu módu a stavový řádek v dolní části.
+
+% obrazek
+
+V hlavní části okna je připravena stránka, na kterou se umisťují jednotlivé mapové prvky. První sada tlačítek na panelu nástrojů ovládá pohled na stránku (posun, přiblížení, oddálení, zobrazení celé stránky), druhá sada slouží k přidání a editaci objektů na stránce a třetí ovládá tvorbu výstupů programu a načítání. Při najetí kurzorem na tlačítko se objeví kratší kontextová nápověda a delší nápověda na stavovém řádku. 
+
+% obrazek
+Jednotlivé objekty lze přidat na stránku buď pomocí hlavní nabídky pod položkou \emph{Insert} nebo kliknutím na příslušné tlačítko na panelu nástrojů. Tím je vyvolán dialog (nemodální), který slouží pro nastavení vlastností objektu. Implicitně jsou nastaveny takové hodnoty, aby uživatel ve většině případů nemusel nic zadávat, nebo jen to nejnutnější. Pokud zapomene zadat požadované informace, je na tuto skutečnost upozorněn. Po potvrzení se na stránce objeví objekt, který představuje vybraný mapový prvek. Lze jej po stránce libovolně posouvat a pokud chce uživatel jeho nastavení změnit, nejjednodušší je na něj poklikat myší, čímž se otevře dialog s aktuálně nastavenými hodnotami. Tento dialog lze vyvolat i z panelu nástrojů a hlavní nabídky.
+
+Výsledek práce lze zobrazit v módu náhledu, který je dostupný ve druhé záložce, po zmáčknutí příslušného tlačítka. Pokud je potřeba detailnější pohled na výsledek, je vhodnější si nechat přímo vygenerovat PostScript a ten si prohlédnout. Výsledek je možné si uložit jako konfigurační soubor v textové podobě, který při příští práci s wx.psmap lze načíst a pokračovat v něm. 
+
+Samozřejmostí je možnost nastavení formátu a orientace stránky a také nápověda, která se zobrazí v internetovém prohlížeči. Další informace a postupy najdete na GRASS-Wiki \cite{wiki_wxpsmap}.
+
 
 \subsection[Problémy při tvorbě wx.psmap]{Problémy při tvorbě wx.psmap a jejich řešení}
 \label{sec:gui:problemy}
@@ -270,15 +318,26 @@ Při práci jsem narazila na několik problematických oblastí, které se čás
  Důsledkem tohoto problému je nemožnost měnit rozměry objektů interaktivně (pomocí myši), jako je to obvyklé v podobných programech. Teoreticky by to možné sice bylo, ale pouze za cenu dalších neprůhledných výpočtů, které by navíc nedávaly přesný výsledek. Pokud tedy chce uživatel změnit velikost objektů, je třeba v příslušném dialogu vyplnit velikost fontu a další parametry ovlivňující rozměry, jsou-li k dispozici. Opět je výjimkou mapové okno, jehož rozměry lze měnit interaktivně. Při označení objektu se objeví v pravém dolním rohu značka, když se na ní najede kurzorem a podrží se levé tlačítko myši, mapové okno mění své rozměry. Jde sice o jednoduchý způsob, ale snad dostatečný.
  
 
-\subsection{Ukázky}
 
 \section{Závěr}
 
 \begin{thebibliography}{9}
 \label{literatura}
-\bibitem{manual} GRASS Development Team. \textit{GRASS GIS 7.0.svn Reference Manual} [online], c2003-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.fbk.eu/grass70/manuals/html70_user/ps.map.html}
-\bibitem{script} GRASS Development Team. \textit{GRASS 7 Programmer's Manual} [online], c2000-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.osgeo.org/programming7/}
-\bibitem{demo} Robin Dunn and Total Control Software. \textit{wxPython demo} [program], c1997-2006 [cit. 2011-03-19].\\ URL: \url{http://downloads.sourceforge.net/wxpython/wxPython-demo-2.8.11.0.tar.bz2}
+\bibitem{manual} 
+GRASS Development Team. \textit{GRASS GIS 7.0.svn Reference Manual} [online], c2003-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.fbk.eu/grass70/manuals/html70_user/ps.map.html}
+
+\bibitem{script} 
+GRASS Development Team. \textit{GRASS 7 Programmer's Manual} [online], c2000-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.osgeo.org/programming7/}
+
+\bibitem{demo} 
+Robin Dunn and Total Control Software. \textit{wxPython demo} [program], c1997-2006 [cit. 2011-03-19].\\ URL: \url{http://downloads.sourceforge.net/wxpython/wxPython-demo-2.8.11.0.tar.bz2}
+
+\bibitem{wiki_psmap_north}
+Ps.map scripts [online], poslední aktualizace 17. ledna 2010 9:01 [cit. 29. 3. 2011], GRASS-Wiki. URL: \url{http://grass.osgeo.org/wiki/Ps.map_scripts#Creating_a_fancy_North_Arrow}
+
+\bibitem{wiki_wxpsmap} %dopsat aktualizaci!!!!!!!!!
+GUI for ps.map [online], poslední aktualizace 17. ledna 2011 9:01 [cit. 29. 3. 2011], GRASS-Wiki. URL: \url{http://grass.osgeo.org/wiki/GUI_for_ps.map#Installation}
+
 \end{thebibliography}
 \end{document}
 
