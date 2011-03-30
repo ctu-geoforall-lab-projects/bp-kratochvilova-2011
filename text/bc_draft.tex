@@ -8,6 +8,7 @@
 \usepackage[pdftex, final]{graphicx}
 \usepackage[pdftex, final, colorlinks=true]{hyperref}
 \usepackage{verbatim}
+\usepackage{alltt}
 \usepackage{mdwlist}
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
 
@@ -73,7 +74,9 @@ GRASS GIS jakožto významný představitel open source geografických informač
 
 Pro uživatele je základním rozdílem mezi \modul{ps.map} a ostatními programy pro tvorbu mapových výstupů  absence grafického uživatelského rozhraní. To je pro většinu uživatelů velký problém, proto není tento modul příliš využívaný. Mapový výstup je ovládán konfiguračním souborem, což je obyčejný textový soubor s instrukcemi, co se má kam vykreslit. Podrobněji je tento modul popsán v oddíle \nameref{sec:psmap}.
 
-Mapový výstup \modul{ps.map} obsahuje většinu standardních prvků jako legenda apod. Možnosti nastavení jejich vzhledu nejsou v zásadě tak široké, což ale mnohdy nevadí, naopak to příspívá k jednoduššímu ovládání.
+Modul \modul{ps.map} nepodporuje češtinu, což je dáno použitým kódováním. \modul{Ps.map} očekává konfigurační soubor v kódování Latin-1 (přesněji ISO-8859-1), které není pro češtinu použitelné kvůli některým chybějícím znakům s diakritikou. Navíc některé texty (například jednotky u grafického měřítka) jsou v angličtině.
+
+Mapový výstup \modul{ps.map} obsahuje většinu standardních prvků jako legenda, měřítko apod. Možnosti nastavení jejich vzhledu nejsou v zásadě tak široké, to ale mnohdy nevadí. Je důležité, aby software pro mapové výstupy splňoval poměrně konzervativní kartografické zásady, a na to nejsou potřeba desítky různých nastavení. Příliš široké možnosti vedou ke komplikovanějšímu grafickému rozhraní a tedy k horší ovladatelnosti a navíc podněcují nezkušené uživatele, aby vyzkoušeli a použili všechna dostupná nastavení, což posléze vede k překombinovanému a nevkusnému výsledku. 
 
 \paragraph*{Mapové okno}
 Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových oken. V jednom mapovém výstupu lze tak zobrazit pouze jednu oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou, ale to není dostatečně komfortní řešení.}. Dalším omezením je vykreslení maximálně jedné rastrové mapy (případně složené 3 vrstvy jako RGB). Vektorových map lze nicméně přidat libovolný počet. Lze u nich nastavit vzhled (symboly, styl čáry, barevnost, výplň, ...) a také například omezit zobrazené prvky atributovým dotazem. 
@@ -99,7 +102,7 @@ Klasické číselné měřítko modul nenabízí. Je totiž součástí objektu 
 Symbol severu v modulu \modul{ps.map} vůbec není k dispozici, což je velkou nevýhodou, jelikož určení severu je v mapových výstupech obvyklé. Tento problém lze řešit buď přidáním obrázku ve formátu EPS, případně lze šipku vytvořit složením z jiných grafických objektů (postup lze najít na webové stránce \cite{wiki_psmap_north}).
 
 \paragraph*{Další možnosti}
-Modul dále umožňuje kreslit základní tvary jako obdélník, linii a bod. K mapovému výstupu lze připojit hlavičku, kde jsou uvedeny základní informace o mapě. Text hlavičky je uložen v externím souboru, používá speciální formátovací značky pro vložení aktuálního data, názvu rastru, lokaci apod. Jinak samozřejmě mapový výstup může obsahovat jakékoli množství textu, ten lze různě barevně zvýrazňovat.
+Modul dále umožňuje kreslit základní tvary jako obdélník, linii a bod. K mapovému výstupu lze připojit hlavičku, kde jsou uvedeny základní informace o mapě. Text hlavičky je uložen v externím souboru, používá speciální formátovací značky pro vložení aktuálního data, názvu rastru, lokaci apod. Jinak samozřejmě mapový výstup může obsahovat jakékoli množství textu, ten lze různě barevně zvýrazňovat. Texty lze modulem \modul{ps.map} umisťovat na konkrétní pozici zadáním mapových souřadnic, což ostatní programy nepodporují. 
 
 \subsection{Porovnání programů pro tvorbu mapových výstupů z hlediska uživatelského rozhraní }
 \subsubsection{Obecné zásady grafického uživatelského rozhraní}
@@ -116,7 +119,65 @@ Modul dále umožňuje kreslit základní tvary jako obdélník, linii a bod. K 
 
 
 \section{Systém GRASS GIS}
-% co je region, lokace,mapset
+\label{sec:grass}
+GRASS GIS (Geographical Resources Analysis Support System) je jedním z nejrozsáhlejších \emph{Free Software}\footnote{\url{http://www.gnu.org/philosophy/free-sw.html}} geografických informačních systémů, publikovaných pod licencí \emph{GNU General Public Licence}\footnote{\url{http://www.gnu.org/licenses/gpl.html}}. Obsahuje více než 350 modulů pro správu prostorových dat, zpracování obrazových dat z leteckých a družicových snímků, analýzu a vizualizaci dat rastrových a vektorových. GRASS GIS je vyvíjen jazyce C a je multiplatformní.
+
+GRASS GIS je projektem s dlouhou historií. Byl původně vyvíjen od roku 1982 laboratořemi v USA (\emph{USA-CERL}) pro vojenské účely. Koncem 80. let poskytl CERL zdrojové kódy veřejnosti a GRASS se během několika let rozšířil po celém světě. Vývoj převzaly \emph{Baylor University} v Texasu, \emph{Universtät Hannover} a další pod souhrnným názvem \emph{GRASS Development Team}. V roce 1998 byla uvolněna verze GRASS 4.2.1 a v současnosti je poslední uvolněnou verzí GRASS 6.4. Vývoj nyní probíhá na nejnovější verzi GRASS 7, která sice ještě není připravená k uvolnění, ale je funkční. 
+
+Pro více informací o vývoji, funkčnosti a použití GRASS GIS nahlédněte do knihy \cite{grass_gis} nebo na stránky %\cite{}
+
+\subsection{Základní pojmy}
+\label{sec:grass:pojmy}
+Jelikož jsou v dalším textu použity některé pojmy specifické pro GRASS, je třeba je alespoň trochu přiblížit čtenářům bez předchozích znalostí systému GRASS. Tyto pojmy souvisí především se strukturou dat, kterou GRASS používá.
+
+\begin{description}
+\item[Database] neboli databanka představuje adresář s obvyklým názvem \emph{grassdata}, který obsahuje veškerá data, se kterými GRASS pracuje.
+\item [Location] neboli lokace je adresář nacházející se v databance. Určen je souřadnicovým systémem a územním rozsahem. Jedna lokace většinou odpovídá jednomu projektu.
+\item [Mapset] je soubor map (rastrové, vektorové, \ldots) v rámci jedné lokace. Jedna lokace obsahuje minimálně jeden mapset s názvem PERMANENT, který  slouží jako zdroj dat pro další mapsety, které jsou pracovní. Tyto mapsety zpravidla odpovídají jednotlivým uživatelům, případně různým analýzám.
+\item [Region] určuje územní rozsah ve tvaru obdélníka a také rozlišení, které se uplatní pouze u rastrových map. Jde o klíčový pojem, protože při práci v GRASSu je třeba nastavení regionu často řešit.  Rozlišujeme výchozí region (pro celou lokaci) a aktuální (výpočetní) region. Téměř veškeré manipulace s daty se pak týkají aktuálně nastaveného regionu. K nastavení regionu slouží modul \emph{g.region}, umožní nastavit region podle konkrétní mapy, přímým zadáním hraničních souřadnic, nebo z již uloženého regionu (\emph{named region}). 
+ \end{description}
+
+\subsection{Instalace systému GRASS GIS}
+Instalace systému GRASS GIS je závisí na jeho verzi a operačním systému. Stručně popíši způsob instalace na operační systém Linux (distribuci Ubuntu), podrobnosti k instalaci i na ostatních systémech (MS Windows a Mac OS X) je popsána na GRASS-Wiki \cite{instalace}.
+
+Nejjednodušší je nainstalovat stabilní verzi GRASS 6.4, která je dostupná v balíčku. Lze ji proto nainstalovat pomocí správce balíčků \emph{Synaptic}. Nebo do příkazové řádky napsat:
+\begin{alltt}
+{\footnotesize sudo apt-get install grass grass-doc}
+\end{alltt}
+
+Nové grafické rozhraní pro modul \modul{ps.map} je funkční pro verze 6.5 a vyšší. Ty nejsou dostupné v balíčku, ale lze je nainstalovat jinak, i když ne tak jednoduše. První možnost je stáhnout binární soubory  a spustit instalační skript. Tyto soubory jsou týdně aktualizovány. Pokud chcete i zdrojový kód, lze si soubory stáhnout z repozitáře SVN, a to buď formou tzv. \emph{SVN snapshot} bez založení lokálního repozitáře nebo se založením lokálního repozitáře pomocí následujících příkazů:
+\begin{alltt}
+{\footnotesize
+svn checkout https://svn.osgeo.org/grass/grass/branches/develbranch_6 grass6_devel}
+\end{alltt}
+pro verzi 6.5 a pro verzi 7:
+\begin{alltt}
+{\footnotesize
+svn checkout https://svn.osgeo.org/grass/grass/trunk grass_trunk}
+\end{alltt}
+Tato možnost má tu výhodu, že po instalaci lze jednoduše provádět aktualizaci pomocí \verb|svn up|. Postup instalace je následující: ve vybraném adresáři (například \verb|/usr/local/src|) s právem zápisu spustťe výše uvedený příkaz a po stažení repozitáře pokračujte spuštěním
+\begin{alltt}
+{\footnotesize ./configure}
+\end{alltt}
+Velmi pravděpodobně skript skončí předčasně kvůli chybějící knihovně. Je třeba se podívat, zda je na počítači instalován veškerý vyžadovaný software\footnote{\url{http://grass.osgeo.org/grass64/source/REQUIREMENTS.html}} a pokud ne, pak jej doinstalovat (nejlépe pomocí balíčků). Téměř úplný seznam nutných balíčků:
+\begin{alltt}
+{\footnotesize
+flex, bison, libreadline5-dev | libreadline-dev, libncurses5-dev, lesstif2-dev, 
+debhelper (>= 5), dpatch, libtiff4-dev, tcl-dev (>= 8.4) | tcl8.4-dev, 
+tk-dev (>= 8.4) | tk8.4-dev, libfftw3-dev|fftw3-dev, libxmu-dev, 
+libglu1-mesa-dev | libglu1-xorg-dev, libfreetype6-dev, autoconf2.13, 
+autotools-dev, libgdal1-dev (>=1.4.0) | libgdal1-1.3.2-dev, proj (>= 4.4.7),
+libjpeg62-dev, libpng12-dev, libpq-dev, unixodbc-dev, doxygen, fakeroot, 
+libmysqlclient15-dev, graphviz, libsqlite3-de
+}
+\end{alltt}
+Může nastat problém ve špatně nastavené cestě ke knihovnám, pro jejich nalezení poslouží příkaz \verb|locate|. Cesty lze nastavit v parametrech skriptu configure. Pro nápovědu použijte \verb|./configure -- help|. Správnou cestu lze pak nastavit například takto:
+\begin{alltt}
+{\footnote./configure --with-freetype-includes=/usr/include/freetype2   }
+\end{alltt}
+
+Po korektním skončení \verb|configure| následuje kompilace pomocí \verb|make|, což chvíli potrvá. Pokud skončí bez chyb, instalace je dokončena pomocí \verb|make install|. 
+
 
 \subsection{Grafické rozhraní systému GRASS GIS}
 
@@ -326,6 +387,9 @@ Při práci jsem narazila na několik problematických oblastí, které se čás
 \bibitem{manual} 
 GRASS Development Team. \textit{GRASS GIS 7.0.svn Reference Manual} [online], c2003-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.fbk.eu/grass70/manuals/html70_user/ps.map.html}
 
+\bibitem{grass_gis} 
+NETELER, Markus; MITASOVA, Helena. \textit{Open Source GIS: A GRASS GIS Approach}. 3rd Ed. New York : Springer, 2008. 406 s. URL: \url{<http://www.grassbook.org/>. ISBN 978-0-387-35767-6}.
+
 \bibitem{script} 
 GRASS Development Team. \textit{GRASS 7 Programmer's Manual} [online], c2000-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.osgeo.org/programming7/}
 
@@ -337,6 +401,21 @@ Ps.map scripts [online], poslední aktualizace 17. ledna 2010 9:01 [cit. 29. 3. 
 
 \bibitem{wiki_wxpsmap} %dopsat aktualizaci!!!!!!!!!
 GUI for ps.map [online], poslední aktualizace 17. ledna 2011 9:01 [cit. 29. 3. 2011], GRASS-Wiki. URL: \url{http://grass.osgeo.org/wiki/GUI_for_ps.map#Installation}
+
+\bibitem{YZOD}
+ \url{http://gama.fsv.cvut.cz/gwiki/153YZOD_Zpracov%C3%A1n%C3%AD_obrazov%C3%BDch_dat_-_cvi%C4%8Den%C3%AD_1}
+
+\bibitem{grass_page}
+\url{http://grass.fbk.eu}
+
+% \bibitem{instalace_windows}
+% \url{http://grass.fbk.eu/grass64/binary/mswindows}
+% 
+% \bibitem{instalace_mac}
+% \url{http://grass.bologna.enea.it/download/}
+
+\bibitem{instalace}
+\url{http://grass.osgeo.org/wiki/Installation_Guide}
 
 \end{thebibliography}
 \end{document}
