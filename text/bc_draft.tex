@@ -2,7 +2,6 @@
 \usepackage{a4wide}
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
-\usepackage{subfigure}
 \usepackage{xcolor}
 \usepackage[czech]{babel}
 \usepackage[pdftex, final]{graphicx}
@@ -10,6 +9,7 @@
 \usepackage{verbatim}
 \usepackage{alltt}
 \usepackage{mdwlist}
+\usepackage{subfig}
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
 
 
@@ -53,9 +53,9 @@ morecomment=[l]{\#},
 
 
 \begin{document}
-
-\renewcommand{\refname}{Použité zdroje}
 \tableofcontents
+\renewcommand{\refname}{Použité zdroje}
+
 \section{Úvod}
 
 \section{Programy pro tvorbu mapových výstupů}
@@ -124,7 +124,7 @@ GRASS GIS (Geographical Resources Analysis Support System) je jedním z nejrozs�
 
 GRASS GIS je projektem s dlouhou historií. Byl původně vyvíjen od roku 1982 laboratořemi v USA (\emph{USA-CERL}) pro vojenské účely. Koncem 80. let poskytl CERL zdrojové kódy veřejnosti a GRASS se během několika let rozšířil po celém světě. Vývoj převzaly \emph{Baylor University} v Texasu, \emph{Universtät Hannover} a další pod souhrnným názvem \emph{GRASS Development Team}. V roce 1998 byla uvolněna verze GRASS 4.2.1 a v současnosti je poslední uvolněnou verzí GRASS 6.4. Vývoj nyní probíhá na nejnovější verzi GRASS 7, která sice ještě není připravená k uvolnění, ale je funkční. 
 
-Pro více informací o vývoji, funkčnosti a použití GRASS GIS nahlédněte do knihy \cite{grass_gis} nebo na stránky %\cite{}
+Pro více informací o vývoji, funkčnosti a použití GRASS GIS nahlédněte do knihy \cite{grass_gis} nebo na stránky \cite{grass_page}.
 
 \subsection{Základní pojmy}
 \label{sec:grass:pojmy}
@@ -173,17 +173,27 @@ libmysqlclient15-dev, graphviz, libsqlite3-de
 \end{alltt}
 Může nastat problém ve špatně nastavené cestě ke knihovnám, pro jejich nalezení poslouží příkaz \verb|locate|. Cesty lze nastavit v parametrech skriptu configure. Pro nápovědu použijte \verb|./configure -- help|. Správnou cestu lze pak nastavit například takto:
 \begin{alltt}
-{\footnote./configure --with-freetype-includes=/usr/include/freetype2   }
+{\footnotesize./configure --with-freetype-includes=/usr/include/freetype2   }
 \end{alltt}
 
 Po korektním skončení \verb|configure| následuje kompilace pomocí \verb|make|, což chvíli potrvá. Pokud skončí bez chyb, instalace je dokončena pomocí \verb|make install|. 
 
 
 \subsection{Grafické rozhraní systému GRASS GIS}
+Původně bylo zamýšleno, že systém GRASS GIS bude ovládán z příkazové řádky, ostatně v dobách jeho vzniku nemohla být o něčem jiném ani řeč. Nicméně postupem času vzrůstal ze strany uživatelů tlak na vytvoření grafického rozhraní. První GUI nazývané \emph{TCLTKGRASS} bylo napsáno v roce 1999 v programovacím jazyce \emph{Tcl} s využitím knihovny \emph{Tk}. Nástupcem byly v dalších verzích GRASS 6 \emph{Display Manager} a poté \emph{GIS Manager}, stále napsané pomocí Tcl/Tk. Vzhledem k omezením Tcl/Tk bylo rozhodnuto přepsat grafické rozhraní pomocí modernější knihovny. Po zvážení různých aspektů (přenositelnost, dostatečná funkcionalita, oblíbenost u vývojářů) byl vybrán \emph{wxPython}, který obaluje knihovnu \emph{wxWidgets}, implementovanou v C++. Nové GUI je tedy napsáno v programovacím jazyce Python. 
+
+Nové grafické rozhraní \emph{wxGUI} bylo vyvíjeno od roku 2006 a je dostupné od verze 6.4. Skládá se ze dvou hlavních komponent -- \emph{Layer Manager} a \emph{Map Display Window}, viz obr. č. \ref{fig:wxgui}. Layer Manager spravuje mapové vstvy, umožňuje spouštět GRASS moduly a zobrazuje výstup programů. Map Display Window především zobrazuje mapové vrstvy a ovládá pohled (přiblížení, posunutí). Většina modulů se ovládá prostřednictvím dialogů generovaných z XML popisu jejich rozhraní, některé mají své samostatně vytvořené dialogy.
+\begin{figure}[h!]
+\centering
+\subfloat[][Layer Manager]{\includegraphics[width=0.45\textwidth]{./wxgui_layer_manager.png}}   \quad              
+\subfloat[][Map Display Window]{\includegraphics[width=0.45\textwidth]{./wxgui_map_display.png}}  
+\caption{Dvě hlavní komponenty wxGUI v GRASS 7\label{fig:wxgui}}
+
+\end{figure}
 
 \subsection{Modul ps.map}
 \label{sec:psmap}
-Modul \modul{ps.map} je v současnosti nejvhodnější prostředek pro tvorbu mapových výstupů v GRASSu. Další alternativou je zobrazit si potřebné mapové vrstvy v mapovém okně\footnote{\emph{Map Display Window} - jedna ze dvou hlavních komponent wxGUI} a upravit jejich vzhled, případně zobrazit i legendu či měřítko. Zde jsou možnosti poměrně omezené, navíc lze výstup uložit pouze jako rastrový obrázek a celkově tento způsob není příliš vhodný pro tvorbu mapového výstupu.
+Modul \modul{ps.map} je v současnosti nejvhodnější prostředek pro tvorbu mapových výstupů v GRASSu. Další alternativou je zobrazit si potřebné mapové vrstvy v mapovém okně (Map Display Window)  a upravit jejich vzhled, případně zobrazit i legendu či měřítko. Zde jsou možnosti poměrně omezené, navíc lze výstup uložit pouze jako rastrový obrázek a celkově tento způsob není příliš vhodný pro tvorbu mapového výstupu.
 
 Modul \modul{ps.map} lze jako většinu modulů používat z příkazové řádky GRASSu nebo pro\-střed\-nic\-tvím wxGUI. Grafické rozhraní je vytvořeno stejným způsobem jako u většiny ostatních modulů, dovoluje tedy zadat parametry příkazu v dialogu. V tomto případě ale spouštění přes grafické rozhraní neskýtá mimořádnou výhodu, jelikož v zásadě většinou stačí zadat jméno již připraveného konfiguračního souboru a souboru výstupního, což je pro mnohé uživatele pohodlnější prostřednictvím příkazové řádky. V příkazové řádce vypadá spuštění \modul{ps.map} takto:
 \begin{verbatim}
@@ -408,8 +418,8 @@ GUI for ps.map [online], poslední aktualizace 17. ledna 2011 9:01 [cit. 29. 3. 
 \bibitem{grass_page}
 \url{http://grass.fbk.eu}
 
-% \bibitem{instalace_windows}
-% \url{http://grass.fbk.eu/grass64/binary/mswindows}
+\bibitem{wxGUI_clanek}
+\url{http://gama.fsv.cvut.cz/~landa/publications/2008/gis-ostrava-08/paper/landa-grass-gui-wxpython.pdf}
 % 
 % \bibitem{instalace_mac}
 % \url{http://grass.bologna.enea.it/download/}

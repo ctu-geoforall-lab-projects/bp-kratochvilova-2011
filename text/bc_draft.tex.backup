@@ -2,7 +2,6 @@
 \usepackage{a4wide}
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
-\usepackage{subfigure}
 \usepackage{xcolor}
 \usepackage[czech]{babel}
 \usepackage[pdftex, final]{graphicx}
@@ -10,6 +9,7 @@
 \usepackage{verbatim}
 \usepackage{alltt}
 \usepackage{mdwlist}
+\usepackage{subfig}
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
 
 
@@ -53,9 +53,9 @@ morecomment=[l]{\#},
 
 
 \begin{document}
-
-\renewcommand{\refname}{Použité zdroje}
 \tableofcontents
+\renewcommand{\refname}{Použité zdroje}
+
 \section{Úvod}
 
 \section{Programy pro tvorbu mapových výstupů}
@@ -142,27 +142,26 @@ Instalace systému GRASS GIS je závisí na jeho verzi a operačním systému. S
 
 Nejjednodušší je nainstalovat stabilní verzi GRASS 6.4, která je dostupná v balíčku. Lze ji proto nainstalovat pomocí správce balíčků \emph{Synaptic}. Nebo do příkazové řádky napsat:
 \begin{alltt}
-\footnotesize
-sudo apt-get install grass grass-doc
+{\footnotesize sudo apt-get install grass grass-doc}
 \end{alltt}
+
 Nové grafické rozhraní pro modul \modul{ps.map} je funkční pro verze 6.5 a vyšší. Ty nejsou dostupné v balíčku, ale lze je nainstalovat jinak, i když ne tak jednoduše. První možnost je stáhnout binární soubory  a spustit instalační skript. Tyto soubory jsou týdně aktualizovány. Pokud chcete i zdrojový kód, lze si soubory stáhnout z repozitáře SVN, a to buď formou tzv. \emph{SVN snapshot} bez založení lokálního repozitáře nebo se založením lokálního repozitáře pomocí následujících příkazů:
 \begin{alltt}
-\footnotesize
-svn checkout https://svn.osgeo.org/grass/grass/branches/develbranch_6 grass6_devel
+{\footnotesize
+svn checkout https://svn.osgeo.org/grass/grass/branches/develbranch_6 grass6_devel}
 \end{alltt}
 pro verzi 6.5 a pro verzi 7:
 \begin{alltt}
-\footnotesize
-svn checkout https://svn.osgeo.org/grass/grass/trunk grass_trunk
+{\footnotesize
+svn checkout https://svn.osgeo.org/grass/grass/trunk grass_trunk}
 \end{alltt}
-Tato možnost má tu výhodu, že po instalaci lze jednoduše provádět aktualizaci pomocí \verb|svn up|. Postup instalace je následující: ve vybraném adresáři (například /usr/local/src) s právem zápisu spustťe výše uvedený příkaz a po stažení repozitáře pokračujte 
+Tato možnost má tu výhodu, že po instalaci lze jednoduše provádět aktualizaci pomocí \verb|svn up|. Postup instalace je následující: ve vybraném adresáři (například \verb|/usr/local/src|) s právem zápisu spustťe výše uvedený příkaz a po stažení repozitáře pokračujte spuštěním
 \begin{alltt}
-\footnotesize
- ./configure   
+{\footnotesize ./configure}
 \end{alltt}
 Velmi pravděpodobně skript skončí předčasně kvůli chybějící knihovně. Je třeba se podívat, zda je na počítači instalován veškerý vyžadovaný software\footnote{\url{http://grass.osgeo.org/grass64/source/REQUIREMENTS.html}} a pokud ne, pak jej doinstalovat (nejlépe pomocí balíčků). Téměř úplný seznam nutných balíčků:
 \begin{alltt}
-\footnotesize
+{\footnotesize
 flex, bison, libreadline5-dev | libreadline-dev, libncurses5-dev, lesstif2-dev, 
 debhelper (>= 5), dpatch, libtiff4-dev, tcl-dev (>= 8.4) | tcl8.4-dev, 
 tk-dev (>= 8.4) | tk8.4-dev, libfftw3-dev|fftw3-dev, libxmu-dev, 
@@ -170,16 +169,27 @@ libglu1-mesa-dev | libglu1-xorg-dev, libfreetype6-dev, autoconf2.13,
 autotools-dev, libgdal1-dev (>=1.4.0) | libgdal1-1.3.2-dev, proj (>= 4.4.7),
 libjpeg62-dev, libpng12-dev, libpq-dev, unixodbc-dev, doxygen, fakeroot, 
 libmysqlclient15-dev, graphviz, libsqlite3-de
+}
 \end{alltt}
 Může nastat problém ve špatně nastavené cestě ke knihovnám, pro jejich nalezení poslouží příkaz \verb|locate|. Cesty lze nastavit v parametrech skriptu configure. Pro nápovědu použijte \verb|./configure -- help|. Správnou cestu lze pak nastavit například takto:
 \begin{alltt}
-./configure --with-freetype-includes=/usr/include/freetype2   
+{\footnotesize./configure --with-freetype-includes=/usr/include/freetype2   }
 \end{alltt}
 
 Po korektním skončení \verb|configure| následuje kompilace pomocí \verb|make|, což chvíli potrvá. Pokud skončí bez chyb, instalace je dokončena pomocí \verb|make install|. 
 
 
 \subsection{Grafické rozhraní systému GRASS GIS}
+Původně bylo zamýšleno, že systém GRASS GIS bude ovládán z příkazové řádky, ostatně v dobách jeho vzniku nemohla být o něčem jiném ani řeč. Nicméně postupem času vzrůstal ze strany uživatelů tlak na vytvoření grafického rozhraní. První GUI nazývané \emph{TCLTKGRASS} bylo napsáno v roce 1999 v programovacím jazyce \emph{Tcl} s využitím knihovny \emph{Tk}. Nástupcem byly v dalších verzích GRASS 6 \emph{Display Manager} a poté \emph{GIS Manager}, stále napsané pomocí Tcl/Tk. Vzhledem k omezením Tcl/Tk bylo rozhodnuto přepsat grafické rozhraní pomocí modernější knihovny. Po zvážení různých aspektů (přenositelnost, dostatečná funkcionalita, oblíbenost u vývojářů) byl vybrán \emph{wxPython}, který obaluje knihovnu \emph{wxWidgets}, implementovanou v C++. 
+
+Nové grafické rozhraní \emph{wxGUI} bylo vyvíjeno od roku 2006 a je dostupné od verze 6.4. Skládá se ze dvou hlavních komponent -- \emph{Layer Manager} a \emph{Map Display Window}, viz obr. č. \ref{fig:wxgui}. Layer Manager spravuje mapové vstvy, umožňuje spouštět GRASS moduly a zobrazuje výstup programů. Map Display Window především zobrazuje mapové vrstvy a ovládá pohled (přiblížení, posunutí). Většina modulů se ovládá prostřednictvím dialogů generovaných z XML popisu jejich rozhraní.
+\begin{figure}[h!]
+\centering
+\subfloat[][Layer Manager]{\includegraphics[width=0.45\textwidth]{./wxgui_layer_manager.png}}   \quad              
+\subfloat[][Map Display Window]{\includegraphics[width=0.45\textwidth]{./wxgui_map_display.png}}  
+\caption{Dvě hlavní komponenty wxGUI\label{fig:wxgui}}
+
+\end{figure}
 
 \subsection{Modul ps.map}
 \label{sec:psmap}
