@@ -9,6 +9,7 @@
 \usepackage{verbatim}
 \usepackage{alltt}
 \usepackage{mdwlist}
+% \usepackage{stdpage}
 \usepackage{subfig}
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
 
@@ -60,9 +61,30 @@ morecomment=[l]{\#},
 
 \section{Programy pro tvorbu mapových výstupů}
 
+Tvorba map dnes již dávno není pouze věcí specializovaných pracovišť. Rozvoj geografických informačních systémů natolik zjednodušil tvorbu mapových výstupů, že mapy, ať už jakékoli kvality, potkáváme na každém kroku. Různé formy map se staly moderním doplňkem v novinách, televizních zprávách, letácích a především na internetu, téměř každá informace má totiž vazbu na geografickou polohu.
+
+Definic geografického informačního systému (dále jen GIS) existuje mnoho a další časem pravděpodobně ještě vzniknou, jak se bude tato oblast vyvíjet. Někteří odborníci v definicích vyzdvihují význam složky datové, jiní zas analytické, v souvislosti s tématem této práce je ale důležité především znázornění dat.
+
+Existuje poměrně velké množství programů umožňujících tvorbu mapových výstupů. Většinou tato funkcionalita nestojí samostatně, ale je součástí většího GIS softwaru. Existující programy lze rozdělit podle mnoha kritérií, ale jedno z nejdůležitějších kritérií je určitě finanční dostupnost. Naštěstí v oblasti GIS existuje velký výběr open source programů, tedy programů, jejichž použití není zpoplatněno. Zdaleka zde neplatí myšlenka, že co je zdarma, je podezřelé a nefunguje. Komerční řešení sice často mají v některých oblastech širší funkcionalitu, ale ta může být samostatně zpoplatněna, případně může být implementována méně efektivním způsobem (například u algoritmů). Další výhodou open source projektů je dostupnost zdrojových kódů, což sice běžné uživatele nezajímá, ale pro odbornou veřejnost to znamená možnost si postrádanou funkčnost vlastními silami dopsat. Jedním z dalších argumentů mluvících pro open source software je rychlá odezva v případě jakýchkoli problémů. Při volbě vhodného softwaru je tedy třeba zvážit mnoho faktorů. Pro velké projekty je často vhodnější komerční program, který pokryje všechnu potřebnou funkcionalitu. Bohužel se dnes často stává, že velká komerční řešení se používají i tam, kde by plně postačil open source software, a to jen kvůli neznalosti.
+
+
 \subsection{Porovnání možností programů pro tvorbu mapových výstupů}
+V rámci práce na grafickém rozhraní pro modul \modul{ps.map} bylo vhodné se seznámit s funkcionalitou aspoň některých programů, které se používají pro mapové výstupy. Vzhledem k dostupnosti softwaru byl pro porovnání vybrán proprietární software \emph{ArcGIS 10.0} a
+open source programy \emph{gvSIG 1.10}, \emph{Quantum GIS} verze \emph{1.6.0-Copiapo} a samozřejmě modul \modul{ps.map} systému \emph{GRASS GIS}.
+Toto porovnání si neklade za cíl vytvořit kompletní seznam funcionality programů, což by bylo téma pro samostatnou práci, cílem je pouze zdůraznit některé zajímavé možnosti, které programy nabízí. Detailněji je pak popsán modul \modul{ps.map}, jehož možnosti bylo třeba zkoumat do nejmenších podrobností.
 
 \subsubsection{ArcGIS}
+Tento software od firmy \emph{ESRI} je jeden z nejpoužívanějších v České republice. ArcGIS sestává z několika základních aplikací,  pro tvorbu mapových výstupů slouží aplikace \emph{ArcMap}.
+
+Při práci v programu je třeba rozlišit dva módy -- \emph{Data View} a \emph{Layout View}. Data View slouží pro běžnou práci s daty, zatímco Layout View je použit pro vytvoření mapového výstupu, zobrazuje výřez mapy na stránce. Tyto dva módy jsou propojené a změny se projevují v obou. V Layout View lze zobrazit vodící linky a mřížku pro přesnější pozicování  a  přidávat mapové elementy: legenda, měřítko grafické a číselné, značku severu, titulek, text, dynamický text, obrázek, jiný objekt (tabulku, graf).  Možnosti nastavení vlastností pro jednotlivé prvky je velice široké, což umožňuje uzpůsobit mapový výstup svým představám. Při velkém množství dat je pro urychlení práce vhodné nevykreslovat objekty, ale zobrazovat je pouze jako šedé obdélníky s popisem (\emph{Draft mode}), toto řešení je dostupné i v jiných programech. 
+
+Většinu výše jmenovaných funkcionalit mají i jiné takto specializované programy. Co již tak běžné není, je použití více datových rámců (\emph{Data Frame}), například QGIS tuto funkcionalitu neposkytuje. Důsledkem je možnost umístit na stránku více mapových rámců (výřezů) zobrazujících \emph{různá} data. Tato vlastnost se vyžívá, chceme-li například zobrazit centrum města ve větším měřítku a méně generalizované než je zbytek mapy. 
+
+Další zajímavou vlastností je tvorba šablon pro mapové výstupy a s tím souvisí i tzv. \emph{Řízené mapové listy} neboli \emph{Data Driven Pages}. Tímto nástrojem lze najednou vygenerovat sadu mapových výstupů. Například pro data obsahující okresy ČR lze velice jednoduše vytvořit sadu stejně vypadajících mapových výstupů zobrazujících jednotlivé okresy.
+
+
+
+
 
 \subsubsection{QGIS}
 
