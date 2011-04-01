@@ -1,0 +1,115 @@
+Name:
+  Anna Kratochvilova
+
+Country:
+  Czech Republic
+
+School and degree:
+  CTU in Prague, Fac. of Civil Engineering, bachelor degree program finishing this academic year
+
+Email:
+  anna.kratochvilova@fsv.cvut.cz
+
+Phone:
+  728467708
+
+OSGeo project(s):
+  GRASS GIS
+
+Title:
+  Completion of wxGUI Nviz extension for 3D data visualization 
+
+
+Describe your idea
+
+1. Introduction
+================
+
+This project continues in the development of wxNviz which is a vizualization tool for GRASS GIS. Nviz graphical interface is originally written in Tcl/Tk and has to be replaced by wxNviz in GRASS 7. Currently wxNviz lacks many features of old nviz so the goal of this project is to add the missing functionality.
+    
+2. Background
+==============
+
+GRASS GIS (Geographic Resources Analysis Support System) is one of the largest open source Geographic Information Systems. GRASS GIS is a Free Software project released under the GNU General Public License and it is the part of Open Source Geospatial Foundation.  GRASS GIS consist of more than 350 modules for spatial analysis, image processing, manipulation and visualisation of many types of data. It is widely used in academic and commercial settings thanks to its powerful tools providing functionality missing in other geographic information systems. GRASS works on on multiple platforms, including Linux, Mac OS X and Microsoft Windows.
+
+GRASS was originally controlled via its command line. The first graphical user interface was written in Tcl/Tk, which later appeared to be unsufficient. Since 2006 new wxGUI is beeing developped using wxPython as a GUI toolkit for the Python programming language.
+
+wxNviz is a one of the wxGUI extensions. It enables visualization of multiple surfaces (raster data) in 3D space, volume data (3D raster data), overlaying 2D vector data over surfaces and displaying 3D vector data. wxNviz uses OGSF and Nviz library as an interface for OpenGL. 
+Completion of wxNviz is essential for GRASS 7 which can be released only without dependency on Tcl/Tk. This project picks up on wxNviz development within Google Summer of Code 2008 and 2010 and it should make wxNviz fully functional.
+  
+3. The idea
+============
+At present wxNviz provides only partial functionality of Tcl/Tk based-nviz so this project focuses on completion of this wxGUI extension. The plan is to add following missing features: cutting planes, scaled difference, animations, vector data querying, decorations (north arrow, legend, labels, scale bar). Implemetation of missing functionality would remove the major obstacle of GRASS 7 release which is the dependency on Tcl/Tk based-nviz.
+Additional plan is to improve view controlling which is not very intuitive presently. Petr Voldan, a PhD student of our faculty (FCE CTU in Prague), was dealing with this issue so new view control could follow his results.
+
+
+ 4. Project plan 
+=================
+April 26:
+  Familiarize with the existing code, OGSF and NVIZ libraries
+May 23:  
+  start to code, fixing existing bugs
+May 30:
+  improve GUI design
+June 6:
+  implement vector data querying
+June 13:
+  implement cutting planes
+June 20:
+  implement scaled difference  
+June 27:
+  implement animations
+July 4:
+  continue with animations, start decorations 
+July 11:
+  implement decorations, bux fixing
+July 15:
+  mid term evaluation deadline
+July 18:
+  GUI maintainance
+July 25:
+  improve view control
+August 1:
+  continue with view control
+August 8:
+  testing, bug fixing
+August 15:
+  write documentation
+August 22:
+  final evaluation
+
+5. Future ideas / How can your idea be expanded? 
+=================================================
+In the future new features could be implemented - point symbols sized and colored based on attributes, fog support and vertical labels.
+
+
+Explain how your SoC task would benefit the OSGeo member project and more generally the OSGeo Foundation as a whole:
+  GRASS GIS as a significant member of OSGeo Foundation needs modern 3D visualization tool. That's why fully functional wxNviz is essential for GRASS 7 and its users. 
+
+Please provide details of general computing experience:
+  I mainly work with Linux. I have experience with Python (and GUI toolkit wxPython), C++, SQL. I'm able to understand code in C.
+
+Please provide details of previous GIS experience:
+  During my studies I attended several courses relating to GIS from the view of a user and of a programmator.
+
+Please provide details of any previous involvement with GIS programming and other software programming:
+  I have some experience with programming of simple cartographic algorithms in C++. Currently I am developing GUI for GRASS GIS module ps.map (using wxPython) within my bachelor project.
+
+Please tell us why you are interested in GIS and open source software:
+  GIS is very interesting for me because it combines various fields including geodesy, programming, mathematics, cartography and many others. Open source projects are necessary to distribute information and education and I like the idea that everyone can contribute.
+
+Please tell us why you are interested in working for OSGeo and the software project you have selected:
+  GRASS GIS to should have more users and I would like to contribute to it.
+
+Please tell us why you are interested in your specific coding project:
+  I would like to use my experience with GUI programming (from my bachelor poject) which fit for the wxNviz project.
+
+Would your application contribute to your ongoing studies/degree? If so, how?
+  This project or some relating issue may continue in my master degree studies and could evolve into graduation thesis.
+  
+Please explain how you intend to continue being an active member of your project and/or OSGeo AFTER the summer is over:
+  I plan to continue within my master degree studies.
+  
+Do you understand this is a serious commitment, equivalent to a full-time paid summer internship or summer job?
+  Yes, I do.
+
