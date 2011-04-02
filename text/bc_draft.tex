@@ -76,37 +76,44 @@ Toto porovnání si neklade za cíl vytvořit kompletní seznam funcionality pro
 \subsubsection{ArcGIS}
 Tento software od firmy \emph{ESRI} je jeden z nejpoužívanějších v České republice. ArcGIS sestává z několika základních aplikací,  pro tvorbu mapových výstupů slouží aplikace \emph{ArcMap}.
 
-Při práci v programu je třeba rozlišit dva módy -- \emph{Data View} a \emph{Layout View}. Data View slouží pro běžnou práci s daty, zatímco Layout View je použit pro vytvoření mapového výstupu, zobrazuje výřez mapy na stránce. Tyto dva módy jsou propojené a změny se projevují v obou. V Layout View lze zobrazit vodící linky a mřížku pro přesnější pozicování  a  přidávat mapové elementy: legenda, měřítko grafické a číselné, značku severu, titulek, text, dynamický text, obrázek, jiný objekt (tabulku, graf).  Možnosti nastavení vlastností pro jednotlivé prvky je velice široké, což umožňuje uzpůsobit mapový výstup svým představám. Při velkém množství dat je pro urychlení práce vhodné nevykreslovat objekty, ale zobrazovat je pouze jako šedé obdélníky s popisem (\emph{Draft mode}), toto řešení je dostupné i v jiných programech. 
+Při práci v programu je třeba rozlišit dva módy -- \emph{Data View} a \emph{Layout View}. Data View slouží pro běžnou práci s daty, zatímco Layout View je použit pro vytvoření mapového výstupu, zobrazuje výřez mapy na stránce. Tyto dva módy jsou propojené a změny se projevují v obou. V Layout View lze zobrazit vodící linky a mřížku pro přesnější pozicování  a  přidávat mapové elementy: legenda, měřítko grafické a číselné, směrovou růžici, titulek, text, dynamický text, rámeček, obrázek, jiný objekt (tabulku, graf).  Možnosti nastavení vlastností pro jednotlivé prvky je velice široké, což umožňuje uzpůsobit mapový výstup svým představám. Při velkém množství dat je pro urychlení práce vhodné nevykreslovat objekty, ale zobrazovat je pouze jako šedé obdélníky s popisem (\emph{Draft mode}), toto řešení je dostupné i v jiných programech. ArcMap dovoluje poměrně pokročilou práci s vektorovou grafikou, lze kreslit základní tvary, seskupovat je, zarovnávat, rotovat či měnit jejich hladinu.
 
 Většinu výše jmenovaných funkcionalit mají i jiné takto specializované programy. Co již tak běžné není, je použití více datových rámců (\emph{Data Frame}), například QGIS tuto funkcionalitu neposkytuje. Důsledkem je možnost umístit na stránku více mapových rámců (výřezů) zobrazujících \emph{různá} data. Tato vlastnost se vyžívá, chceme-li například zobrazit centrum města ve větším měřítku a méně generalizované než je zbytek mapy. 
 
 Další zajímavou vlastností je tvorba šablon pro mapové výstupy a s tím souvisí i tzv. \emph{Řízené mapové listy} neboli \emph{Data Driven Pages}. Tímto nástrojem lze najednou vygenerovat sadu mapových výstupů. Například pro data obsahující okresy ČR lze velice jednoduše vytvořit sadu stejně vypadajících mapových výstupů zobrazujících jednotlivé okresy.
 
 
+\subsubsection{gvSIG}
+GIS gvSIG je open source software šířený pod licencí GNU/GPL. Je lokalizovaný do mnoha jazyků včetně češtiny a dostupný na všech běžných platformách (Linux, MS Windows, Mac OS X). Existuje i produkt gvSIG Mobile určený pro použití v mobilních zařízeních. gvSIG je napsán v programovacím jazyce Java, díky čemuž má mnoho aktivních vývojářů.
 
-
+Projekt programu gvSIGu sestává tří hlavních částí -- \emph{View}, \emph{Table} a \emph{Map}, v poslední jmenované pak probíhá tvorba mapových výstupů. View je obdobou datového rámce v ArcGISu. Na stránku lze tedy umístit více mapových rámců, u každého se pak zvolí, který View bude zobrazovat. Podporované mapové elementy jsou obdobné jako u ArcGISu, navíc umí gvSIG přímo vložit lokalizační mapku, to je sice u ArcGISu také možné, ale tato funkce není tak jednoduše přístupná. Drobné rozdíly najdete v možnostech nastavení vzhledu jednotlivých elementů, ale opravdu není podstatné, jestli máte na výběr mezi 50 nebo 100 různých směrových růžic. Co mne trochu zklamalo, byla legenda, jejíž vlastnosti se poměrně špatně nastavovaly. Pro více sloupců je potřeba ji nejprve rozložit na jednotlivé grafické elementy a pak s ní pracovat jako s vektorovou grafikou. Co se týče exportních formátů, gvSIG podporuje pouze PS a PDF, zatímco ArcGIS má daleko širší výběr. To ale dnes není tak důležité vzhledem k existujícím grafickým editorům, které jsou schopné načíst a konvertovat velké množství formátů.
 
 \subsubsection{QGIS}
+Quantum GIS je rychle rostoucí GIS projekt psaný v C++, je opět šířený pod licencí GNU/GPL. Pro tvorbu mapových výstupů slouží \emph{Map Composer}, jehož funkcionalita plně nedosahuje úrovně programů ArcGIS ani gvSIG, nicméně pro ne příliš sofistikované mapové výstupy je to výborný prostředek.
 
-\subsubsection{gvSIG}
+Map Composer umožnuje sice vložit více mapových rámců, ale zobrazují pouze stejná data. Lze přidat standardní mapové elementy jako měřítko, legenda, text, atributovou tabulku, obrázek, jednoduché tvary. Směrová růžice se přidává v rámci obrázků. Zajímavou vlastností je přidání atributové tabulky pro zvolenou mapovou vrstvu, z tabulky se dají vybrat pouze některé atributy a také lze vhodně záznamy seřadit. Tuto funkcionalitu z porovnávaných programů poskytuje pouze ArcGIS, ale nastavení vlastností tabulky zde už není tak jednoduché. Legenda pro vektorové vrstvy se chová standardně, ale pro rastr v podstatě nefunguje. Pro pozicování objektů je k dispozici mřížka s nastavitelnými parametry a volitelným přichytáváním. Dobře funguje i zobrazení souřadnicové sítě s popisky.
+
+
 
 \subsubsection{GRASS GIS -- ps.map}
 \label{sec:porovnani:psmap}
-GRASS GIS jakožto významný představitel open source geografických informačních systémů má v tvorbě mapových výstupů značné rezervy. Prakticky jediným vhodným nástrojem, kterým GRASS GIS v současnosti disponuje, je modul \modul{ps.map}\footnote{V současné době je vyvíjen modul \modul{ps.output}, který rozšiřuje možnosti \modul{ps.map} a možná jej v budoucnu nahradí, nicméně zatím je k dispozici jen v grass-addons.}.
+GRASS GIS (viz část \ref{sec:grass} na straně \pageref{sec:grass}) jakožto významný představitel open source geografických informačních systémů má v tvorbě mapových výstupů značné rezervy. Prakticky jediným vhodným nástrojem, kterým GRASS GIS v současnosti disponuje, je modul \modul{ps.map}\footnote{V současné době je vyvíjen modul \modul{ps.output}, který rozšiřuje možnosti \modul{ps.map} a možná jej v budoucnu nahradí, nicméně zatím je k dispozici jen v grass-addons.}.
 
-Pro uživatele je základním rozdílem mezi \modul{ps.map} a ostatními programy pro tvorbu mapových výstupů  absence grafického uživatelského rozhraní. To je pro většinu uživatelů velký problém, proto není tento modul příliš využívaný. Mapový výstup je ovládán konfiguračním souborem, což je obyčejný textový soubor s instrukcemi, co se má kam vykreslit. Podrobněji je tento modul popsán v oddíle \nameref{sec:psmap}.
+Pro uživatele je základním rozdílem mezi \modul{ps.map} a ostatními programy pro tvorbu mapových výstupů  absence grafického uživatelského rozhraní. To je pro většinu uživatelů velký problém, částečně proto není tento modul příliš využívaný. Mapový výstup je ovládán konfiguračním souborem, což je obyčejný textový soubor s instrukcemi, co se má kam vykreslit. Po technické stránce je tento modul podrobněji  popsán v oddíle \nameref{sec:psmap}.
+
+Dalším výrazným rozdílem je oddělenost tvorby mapového výstupu od zbytku programu. To se projevuje tím, že je nutné explicitně uvést všechny mapové vrstvy, které se mají zobrazit, a také nastavit jejich vzhled, nehledě na mapové vrstvy aktuálně zobrazované  v grafickém uživatelském prostředí GRASSu.
 
 Modul \modul{ps.map} nepodporuje češtinu, což je dáno použitým kódováním. \modul{Ps.map} očekává konfigurační soubor v kódování Latin-1 (přesněji ISO-8859-1), které není pro češtinu použitelné kvůli některým chybějícím znakům s diakritikou. Navíc některé texty (například jednotky u grafického měřítka) jsou v angličtině.
 
-Mapový výstup \modul{ps.map} obsahuje většinu standardních prvků jako legenda, měřítko apod. Možnosti nastavení jejich vzhledu nejsou v zásadě tak široké, to ale mnohdy nevadí. Je důležité, aby software pro mapové výstupy splňoval poměrně konzervativní kartografické zásady, a na to nejsou potřeba desítky různých nastavení. Příliš široké možnosti vedou ke komplikovanějšímu grafickému rozhraní a tedy k horší ovladatelnosti a navíc podněcují nezkušené uživatele, aby vyzkoušeli a použili všechna dostupná nastavení, což posléze vede k překombinovanému a nevkusnému výsledku. 
+Mapový výstup \modul{ps.map} obsahuje většinu standardních prvků jako legenda, měřítko apod. Možnosti nastavení jejich vzhledu nejsou tak široké jako u jiných programů, což v některých případech nevadí.
 
-\paragraph*{Mapové okno}
-Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových oken. V jednom mapovém výstupu lze tak zobrazit pouze jednu oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou, ale to není dostatečně komfortní řešení.}. Dalším omezením je vykreslení maximálně jedné rastrové mapy (případně složené 3 vrstvy jako RGB). Vektorových map lze nicméně přidat libovolný počet. Lze u nich nastavit vzhled (symboly, styl čáry, barevnost, výplň, ...) a také například omezit zobrazené prvky atributovým dotazem. 
+\paragraph*{Mapový rámec}
+Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových rámců. V jednom mapovém výstupu lze tak zobrazit pouze jednu oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou, ale to není dostatečně komfortní řešení.}. Dalším omezením je vykreslení maximálně jedné rastrové mapy (případně složené 3 vrstvy jako RGB). Vektorových map lze nicméně přidat libovolný počet. Lze u nich nastavit vzhled (symboly, styl čáry, barevnost, výplň, ...) a také například omezit zobrazené prvky atributovým dotazem.
 
-V mapovém okně lze dále zobrazit zeměpisnou síť (grid), popisky (labels) nebo zvýraznit uložený region s menším rozsahem.
+V mapovém rámci lze dále zobrazit zeměpisnou síť (grid), popisky (labels) nebo zvýraznit uložený region s menším rozsahem.
 
 \paragraph*{Legenda}
-Vzhled legendy \modul{ps.map} se v zásadě příliš neliší od ostatních programů. V podstatě jediným podstatnějším rozdílem je fakt, že \modul{ps.map} striktně rozlišuje rastrovou a vektorou legendu. Jde o dva oddělené objekty, což není obvyklé a asi ani žádoucí řešení. Vzhled rastrové legendy závisí na typu dat, je buď spojitá, nebo rozdělená podle kategorií, což se používá i v ostatních programech.
+Vzhled legendy \modul{ps.map} se v zásadě příliš neliší od ostatních programů. V podstatě jediným podstatnějším rozdílem je fakt, že \modul{ps.map} striktně rozlišuje rastrovou a vektorou legendu. Jde o dva oddělené objekty, což není obvyklé a asi ani žádoucí řešení. Vzhled rastrové legendy závisí na typu dat, je buď spojitá, nebo rozdělená podle kategorií, to je běžné i v ostatních programech.
 
 \paragraph*{Měřítko}
 Je třeba odlišit grafické a číselné měřítko, opět jde o dva odlišné objekty.
@@ -120,11 +127,14 @@ Klasické číselné měřítko modul nenabízí. Je totiž součástí objektu 
     \label{fig:mapinfo}
 \end{figure}
 
-\paragraph*{Značka severu}
+\paragraph*{Směrová růžice}
 Symbol severu v modulu \modul{ps.map} vůbec není k dispozici, což je velkou nevýhodou, jelikož určení severu je v mapových výstupech obvyklé. Tento problém lze řešit buď přidáním obrázku ve formátu EPS, případně lze šipku vytvořit složením z jiných grafických objektů (postup lze najít na webové stránce \cite{wiki_psmap_north}).
 
 \paragraph*{Další možnosti}
 Modul dále umožňuje kreslit základní tvary jako obdélník, linii a bod. K mapovému výstupu lze připojit hlavičku, kde jsou uvedeny základní informace o mapě. Text hlavičky je uložen v externím souboru, používá speciální formátovací značky pro vložení aktuálního data, názvu rastru, lokaci apod. Jinak samozřejmě mapový výstup může obsahovat jakékoli množství textu, ten lze různě barevně zvýrazňovat. Texty lze modulem \modul{ps.map} umisťovat na konkrétní pozici zadáním mapových souřadnic, což ostatní programy nepodporují. 
+
+
+
 
 \subsection{Porovnání programů pro tvorbu mapových výstupů z hlediska uživatelského rozhraní }
 \subsubsection{Obecné zásady grafického uživatelského rozhraní}
@@ -134,10 +144,12 @@ Modul dále umožňuje kreslit základní tvary jako obdélník, linii a bod. K 
 
 \subsubsection{gvSIG}
 
+
+
 \subsubsection{GRASS -- wx.psmap}
-% \section{Zásady tvorby grafického uživatelského rozhraní}
-% \subsection{Čeho se vyvarovat}
-% \subsection{Co je vhodné}
+
+\subsection{Výsledek porovnání}
+Je důležité, aby software pro mapové výstupy splňoval poměrně konzervativní kartografické zásady, a na to nejsou potřeba desítky různých nastavení. Příliš široké možnosti vedou ke komplikovanějšímu grafickému rozhraní a tedy k horší ovladatelnosti a navíc podněcují nezkušené uživatele, aby vyzkoušeli a použili všechna dostupná nastavení, což posléze vede k překombinovanému a nevkusnému výsledku.
 
 
 \section{Systém GRASS GIS}
@@ -244,10 +256,10 @@ Význam jednotlivých instrukcí je popsán v manuálové stránce k modulu, kte
 
 \subsubsection{Volba rozsahu zobrazovaného území}
 \label{sec:psmap:rozsah}
-V konfiguračním souboru lze nastavit velikost mapového okna, čímž je myšlen obdélník s vykreslenou rastrovou či vektorovou mapou.  K nastavení slouží jednořádková instrukce \instr{maploc}, která umístí levý horní roh okna na dané místo a volitelně nastaví i šířku a výšku mapového okna. Rozměry lze nepřímo ovlivnit také instrukcí \instr{scale}, která na základě měřítka upraví rozměry okna. 
+V konfiguračním souboru lze nastavit velikost mapového rámce, čímž je myšlen obdélník s vykreslenou rastrovou či vektorovou mapou.  K nastavení slouží jednořádková instrukce \instr{maploc}, která umístí levý horní roh rámce na dané místo a volitelně nastaví i šířku a výšku mapového rámce. Rozměry lze nepřímo ovlivnit také instrukcí \instr{scale}, která na základě měřítka upraví rozměry rámce.
 
-Nicméně při jakýchkoli rozměrech a umístění mapového okna, se vykresluje stále stejný územní rozsah. Ten je dán tzv. \emph{výpočetním regionem}. Proto je třeba před vlastním generováním mapového výstupu nastavit výpočetní region tak, aby odpovídal území, které chceme zobrazit. K tomu slouží modul \modul{g.region}. V konfiguračním souboru tedy nelze rozsah území ovlivnit.
-Modul \modul{ps.map} tedy nejprve zjistí požadované rozměry a měřítko z konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí aplikovat na rozměry současného výpočetního regionu. Když by se mapové okno při požadovaném měřítku nevešlo na daný formát papíru, modul měřítko upraví. Podobně upraví rozměry mapového okna, aby se vešlo do zadaných rozměrů.
+Nicméně při jakýchkoli rozměrech a umístění mapového rámce, se vykresluje stále stejný územní rozsah. Ten je dán tzv. \emph{výpočetním regionem}. Proto je třeba před vlastním generováním mapového výstupu nastavit výpočetní region tak, aby odpovídal území, které chceme zobrazit. K tomu slouží modul \modul{g.region}. V konfiguračním souboru tedy nelze rozsah území ovlivnit.
+Modul \modul{ps.map} tedy nejprve zjistí požadované rozměry a měřítko z konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí aplikovat na rozměry současného výpočetního regionu. Když by se mapový rámec při požadovaném měřítku nevešel na daný formát papíru, modul měřítko upraví. Podobně upraví rozměry mapového rámce, aby se vešel do zadaných rozměrů.
 
 Nové grafické rozhraní wx.psmap řeší volbu zobrazovaného území ve vlastní režii, není tedy třeba volat modul \modul{g.region} a zároveň se nemění současný výpočetní region pro ostatí moduly. %Více v oddíle 
 
@@ -269,11 +281,11 @@ Jedním z nejnepříjemnějších problémů, se kterými bylo třeba se při tv
 První z nich -- souřadnicový systém papíru -- má počátek v levém horním rohu, kladná osa \emph{x} směřuje doprava a osa \emph{y} směrem dolů (tedy odpovídá systému obvyklému v počítačové grafice). 
 Je-li poloha určena v tomto sytému, očekávanou jednotkou je inch\footnote{ česky palec, odpovídá $2{},54$ cm}.
 
-Druhý systém -- systém mapového okna -- má počátek souřadnic v levém dolním rohu mapového okna s pravotočivou orientací os obvyklou v matematice. Souřadnice lze v tomto systému zadávat dvěma způsoby. Buď v procentech výpočetního regionu nebo přímo v souřadnicích mapy. Například, při souřadnicích [100\%, 0\%] je objekt umístěn v pravém dolním rohu mapového okna, ať už je mapové okno na papíře umístěno kdekoli. Alternativně bychom toho samého umístění dosáhli zadáním mapových souřadnic bodu položeného co nejvíce na východ a jih v rozsahu výpočetního regionu. Oběma způsoby lze dosáhnout i umístění objektu mimo mapové okno, a to zadáním záporné hodnoty nebo hodnoty větší než 100 u procent, případně mapových souřadnic mimo výpočetní region.
+Druhý systém -- systém mapového rámce -- má počátek souřadnic v levém dolním rohu mapového rámce s pravotočivou orientací os obvyklou v matematice. Souřadnice lze v tomto systému zadávat dvěma způsoby. Buď v procentech výpočetního regionu nebo přímo v souřadnicích mapy. Například, při souřadnicích [100\%, 0\%] je objekt umístěn v pravém dolním rohu mapového rámce, ať už je mapový rámec na papíře umístěn kdekoli. Alternativně bychom toho samého umístění dosáhli zadáním mapových souřadnic bodu položeného co nejvíce na východ a jih v rozsahu výpočetního regionu. Oběma způsoby lze dosáhnout i umístění objektu mimo mapový rámec, a to zadáním záporné hodnoty nebo hodnoty větší než 100 u procent, případně mapových souřadnic mimo výpočetní region.
 
-Různé způsoby určení polohy mají své opodstatnění. V některých případech je výhodné umístit popisek k určitému místu, jehož mapové souřadnice známe, a jeho poloha vzhledem k papíru není podstatná. Pozicování pomocí procent je vhodné například pro nadpis mapy, který chceme umístit přesně doprostřed nad mapové okno. 
+Různé způsoby určení polohy mají své opodstatnění. V některých případech je výhodné umístit popisek k určitému místu, jehož mapové souřadnice známe, a jeho poloha vzhledem k papíru není podstatná. Pozicování pomocí procent je vhodné například pro nadpis mapy, který chceme umístit přesně doprostřed nad mapový rámec. 
 
-Problém nastává v případě, když chce uživatel určit polohu objektu relativně k papíru a tento objekt podporuje umístění pouze relativně k mapovému oknu, případně naopak. Bylo by proto vhodné, aby všechny objekty podporovaly umístění všemi těmito způsoby. Uživatel by si pak mohl vybrat, který z nich je pro danou situaci nejvhodnější.
+Problém nastává v případě, když chce uživatel určit polohu objektu relativně k papíru a tento objekt podporuje umístění pouze relativně k mapovému rámci, případně naopak. Bylo by proto vhodné, aby všechny objekty podporovaly umístění všemi těmito způsoby. Uživatel by si pak mohl vybrat, který z nich je pro danou situaci nejvhodnější.
 
 \paragraph*{Referenční bod objektu}
 \label{sec:psmap:referencepoint}
@@ -286,7 +298,7 @@ V mnoha instrukcích se vyskytuje nastavení barvy. Bohužel velká část instr
 
 \paragraph*{Jednořádkové a víceřádkové instrukce}
 \label{sec:psmap:singleline}
-Instrukce \instr{border} (ohraničení mapového okna) a \instr{colortable} (rastrová legenda) mohou být jednořádkové i víceřádkové, což mimo jiné znamená, že někdy je \instr{end} za příkazem vyžadováno a někdy naopak následovat nesmí. Záleží, zda za zmíněné instrukce do stejného řádku napíšeme \instr{y} nebo \instr{n}, tím ji lze zapnout a vypnout. 
+Instrukce \instr{border} (ohraničení mapového rámce) a \instr{colortable} (rastrová legenda) mohou být jednořádkové i víceřádkové, což mimo jiné znamená, že někdy je \instr{end} za příkazem vyžadováno a někdy naopak následovat nesmí. Záleží, zda za zmíněné instrukce do stejného řádku napíšeme \instr{y} nebo \instr{n}, tím ji lze zapnout a vypnout.
 \begin{psmap}
 border n    # jednoradkova instrukce - nesmi nasledovat end
 
@@ -299,7 +311,7 @@ Navíc u \instr{colortable} nemá možnost zapínání a vypínání valného sm
 
 \paragraph*{Mapinfo}
 \label{sec:psmap:mapinfo}
-Mapový prvek \emph{mapinfo}, se v některých případech špatně vykreslí. Problém nastává, když jej uživatel chce umístit nalevo od mapového okna. Modul \modul{ps.map} přesune mapinfo tak, že se vertikálně zarovná k mapovému oknu, neboli převezme \emph{x}-ovou sořadnici okna. Další chybou je špatné barevné vykreslení barvy pozadí a ohraničující linie. Barvy se nevykreslí, když je mapinfo  mimo mapové okno. 
+Mapový prvek \emph{mapinfo}, se v některých případech špatně vykreslí. Problém nastává, když jej uživatel chce umístit nalevo od mapového rámce. Modul \modul{ps.map} přesune mapinfo tak, že se vertikálně zarovná k mapovému rámci, neboli převezme \emph{x}-ovou sořadnici rámce. Další chybou je špatné barevné vykreslení barvy pozadí a ohraničující linie. Barvy se nevykreslí, když je mapinfo  mimo mapový rámec.
 
 \paragraph*{Nekonzistence u instrukce \instr{vlines}}
 \label{sec:psmap:vlines}
@@ -352,11 +364,11 @@ Aplikace umožňuje také konfigurační soubory načítat. Vhodnější je ale 
 
 \paragraph*{Koncept a náhled}
 Aplikace rozlišuje dva módy -- koncept a náhled (\emph{Draft mode} a \emph{Preview mode}). 
-Uživatel vytváří mapový výstup v módu konceptu, což znamená, že jednotlivé vykreslované prvky jako legenda či mapové okno jsou představovány pouze barevným obdélníkem s popisem typu objektu. Jejich vzhled tedy nijak nesouvisí se jejich skutečným vykreslením modulem \modul{ps.map}, s výjimkou jejich rozměrů. Ty odpovídají rozměrům skutečným (alespoň se o to snaží, viz část \nameref{sec:gui:problemy}). 
+Uživatel vytváří mapový výstup v módu konceptu, což znamená, že jednotlivé vykreslované prvky jako legenda či mapový rámec jsou představovány pouze barevným obdélníkem s popisem typu objektu. Jejich vzhled tedy nijak nesouvisí se jejich skutečným vykreslením modulem \modul{ps.map}, s výjimkou jejich rozměrů. Ty odpovídají rozměrům skutečným (alespoň se o to snaží, viz část \nameref{sec:gui:problemy}).
 
 Jiný případ nastává při zobrazení textu v konceptu, text je zde zobrazen v zadané velikost fontu (ne však zadaným fontem). Zvolená barva písma se také zobrazí správně, nicméně je-li nastavena barva pozadí, vykreslí se pouze barva bílá. Pravděpodobně jde o problém knihovny wxPython, je možné, že na jiných platformách k tomuto problému nedochází. Stejně tak ostatní efekty textu jako zvýraznění a rámeček se v konceptu nezobrazují (bylo by to složité a zbytečné). Raději dodávám, že všechny tyto nastavené vlastnosti textu se ve výsledném mapovém výstupu zobrazí správně.
 
-V konceptu lze označené objekty posunovat tažením kurzoru, polohu lze zadat také v příslušném dialogu objektu. S výjimkou mapového okna nelze měnit rozměry objektů interaktivně, viz \nameref{sec:gui:problemy}
+V konceptu lze označené objekty posunovat tažením kurzoru, polohu lze zadat také v příslušném dialogu objektu. S výjimkou mapového rámce nelze měnit rozměry objektů interaktivně, viz \nameref{sec:gui:problemy}
 
 Při práci lze průběžně kontrolovat výsledek pomocí módu náhledu. Na pozadí je spuštěn modul \modul{ps.map}, který vygeneruje dočasný PostScript soubor, ten je překonvertován do PNG a zobrazen v GUI aplikaci. To vše samozřejmě zabere poměrně dost času, záleží na složitosti mapového výstupu. Konverze do PNG je také poměrně časově náročná. Proto může být lepší si vygenerovat přímo PS soubor a ten si zobrazit v externím prohlížeči.
 
@@ -406,9 +418,9 @@ Při práci jsem narazila na několik problematických oblastí, které se čás
  Každý mapový prvek jako např. mapinfo, grafické měřítko či legenda mají vlastní dialog, kde se nastavují jejich vlastnosti. Dialogy jsou různě rozsáhlé, ale mají podobný vzhled. Problém při tvorbě dialogů byla celková nejednotnost v nastavitelných vlastnostech dialogů. Například, rastrová legenda umožňuje změnit barvu písma a neumožňuje vykreslit ohraničení (\emph{border}), zatímco u vektorové legendy je to přesně naopak. Takových případů je víc a značně komplikují snahy o ujednocení vzhledu dialogů. Proto by bylo příliš náročné vytvořit jakýsi jednotný dialog pro nastavení vlastností objektů, pravděpodobně by to vedlo k větší nepřehlednosti. 
  
  \paragraph*{Určení rozměru mapových prvků}
- V módu konceptu se jednotlivé mapové prvky zobrazují na stránce jako obdélníky, které se od sebe liší barvou popiskem a rozměrem. Právě určení rozměru prvku je problém, který není uspokojivě vyřešen. Velikost mapového prvku je totiž v zásadě dána velikostí fontu, ale i dalšími parametry, například počet sloupců a počet kategorií u legendy. Aplikace wx.psmap na základě těchto vlastností odhaduje přibližné rozměry, ty se ovšem do jisté míry mohou lišit od rozměrů výsledného objektu vykresleného modulem \modul{ps.map}. Ve wx.psmap tak opět dochází ke zbytečnému (a ne tak přesnému) opakování výpočtů, které provádí modul. Je třeba tudíž rozměry objektů v konceptu brát jako orientační, s výjimkou mapového okna, jehož rozměry lze určit přesně.
+ V módu konceptu se jednotlivé mapové prvky zobrazují na stránce jako obdélníky, které se od sebe liší barvou popiskem a rozměrem. Právě určení rozměru prvku je problém, který není uspokojivě vyřešen. Velikost mapového prvku je totiž v zásadě dána velikostí fontu, ale i dalšími parametry, například počet sloupců a počet kategorií u legendy. Aplikace wx.psmap na základě těchto vlastností odhaduje přibližné rozměry, ty se ovšem do jisté míry mohou lišit od rozměrů výsledného objektu vykresleného modulem \modul{ps.map}. Ve wx.psmap tak opět dochází ke zbytečnému (a ne tak přesnému) opakování výpočtů, které provádí modul. Je třeba tudíž rozměry objektů v konceptu brát jako orientační, s výjimkou mapového rámce, jehož rozměry lze určit přesně.
  
- Důsledkem tohoto problému je nemožnost měnit rozměry objektů interaktivně (pomocí myši), jako je to obvyklé v podobných programech. Teoreticky by to možné sice bylo, ale pouze za cenu dalších neprůhledných výpočtů, které by navíc nedávaly přesný výsledek. Pokud tedy chce uživatel změnit velikost objektů, je třeba v příslušném dialogu vyplnit velikost fontu a další parametry ovlivňující rozměry, jsou-li k dispozici. Opět je výjimkou mapové okno, jehož rozměry lze měnit interaktivně. Při označení objektu se objeví v pravém dolním rohu značka, když se na ní najede kurzorem a podrží se levé tlačítko myši, mapové okno mění své rozměry. Jde sice o jednoduchý způsob, ale snad dostatečný.
+ Důsledkem tohoto problému je nemožnost měnit rozměry objektů interaktivně (pomocí myši), jako je to obvyklé v podobných programech. Teoreticky by to možné sice bylo, ale pouze za cenu dalších neprůhledných výpočtů, které by navíc nedávaly přesný výsledek. Pokud tedy chce uživatel změnit velikost objektů, je třeba v příslušném dialogu vyplnit velikost fontu a další parametry ovlivňující rozměry, jsou-li k dispozici. Opět je výjimkou mapový rámec, jehož rozměry lze měnit interaktivně. Při označení objektu se objeví v pravém dolním rohu značka, když se na ní najede kurzorem a podrží se levé tlačítko myši, mapový rámec mění své rozměry. Jde sice o jednoduchý způsob, ale snad dostatečný.
  
 
 
