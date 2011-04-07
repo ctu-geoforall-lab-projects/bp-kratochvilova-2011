@@ -9,6 +9,7 @@
 \usepackage{verbatim}
 \usepackage{alltt}
 \usepackage{mdwlist}
+
 % \usepackage{stdpage}
 \usepackage{subfig}
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
@@ -53,7 +54,7 @@ morecomment=[l]{\#},
 \newcommand{\modul}[1]{\emph{#1}}
 \newcommand{\instr}[1]{\lstinline[style=psmapInline]|#1|}
 \author{Anna Kratochvílová}
-
+% \pagecolor{darkGrey}
 
 \begin{document}
 \tableofcontents
@@ -121,7 +122,9 @@ Při práci v programu je třeba rozlišit dva módy -- \emph{Data View}
 a \emph{Layout View}. Data View slouží pro běžnou práci s daty,
 zatímco Layout View je použit pro vytvoření mapového výstupu,
 zobrazuje výřez mapy na stránce. Tyto dva módy jsou propojené a
-změny se projevují v obou. V Layout View lze zobrazit vodící linky a
+změny se projevují v obou. ArcGIS podporuje pokročilé nastavení
+symbologie a vytváření kartogramů či kartodiagramů. Tato nastavení se
+pak promítjí v legendě. V Layout View lze zobrazit vodící linky a
 mřížku pro přesnější pozicování  a  přidávat mapové elementy:
 legenda, měřítko grafické a číselné, směrovou růžici, titulek,
 text, dynamický text, rámeček, obrázek, jiný objekt (tabulku, graf).
@@ -156,16 +159,22 @@ běžných platformách (Linux, MS Windows, Mac OS X). Existuje i produkt gvSIG
 Mobile určený pro použití v mobilních zařízeních. gvSIG je napsán
 v programovacím jazyce Java, díky čemuž má mnoho aktivních vývojářů.
 
-Projekt programu gvSIGu sestává tří hlavních částí -- \emph{View},
+Projekt programu gvSIG sestává tří hlavních částí -- \emph{View},
 \emph{Table} a \emph{Map}, v poslední jmenované pak probíhá tvorba
 mapových výstupů. View je obdobou datového rámce v ArcGISu. Na stránku
 lze tedy umístit více mapových rámců, u každého se pak zvolí,
-který View bude zobrazovat. Podporované mapové elementy jsou obdobné
+který View bude zobrazovat. Podporované mapové elementy a možnosti
+symbologie jsou obdobné
 jako u ArcGISu, navíc umí gvSIG přímo vložit lokalizační mapku,
 to je sice u ArcGISu také možné, ale tato funkce není tak jednoduše
-přístupná. Drobné rozdíly najdete v možnostech nastavení vzhledu
-jednotlivých elementů, ale opravdu není podstatné, jestli máte na výběr
-mezi 50 nebo 100 různých směrových růžic. Co mne trochu zklamalo,
+přístupná. Drobné rozdíly oproti ArcGISu najdete v možnostech nastavení
+vzhledu
+jednotlivých elementů, které nejsou tak široké. Nicméně pro uživatele
+většinou
+není podstatné, jestli má na výběr mezi 50 nebo 100 různých směrových
+růžic,
+když se navíc  většina z nich  pro běžné mapové výstupy nehodí.
+Co mne trochu zklamalo,
 byla legenda, jejíž vlastnosti se poměrně špatně nastavovaly. Pro
 více sloupců je potřeba ji nejprve rozložit na jednotlivé grafické
 elementy a pak s ní pracovat jako s vektorovou grafikou. Co se týče
@@ -175,24 +184,31 @@ k existujícím grafickým editorům, které jsou schopné načíst a
 konvertovat velké množství formátů.
 
 \subsubsection{QGIS}
-Quantum GIS je rychle rostoucí GIS projekt psaný v C++, je opět šířený
+Quantum GIS je rychle rostoucí GIS projekt psaný v C++/Qt, je opět
+šířený
 pod licencí GNU/GPL. Pro tvorbu mapových výstupů slouží \emph{Map
 Composer}, jehož funkcionalita plně nedosahuje úrovně programů ArcGIS
 ani gvSIG, nicméně pro ne příliš sofistikované mapové výstupy je to
 výborný prostředek.
 
-Map Composer umožnuje sice vložit více mapových rámců, ale
+Map Composer umožňuje sice vložit více mapových rámců, ale
 zobrazují pouze stejná data. Lze přidat standardní mapové elementy
 jako měřítko, legenda, text, atributovou tabulku, obrázek, jednoduché
-tvary. Směrová růžice se přidává v rámci obrázků. Zajímavou
+tvary. Směrová růžice se přidává v rámci obrázků.
+QGIS nabízí podobné volby symbologie a vytváření kartodiagramů,
+a i když
+ještě není v této oblasti na takové úrovni jako předchozí dva
+programy, výrazně
+v tomto směru od předchozích verzích pokročil.
+Legenda pro vektorové vrstvy se chová v QGISu standardně, ale
+pro rastr v podstatě nefunguje. Pro pozicování objektů je k dispozici
+mřížka s nastavitelnými parametry a volitelným přichytáváním. Dobře
+funguje i zobrazení souřadnicové sítě s popisky. Zajímavou
 vlastností je přidání atributové tabulky pro zvolenou mapovou
 vrstvu, z tabulky se dají vybrat pouze některé atributy a také lze
 vhodně záznamy seřadit. Tuto funkcionalitu z porovnávaných programů
 poskytuje pouze ArcGIS, ale nastavení vlastností tabulky zde už není
-tak jednoduché. Legenda pro vektorové vrstvy se chová standardně, ale
-pro rastr v podstatě nefunguje. Pro pozicování objektů je k dispozici
-mřížka s nastavitelnými parametry a volitelným přichytáváním. Dobře
-funguje i zobrazení souřadnicové sítě s popisky.
+tak jednoduché.
 
 
 
@@ -218,7 +234,9 @@ Dalším výrazným rozdílem je oddělenost tvorby mapového výstupu od
 zbytku programu. To se projevuje tím, že je nutné explicitně uvést
 všechny mapové vrstvy, které se mají zobrazit, a také nastavit jejich
 vzhled, nehledě na mapové vrstvy aktuálně zobrazované  v grafickém
-uživatelském prostředí GRASSu.
+uživatelském prostředí GRASSu. Modul \modul{psmap} nevytváří
+tematicke mapy přímo, lze si ale pomoci modulem \emph{d.vect.thematic},
+který umí vygenerovat příslušnou část konfiguračního souboru.
 
 Modul \modul{ps.map} nepodporuje češtinu, což je dáno použitým
 kódováním. \modul{Ps.map} očekává konfigurační soubor v kódování
@@ -297,14 +315,113 @@ souřadnic, což ostatní programy nepodporují.
 
 
 \subsection{Porovnání programů pro tvorbu mapových výstupů z hlediska
-uživatelského rozhraní }
-\subsubsection{Obecné zásady grafického uživatelského rozhraní}
-\subsubsection{ArcGIS}
+uživatelského rozhraní}
+Uživatelé komunikují s programem vždy přes určité rozhraní. V
+dřívějších dobách komunikace probíhala pouze přes příkazovou
+řádku, dnes tento způsob ustupuje ve prospěch grafického uživatelského
+rozhraní (\emph{GUI}). Oba způsoby mají svá pro a proti, například
+používání příkazové řádky může být velice efektivní, ale pouze
+pro odborníky. Naopak GUI umožňuje používaní programu běžným
+uživatelům a pokud je dobře navržené, rychle si program osvojí a
+rádi ho používají. Pro některé oblasti, jakou je například i GIS,
+je grafické rozhraní velice potřebné, protože je třeba zobrazovat data
+a manipulovat s nimi interaktivně.
 
+\subsubsection{Obecné zásady grafického uživatelského rozhraní}
+GUI je dnes natolik samozřejmou součástí aplikace, že jej mnoho
+uživatelů považuje za program samotný a neuvědomuje si, že jde
+pouze o rozhraní. Pokud je grafické rozhraní navrženo špatně,
+může být samotný program sebelepší a přesto jej nebude chtít nikdo
+používat\footnote{Naopak to samozřejmě platí také.}. Navrhnout dobře
+vypadající a funkční grafické rozhraní není vůbec jednoduché a to
+především u rozsáhlých programů se širokou funkcionalitou.
+
+Následuje několik obecných zásad, které by se při tvorbě GUI měly
+dodržet, obzvláště jde-li o větší projekt. Tyto zásady jsou převzaty
+z knihy \cite{bloopers} a okomentovány.
+\begin{description}
+    \item[Zaměřit se především na uživatele, jejich znalosti a
+    potřeby.] Při návrhu GUI se musí brát v úvahu, jaká je cílová
+    skupina uživatelů, jejich počítačová gramotnost a znalost oblasti,
+    které se program týká. Dále je třeba porozumět činnostem,
+    které uživatelé v současnosti provádí a vědět, jak často jsou
+    vykonávány.
+
+\item [Nejprve si rozmyslet celkové uspořádání, pak vytvářet GUI.] Nemá
+smysl nejprve navrhovat GUI, když není jasné, jakou funkcionalitu
+bude uživatelům nabízet. U větších projektů je vhodné začít s
+konceptuálním modelem popisujícím uspořádání dat, manipulace s nimi,
+interakce s uživatelem, a až následně přemýšlet, jaký vzhled má
+aplikace mít.
+
+\item [Vžít se do role uživatele.] Software by neměl nutit uživatele,
+aby přemýšlel, jak to vývojář programu myslel. Je třeba používat
+termíny, kterým uživatelé rozumí a ne na ně mluvit výrazy běžnými
+mezi programátory. Vžít se do role uživatele znamená i zvolit rozumnou
+hranici mezi zpřístupnění veškeré funkcionality programu a složitostí
+jeho ovládání. I velice obsáhlý software může být ovladatelný,
+pokud se použijí vhodné prostředky: průvodce nastavením, zakrytí
+pokročilých nastavení, použití vhodných implicitních hodnot či
+nabídka vzorových řešení (šablon).
+
+\item [Běžné činnosti musí být jednoduše dostupné.] Rozlišit je
+třeba, kolik uživatelů danou činnost provádí a jak často. Obecně
+platí, že čím častěji je daná funkcionalita potřebná, tím méně
+kliknutí myši by měl uživatel vykonat. Zároveň čím více uživatelů
+danou funkcionalitu používá, tím nápadnější  by měla být, aby
+ji všichni uživatelé našli. Proto je potřeba se v návrhu GUI  daleko
+více zabývat běžným pracovním úkonům než okrajové funkcionalitě.
+
+\item [Neodvádět pozornost uživatele od svých vlastních úkolů.] Špatně
+navržená grafická rozhraní uživatele nutí přemýšlet, jak je ovládat,
+místo toho, aby se věnovali své práci. Smysl jednotlivých ovládacích
+prvků a nastavení by proto měl být zřejmý.
+
+\item [Ulehčit uživatelům osvojování nového softwaru.] Také to znamená
+neklást pasti na uživatele, například v podobě nejednoznačných popisků
+a symbolů. Tvůrci softwaru by měli v rozumné míře dbát na jednotnost
+a konzistenci ovládání programu, tím se učení usnadní. Další
+potřebnou vlastností je bezpečnost, tedy pokud uživatel udělá chybu,
+mělo by být snadné situaci napravit. Uživatelé tak mohou s klidem
+zkoumat další funkcionalitu a nemusí se bát, že něco zkazí.
+
+\item [Postatné je dodávat informace a ne pouze data.] Pokud program
+zobrazuje data, kterých si kvůli špatnému umístění nebo nedostatečnému
+zvýraznění nikdo nevšimne, nepřináší uživatelům vlastně žádné
+informace. Zároveň není vhodné při zobrazení nových informací výrazně
+měnit stávající situaci na obrazovce počítače, jako například pozici
+kurzoru či oken. To uživatele pouze dezorientuje a znejistí.
+
+\item [Reagovat a informovat.] Pokud aplikaci trvá vykonání příkazu
+delší dobu, je nutné uživatele informovat, že skutečně vykonává
+jeho příkaz, a také případně sdělit, jak dlouho to ještě potrvá. U
+delších procesů je vhodné nabídnout jejich předčasné ukončení. Pokud
+uživatel neví, co se s programem děje, zkouší klikat na všechna možná
+tlačítka, což zaneprázdněné aplikaci nepomůže. I když je aplikace
+poměrně pomalá, může být vnímaná jako rychlá, pokud dává uživateli
+vědět, co se právě děje.
+
+\item [Testovat, vyhodnotit, opravit.] Některé chyby se dají zjistit,
+až když s programem začnou uživatelé pracovat. Testování je třeba
+provést samozřejmě před uvolněním softwaru. Pokud je tedy vývoj
+programu časově omezen, je nutné počítat i s časem stráveným nad
+vyhodnocením testování a následným opravám.
+ \end{description}
+\subsubsection{ArcGIS}
+% - temer nekonecna hloubka zanoreni dialogu
+% - zalozky dvourade
+% - ovladani zoomovani koleckem naopak
+% - legenda zacne wizardem, kdyz ji editujeme, je to jiny dialog
+% - chybi advanced settings, zejmena pri nastaveni textu
+% - chyba ve wizardu u site - zpet se vraci na defaultni nastaveni
+%
+% + obrazky k nabidkam (napr na prave tlacitko)
+% + wizard casty (legenda, sit)
 \subsubsection{QGIS}
 
 \subsubsection{gvSIG}
-
+% -nekonzistence v dvojteckach, OK vs Accept, nektere dialogy pouzivaji
+group boxy, jine ne
 
 
 \subsubsection{GRASS -- wx.psmap}
@@ -1010,6 +1127,11 @@ NETELER, Markus; MITASOVA, Helena. \textit{Open Source GIS: A
 GRASS GIS Approach}. 3rd Ed. New York : Springer, 2008. 406 s. URL:
 \url{<http://www.grassbook.org/>. ISBN 978-0-387-35767-6}.
 
+\bibitem{bloopers}
+JOHNSON, Jeff. \textit{GUI Bloopers 2.0 : Common User Interface Design
+Dont's and Dos}. Burlington : Morgan Kaufman Publishers, 2008. 407 s. ISBN
+978-0-12-370643-0.
+
 \bibitem{script}
 GRASS Development Team. \textit{GRASS 7 Programmer's Manual} [online],
 c2000-2011 [cit. 2011-03-19].\\ URL: \url{http://grass.osgeo.org/programming7/}
@@ -1043,6 +1165,8 @@ GUI for ps.map [online], poslední aktualizace
 
 \bibitem{instalace}
 \url{http://grass.osgeo.org/wiki/Installation_Guide}
+
+
 
 \end{thebibliography}
 \end{document}
