@@ -52,14 +52,13 @@ except ImportError:
     import wx.lib.flatnotebook as fnb
 
 Icons['psMap'] = {
-    'script'     : MetaIcon(img = iconSet['ps-script'],
-                            label = _('Generate instruction file')),
-    'export'     : MetaIcon(img = iconSet['ps-export'],
-                            label = _('Generate PostScript output')),
-    'loadFile'     : MetaIcon(img = iconSet['open'],
-                            label = _('Load file'), 
-                            desc = _('Load file with mapping instructions')),                           
-    'pageSetup'  : MetaIcon(img = iconSet['settings'],
+    'scriptSave'     : MetaIcon(img = iconSet['script-save'],
+                                label = _('Generate text file with mapping instructions')),
+    'scriptLoad'     : MetaIcon(img = iconSet['script-load'],
+                                label = _('Load text file with mapping instructions')),                           
+    'psExport'       : MetaIcon(img = iconSet['ps-export'],
+                                label = _('Generate PostScript output')),
+    'pageSetup'  : MetaIcon(img = iconSet['page-settings'],
                             label = _('Page setup'),
                             desc = _('Specify paper size, margins and orientation')),
     'fullExtent' : MetaIcon(img = iconSet['zoom-extent'],
@@ -82,7 +81,7 @@ Icons['psMap'] = {
                            label = _('Quit Hardcopy Map Utility')),
     'addText'   : MetaIcon(img = iconSet['text-add'],
                             label = _('Add text')),
-    'addMapinfo': MetaIcon(img = iconSet['legend-add'],
+    'addMapinfo': MetaIcon(img = iconSet['map-settings'],
                             label = _('Add map info')),
     'addLegend' : MetaIcon(img = iconSet['legend-add'],
                             label = _('Add legend')),
@@ -144,7 +143,12 @@ class PsMapToolbar(AbstractToolbar):
         self.pan = wx.NewId()
 
         icons = Icons['psMap']
-        return self._getToolbarData(((self.pagesetup, 'page setup', icons['pageSetup'],
+        return self._getToolbarData(((self.loadFile, 'loadFile', icons['scriptLoad'],
+                                      self.parent.OnLoadFile),                                    
+                                     (self.instructionFile, 'psScript', icons['scriptSave'],
+                                      self.parent.OnInstructionFile),
+                                     (None, ),
+                                     (self.pagesetup, 'page setup', icons['pageSetup'],
                                       self.parent.OnPageSetup),
                                      (None, ),
                                      (self.pointer, "pointer", Icons["displayWindow"]["pointer"],
@@ -171,18 +175,13 @@ class PsMapToolbar(AbstractToolbar):
                                      (None, ),
                                      (self.preview, "preview", icons["preview"],
                                       self.parent.OnPreview),
-                                     (self.instructionFile, 'psScript', icons['script'],
-                                      self.parent.OnInstructionFile),
-                                     (self.generatePS, 'generatePS', icons['export'],
+                                     (self.generatePS, 'generatePS', icons['psExport'],
                                       self.parent.OnPSFile),
-                                     (self.loadFile, 'loadFile', icons['loadFile'],
-                                      self.parent.OnLoadFile),                                    
                                      (None, ),
                                      (self.quit, 'quit', icons['quit'],
                                       self.parent.OnCloseWindow))
                                     )
-
-                
+    
 class PsMapFrame(wx.Frame):
     def __init__(self, parent = None, id = wx.ID_ANY,
                  title = _("GRASS GIS Hardcopy Map Output Utility"), **kwargs):
@@ -358,9 +357,14 @@ class PsMapFrame(wx.Frame):
         instrFileFd.close()
         
         temp = False
+        regOld = grass.region()
         if not filename:
             temp = True
             filename = grass.tempfile()
+            if self.instruction.FindInstructionByType('map'):
+                mapId = self.instruction.FindInstructionByType('map').id
+                SetResolution(dpi = 100, width = self.instruction[mapId]['rect'][2],
+                                height = self.instruction[mapId]['rect'][3])
         
         cmd = ['ps.map', '--overwrite']
         if os.path.splitext(filename)[1] == '.eps':
@@ -371,7 +375,8 @@ class PsMapFrame(wx.Frame):
         cmd.append('output=%s' % filename)
         self.SetStatusText(_('Generating preview...'), 0)
          
-        self.cmdThread.RunCmd(cmd, userData = {'instrFile' : instrFile, 'filename' : filename, 'temp' : temp })
+        self.cmdThread.RunCmd(cmd, userData = {'instrFile' : instrFile, 'filename' : filename,
+                                            'temp' : temp, 'regionOld' : regOld})
         
     def OnCmdDone(self, event):
         """!ps.map process finished"""
@@ -381,21 +386,29 @@ class PsMapFrame(wx.Frame):
                    message = _("Ps.map exited with return code %s") % event.returncode)
             return 
 
-        if haveImage:
+        if haveImage and event.userData['temp']:
+            RunCommand('g.region', cols = event.userData['regionOld']['cols'], rows = event.userData['regionOld']['rows'])
+## wx.BusyInfo does not display the message
+##            busy = wx.BusyInfo(message = "Generating preview, wait please", parent = self)
+
             try:
                 im = Image.open(event.userData['filename'])
                 if self.instruction[self.pageId]['Orientation'] == 'Landscape':
                     im = im.rotate(270)
-                im.save(self.imgName)
-            
+                
+                im.save(self.imgName, format = 'png')
+                
             except IOError, e:
                 GError(parent = self,
                        message = _("Unable to generate preview. %s") % e)
+            
+            
                 
             rect = self.previewCanvas.ImageRect()
             self.previewCanvas.image = wx.Image(self.imgName, wx.BITMAP_TYPE_PNG)
             self.previewCanvas.DrawImage(rect = rect)
             
+##            busy.Destroy()
             self.SetStatusText(_('Preview generated'), 0)
             self.book.SetSelection(1)
             self.currentPage = 1
@@ -796,6 +809,7 @@ class PsMapFrame(wx.Frame):
             ids = [id]
         for id in ids:
             itype = self.instruction[id].type
+            
             if itype in ('scalebar', 'mapinfo'):
                 drawRectangle = self.canvas.CanvasPaperCoordinates(
                                     rect = self.instruction[id]['rect'], canvasToPaper = False)
@@ -825,7 +839,7 @@ class PsMapFrame(wx.Frame):
                     self.instruction[id]['coords'][1] += extent[0]/2 * sin(rot/180*pi)
                     
                 self.instruction[id]['coords'][0] += self.instruction[id]['xoffset']
-                self.instruction[id]['coords'][1] += self.instruction[id]['yoffset']
+                self.instruction[id]['coords'][1] -= self.instruction[id]['yoffset']
                 coords = self.instruction[id]['coords']
                 self.instruction[id]['rect'] = bounds = self.getModifiedTextBounds(coords[0], coords[1], extent, rot)
                 self.canvas.DrawRotText(pdc = self.canvas.pdcObj, drawId = id,
@@ -840,10 +854,16 @@ class PsMapFrame(wx.Frame):
                     resol = grass.parse_key_val(resol, val_type = float)
                     RunCommand('g.region', nsres = resol['nsres'], ewres = resol['ewres'])
                     # change current raster in raster legend
+                    
                 if 'rasterLegend' in self.openDialogs:
                     self.openDialogs['rasterLegend'].updateDialog()
                 id = self.instruction.FindInstructionByType('map').id
-                   
+                
+                #check resolution
+                if itype == 'raster':
+                    SetResolution(dpi = self.instruction[id]['resolution'], 
+                                    width = self.instruction[id]['rect'].width,
+                                    height = self.instruction[id]['rect'].height)   
                 rectCanvas = self.canvas.CanvasPaperCoordinates(rect = self.instruction[id]['rect'],
                                                                     canvasToPaper = False)
                 self.canvas.RecalculateEN()
@@ -855,7 +875,7 @@ class PsMapFrame(wx.Frame):
                 self.canvas.RedrawSelectBox(id)
                 self.canvas.pdcTmp.RemoveId(self.canvas.idZoomBoxTmp)
                 # redraw to get map to the bottom layer
-                self.canvas.Zoom(zoomFactor = 1, view = (0, 0))
+                #self.canvas.Zoom(zoomFactor = 1, view = (0, 0))
                 
             if itype == 'rasterLegend':
                 if self.instruction[id]['rLegend']:
@@ -918,6 +938,7 @@ class PsMapFrame(wx.Frame):
             os.remove(self.imgName)
         except OSError:
             pass
+        grass.set_raise_on_error(False)
         self.Destroy()
 
 
@@ -1234,20 +1255,13 @@ class PsMapBufferedWindow(wx.Window):
                     self.Refresh()
                     return
                 rectPaper = self.CanvasPaperCoordinates(rect = rectTmp, canvasToPaper = True)                
-##                
-##                dlg = MapDialog(parent = self.parent, id = [None, None, None], settings = self.instruction, 
-##                                         rect = rectPaper)
-##                dlg.ShowModal()
                 
                 dlg = MapDialog(parent = self.parent, id = [None, None, None], settings = self.instruction, 
                                          rect = rectPaper)
                 self.openDialogs['map'] = dlg
                 self.openDialogs['map'].Show()
                 
-##                if  self.instruction.FindInstructionByType('map'):
-##                    #redraw objects to lower map to the bottom
                 
-
                 self.mouse['use'] = self.parent.mouseOld
 
                 self.SetCursor(self.parent.cursorOld)
@@ -1255,8 +1269,6 @@ class PsMapBufferedWindow(wx.Window):
                 self.parent.toolbar.ToggleTool(self.parent.toolbar.action['id'], False)
                 self.parent.toolbar.action['id'] = self.parent.actionOld
                     
-##                self.pdcTmp.RemoveId(self.idZoomBoxTmp)
-##                self.Refresh() 
 
 
             # resize resizable objects (only map sofar)
@@ -1276,7 +1288,8 @@ class PsMapBufferedWindow(wx.Window):
                                                         map = self.instruction[mapId]['map'],
                                                         mapType = self.instruction[mapId]['mapType'], 
                                                         rect = self.instruction[mapId]['rect'])
-                        if self.instruction[mapId]['scaleType'] == 1:
+                            
+                        elif self.instruction[mapId]['scaleType'] == 1:
                             scale, foo, rect = AutoAdjust(self, scaleType = 1,
                                                         region = self.instruction[mapId]['region'],
                                                         rect = self.instruction[mapId]['rect'])
@@ -1292,6 +1305,10 @@ class PsMapBufferedWindow(wx.Window):
                                     
                     elif self.instruction[mapId]['scaleType'] == 3:
                         ComputeSetRegion(self, mapDict = self.instruction[mapId].GetInstruction())
+                    #check resolution
+                    SetResolution(dpi = self.instruction[mapId]['resolution'],
+                                    width = self.instruction[mapId]['rect'].width,
+                                    height = self.instruction[mapId]['rect'].height)
                         
                     self.RedrawSelectBox(mapId)
                     self.Zoom(zoomFactor = 1, view = (0, 0))
@@ -1344,7 +1361,7 @@ class PsMapBufferedWindow(wx.Window):
                                                              
             elif  itype == 'text':
                 x, y = self.instruction[id]['coords'][0] - self.instruction[id]['xoffset'],\
-                        self.instruction[id]['coords'][1] - self.instruction[id]['yoffset']
+                        self.instruction[id]['coords'][1] + self.instruction[id]['yoffset']
                 extent = self.parent.getTextExtent(textDict = self.instruction[id])
                 rot = float(self.instruction[id]['rotate'])/180*pi if self.instruction[id]['rotate'] is not None else 0
                 if self.instruction[id]['ref'].split()[0] == 'lower':

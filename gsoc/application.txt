@@ -11,13 +11,24 @@ Email:
   anna.kratochvilova@fsv.cvut.cz
 
 Phone:
-  728467708
+  420728467708
 
 OSGeo project(s):
   GRASS GIS
 
 Title:
   Completion of wxGUI Nviz extension for 3D data visualization 
+
+Abstract
+=========
+This project continues in the development of GRASS GIS 3D visualizaton tool wxNviz 
+based on wxPython and underlying OGSF library. 
+The goal is to add missing functionality so that wxNviz's predecessor
+written in Tcl/Tk could be replaced by completed wxNviz in GRASS 7. 
+The plan is to add missing features like animations or cutting planes 
+and additionally implement better view control.
+
+
 
 
 Describe your idea
@@ -41,7 +52,7 @@ GRASS GIS (Geographic Resources Analysis Support System) is one of the
 largest open source Geographic Information Systems. GRASS GIS is a
 Free Software project released under the GNU General Public License
 and it is the part of Open Source Geospatial Foundation. GRASS GIS
-consist of more than 400 modules for spatial analysis, image
+consists of more than 400 modules for spatial analysis, image
 processing, manipulation and visualization of many types of data. It
 is widely used in academic and commercial settings thanks to its
 powerful tools providing functionality missing in other geographic
@@ -151,13 +162,13 @@ Please tell us why you are interested in GIS and open source software:
 
 Please tell us why you are interested in working for OSGeo and the software project you have selected:
 
-  GRASS GIS to should have more users and I would like to contribute
+  GRASS GIS should have more users and I would like to contribute
   to it.
 
 Please tell us why you are interested in your specific coding project:
 
   I would like to use my experience with GUI programming (from my
-  bachelor project) which fit for the wxNviz project.
+  bachelor project) which fits for the wxNviz project.
 
 Would your application contribute to your ongoing studies/degree? If so, how?
 

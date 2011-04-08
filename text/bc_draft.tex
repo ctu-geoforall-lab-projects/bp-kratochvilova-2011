@@ -8,6 +8,7 @@
 \usepackage[pdftex, final, colorlinks=true]{hyperref}
 \usepackage{verbatim}
 \usepackage{alltt}
+\usepackage{paralist}
 \usepackage{mdwlist}
 
 % \usepackage{stdpage}
@@ -114,6 +115,7 @@ nabízí. Detailněji je pak popsán modul \modul{ps.map}, jehož možnosti
 bylo třeba zkoumat do nejmenších podrobností.
 
 \subsubsection{ArcGIS}
+\label{sec:porovnani_moznosti:ArcGIS}
 Tento software od firmy \emph{ESRI} je jeden z nejpoužívanějších v
 České republice. ArcGIS sestává z několika základních aplikací,
 pro tvorbu mapových výstupů slouží aplikace \emph{ArcMap}.
@@ -317,9 +319,11 @@ souřadnic, což ostatní programy nepodporují.
 \subsection{Porovnání programů pro tvorbu mapových výstupů z hlediska
 uživatelského rozhraní}
 Uživatelé komunikují s programem vždy přes určité rozhraní. V
-dřívějších dobách komunikace probíhala pouze přes příkazovou
-řádku, dnes tento způsob ustupuje ve prospěch grafického uživatelského
-rozhraní (\emph{GUI}). Oba způsoby mají svá pro a proti, například
+dřívějších dobách komunikace probíhala přes příkazovou
+řádku (CLI -- command-line interface) nebo přes textové uživatelské
+rozhraní (TUI), dnes tento způsob ustupuje ve prospěch grafického
+uživatelského
+rozhraní (\emph{GUI}). Každý způsob má svá pro a proti, například
 používání příkazové řádky může být velice efektivní, ale pouze
 pro odborníky. Naopak GUI umožňuje používaní programu běžným
 uživatelům a pokud je dobře navržené, rychle si program osvojí a
@@ -405,25 +409,262 @@ vědět, co se právě děje.
 až když s programem začnou uživatelé pracovat. Testování je třeba
 provést samozřejmě před uvolněním softwaru. Pokud je tedy vývoj
 programu časově omezen, je nutné počítat i s časem stráveným nad
-vyhodnocením testování a následným opravám.
+vyhodnocením testování a následnými opravami.
  \end{description}
+
+Následující porovnání grafických uživatelských prostředí
+výše zmíněných GIS programů shrnuje jejich celkovou ovladatelnost a
+vzhled. Kromě toho upozorňuji na několik chyb v GUI, na které jsem při
+testování softwaru narazila, abych mohla uvést konkrétní případy
+porušení obecných zásad. Snažila jsem se hodnotit nezávisle na tom,
+že s některými z programů mám zkušenosti, nicméně vždy také chci
+vyjádřit svůj osobní názor.
+
 \subsubsection{ArcGIS}
-% - temer nekonecna hloubka zanoreni dialogu
-% - zalozky dvourade
-% - ovladani zoomovani koleckem naopak
-% - legenda zacne wizardem, kdyz ji editujeme, je to jiny dialog
-% - chybi advanced settings, zejmena pri nastaveni textu
-% - chyba ve wizardu u site - zpet se vraci na defaultni nastaveni
-%
-% + obrazky k nabidkam (napr na prave tlacitko)
-% + wizard casty (legenda, sit)
-\subsubsection{QGIS}
+ArcGIS je software se širokou funkcionalitou, jeho grafické rozhraní tedy
+muselo být řešeno velice pečlivě, aby byl program ovladatelný. Tento
+nelehký úkol se víceméně zdařil, tomu napovídá i obrovský počet
+uživatelů ArcGISu. Typickými prvky grafického rozhraní jsou modální
+dialogy (nelze pracovat s programem, dokud s dialogové okno neukončí),
+panely nástrojů (toolbar), záložky pro navigaci v dialogu (tab) a místní
+nabídka na pravé tlačítko myši (context menu).
+Samozřejmě GUI není zdaleka dokonalé, zde je několik problémů:
+
+\paragraph*{Mnoho úrovní dialogových oken} Z některých dialogových oken
+lze vyvolat další a tímto způsobem se lze dostat v jejich hierarchii velice
+hluboko, zejména při nastavování vzhledu symbolů.  Uživatel může být
+dezorientován několika úrovněmi dialogových oken, proto by zanoření
+nemělo přesáhnout dvě úrovně.
+
+\paragraph*{Dvě řady záložek} Některá dialogová okna (například
+\emph{Data Frame Properties}) mají dvě řady záložek, což není vhodné
+řešení. Při označení záložky z horní řady se celá řada přesune
+dolů, což uživatele může překvapit a tím odvést jeho pozornost od
+původního záměru. Pokud je záložek tolik, že se nevejdou do jedné
+řady, je třeba zamyslet se nad použitím jiného ovládacího prvku.
+
+\paragraph*{Implicitní chování kolečka myši} Přibližování a
+oddalování mapy lze ovládat kolečkem myši, nicméně otáčení
+kolečka od sebe vyvolá oddálení, což u většiny podobných programů
+funguje přesně opačně. To je nepříjemná vlastnost, zvlášť když
+vykreslování trvá poměrně dlouho. Jak jsem zjistila, toto nastavení
+lze změnit, mnohé uživatele ale možná nenapadne toto nastavení hledat.
+
+\paragraph*{Složité nastavení písma}  Typickým příkladem porušení
+zásady, že běžné činnosti musí být jednoduše dostupné je dialogové
+okno pro nastavení vlastnosti písma u vkládaného textu, viz obrázek
+č. \ref{fig:ArcGIS_text_dialog}. Obvyklým požadavkem je nastavení
+fontu a jeho velikosti, naopak volba úhlu rotace a velikosti mezer mezi
+znaky se často nepoužívá. Tyto požadavky dialog vůbec nerespektuje,
+pokud uživatel chce změnit velikost fontu (a to chce téměř pokaždé),
+musí kliknout na tlačítko \emph{Change Symbol\ldots}, které otevře
+další dialogové okno s nastavením. Popisek tlačítka je matoucí,
+protože uživatel nechce měnit symbol, ale font. Toto důležité
+tlačítko navíc poněkud zaniká v celkovém rozvržení, je ve stejné
+úrovni jako ne příliš důležité tlačítko nápovědy. Tvůrci si
+tohoto problému evidentně byli vědomi, jelikož se snaží situaci
+napravit jemným zvýrazněním důležitého tlačítka. Na tomto dialogu
+lze demonstrovat ještě jednu drobnou chybu (zvýrazněno na obrázku),
+a tou je nesprávné použití textového pole (text box, edit field) místo
+popisku (label). Vyvolává totiž dojem, že font lze takto editovat.
+
+Řešení problému složitého nastavení fontu nemusí být obtížné,
+stačilo by dát uživateli možnost nastavit font a velikost přímo v
+tomto dialogu a tlačítko \emph{Change Symbol\ldots} nahradit \emph{Advanced
+settings\ldots}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{./GUI_screenshots/ArcGIS_text_dialog.png}
+    \caption{ArcGIS: Příklad špatně navrženého dialogu}
+    \label{fig:ArcGIS_text_dialog}
+\end{figure}
+
+\paragraph*{Průvodce nastavením legendy}  Nastavení legendy je poměrně
+složité, proto ArcGIS při vkládání legendy spustí průvodce nastavením,
+což je určitě vhodné řešení. Má ale některé chyby. Pokud v
+kterémkoli kroku zmáčknete tlačítko \emph{Náhled} (\emph{Preview}),
+zobrazí se legenda a kromě toho se také změní tlačítko \emph{Další}
+na \emph{Dokončit}. Uživatel si pak klade otázku, proč musí nejprve
+zmáčknout nesouvisející tlačítko \emph{Náhled}, aby mohl zbytek
+průvodce nastavením přeskočit. Proč nemůže být tlačítko
+\emph{Dokončit} přítomné neustále?
+
+Koncept průvodce nastavením má ještě jednu chybu. Pokud chcete vytvořenou
+legendu v zápětí měnit, otevře se dialog se záložkami, které ovšem
+strukturou a použitými názvy příliš neodpovídají průvodci nastavením,
+což vede ke zmatení uživatele.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{./GUI_screenshots/ArcGIS_legend_wizard.png}
+\caption{ArcGIS: Neočekávané chování průvodce nastavením legendy}
+\label{fig:ArcGIS_legend_wizard}
+\end{figure}
+
+
+\paragraph*{Průvodce nastavením zeměpisné sítě}
+U průvodce nastavením zeměpisné sítě jsem narazila na chybu, která se
+projeví, když se chce uživatel vrátit k předchozím krokům. Průvodce
+totiž obnoví implicitní hodnoty, takže uživatel, který se chtěl jen
+podívat o krok zpět, aby se ujistil o správném nastavení, musí vše
+nastavovat znovu. Na tento problém jsem jinde nenarazila.
+
+ArcGIS má grafické uživatelské rozhraní velice propracované, proto
+bych chtěla několik detailů vyzdvihnout:
+\paragraph*{Místní nabídka (\emph{Context Menu})}
+Nabídka vyvolaná zmáčknutím pravého tlačítka myši, která je v ArcGISu
+hojně využívaná, je efektivním nástrojem, díky kterému se uživatel
+rychle dostane, kam potřebuje. Navíc orientaci v nabídce usnadňují
+postranní ikonky, díky kterým uživatel hned pochopí, co funkce znamená.
+\paragraph*{Rozvržení ovládacích prvků}
+Většina dialogových oken má uspokojivé rozvržení jednotlivých
+ovládacích prvků a zároveň je i správně používá. Obecně platí,
+že rozvržení musí respektovat, zda prvky spolu souvisí či ne. Příklad
+na obrázku č. \ref{fig:ArcGIS_graticule_wizard} ukazuje jedno z možných
+správných řešení, které má následující výhody:
+\begin{inparaenum}[\itshape 1\upshape)]
+\item obrázek zobrazuje vliv různých přepínačů a tím usnadňuje
+uživateli volbu;
+\item vhodné rozdělení a popis textových polí jasně uživateli sděluje,
+v jakém formátu má co kam zadat;
+\item vhodně použité rámečky vizuálně sdružují související
+ovládací prvky.
+\end{inparaenum}
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{./GUI_screenshots/ArcGIS_graticule_wizard.png}
+\caption{ArcGIS: Příklad vhodného rozvržení a použití ovládacích
+prvků}
+\label{fig:ArcGIS_graticule_wizard}
+\end{figure}
+
+\paragraph*{Použití panelů nástrojů}
+Funkcionalita ArcGISu je přístupná nejlépe pomocí různých panelů
+nástrojů (\emph{toolbar}). Výhoda je, že pokud uživatel určitou
+funkcionalitu nepotřebuje, může panel zavřít a ten pak zbytečně
+nepřekáží. Zároveň se panely dají různě posouvat, jsou součástí
+lišty nebo mohou stát samostatně.
+
+
+Grafické rozhraní ArcGISu celkově trpí problémem vyplývajícím z jeho
+široké funkcionality. Nezkušenému uživateli asi bude chvíli trvat,
+než se jej naučí ovládat, protože bude přehlcen všemi možnými
+nastaveními. Osobně jsem se při porovnávání funkcionality v kapitole
+\ref{sec:porovnani_moznosti:ArcGIS} potýkala s problémem, že jsem si
+několikrát myslela, že ArcGIS určitou funcionalitu nepodporuje, protože
+jsem ji nenašla. Až v návodu na internetu jsem zjistila opak.
+
+
 
 \subsubsection{gvSIG}
-% -nekonzistence v dvojteckach, OK vs Accept, nektere dialogy pouzivaji
-group boxy, jine ne
+U grafického uživatelského rozhraní programu gvSIG je patrná mírná
+nekonzistentnost ve vzhledu dialogových oken. Některá dialogová okna se
+nápadně podobají těm v ArcGISu. Na první pohled je to patrné v dialogu
+nastavujícím vlastnosti vrstev, v záložce symbologie. Tato podoba ale
+není na závadu, uživatel se tak při použití nového programu nemusí
+nic učit. Většina ostatních dialogových oken už ale podobná není. Na
+obrázku č. \ref{fig:gvSIG_dialogy} jsou patrné některé drobné chyby,
+které vysvětlím:
+\begin{inparaenum}[\itshape 1\upshape)]
+\item nekonzistence v popisu tlačítek -- stejná funkce ale jiný popis;
+\item při otevření dialogového okna je sice uvedena nabídka možností,
+ale žádná není vybrána, uživatel si toho nevšimne;
+\item ukázka nevhodného rozložení ovládacích prvků, lze jen těžko
+předpokládat, že tlačítko \emph{Configure} patří k zaškrtávacímu
+poli \emph{Show grid};
+\item uživatel netuší, co si má za tři tečky doplnit;
+\item opět nevhodné rozložení ovládacích prvků, nastavení fontu
+nesouvisí s ostatními tlačítky v řadě.
+\end{inparaenum}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{./GUI_screenshots/gvSIG_dialogy.png}
+\caption{gvSIG: Nekonzistence a chyby ve vzhledu dialogových oken}
+\label{fig:gvSIG_dialogy}
+\end{figure}
+
+Další věcí, se kterou jsem nebyla příliš spokojená, je panel
+nástrojů. Při přesouvání jednotlivých částí nereagoval, jak bych
+čekala. Navíc ovládáním pohledu (zoomováním) se zabývalo tolik
+podobných tlačítek, že ve výsledku jsem netušila, které zvolit. To by
+nevadilo, kdyby šlo přibližovat kolečkem myši, což ale nefunguje. Jak je
+vidět na obrázku č. \ref{fig:gvSIG_toolbar}, dvě naprosto stejné ikonky
+mají různé významy (první ručička pohybuje se zobrazovanými daty ve
+výřezu, druhá pohybuje celou stránkou). Navíc zobrazená kontextová
+nápověda je evidentně chybná.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.4\textwidth]{./GUI_screenshots/gvSIG_toolbar.png}
+\caption{gvSIG: Část panelu nástrojů}
+\label{fig:gvSIG_toolbar}
+\end{figure}
+
+% \begin{figure}[h!]
+% \centering
+% \subfloat[][Část panelu nástrojů se stejnými ikonkami]
+% {\includegraphics[width=0.5\textwidth]
+% {./GUI_screenshots/gvSIG_toolbar.png}}
+% \\
+% \subfloat[][Chyby v nabídce \emph{Map}]
+% {\includegraphics[width=0.3\textwidth]
+% {./GUI_screenshots/gvSIG_menu.png}}
+% \caption{gvSIG: chyby v GUI\label{fig:gvSIG_toolbar_menu}}
+%
+% \end{figure}
+
+Grafické rozhraní není navrženo špatně, na druhou stranu mne nenapadá,
+co bych na něm vyzdvihla. Drobné nedostatky a dokonce i překlepy bohužel
+trochu kazí celkový dojem. Z estetického hlediska není grafické rozhraní
+silnou stránkou programu, nicméně to je pouze můj osobní názor.
+
+\subsubsection{QGIS}
+Grafické rozhraní programu QGIS nepůsobí složitě i díky tomu, že QGIS
+nenabízí takové množství různých nastavení. Zaměřím se převážně
+na grafické rozhraní tvorby mapového výstupu -- Map Composer. Je tvořen
+samostaným oknem a má vlastní panel nástrojů, sdílí ale data a jejich
+symbologii. Tím se liší od ArcGISu i gvSIGu, které mají tvorbu map v
+různé míře integrovanou v programu. Částečné oddělení od zbytku
+programu má své výhody a nevýhody, mne osobně vyhovuje více než
+plná integrace, protože zjednodušuje ovládání. Když chce uživatel
+vytvářet mapový výstup, nezajímá ho většinou jiná funkcionalita a
+spíše mu ostatní panely nástrojů překáží.
+
+Zatímco u programů ArcGIS a gvSIG se vlastnosti jednotlivých mapových
+elementů nastavují v samostatných dialogových oknech, QGIS soustřeďuje
+nastavení do dvou záložek, v první je obecné nastavení a obsah
+druhé se dynamicky mění podle vybraného mapového elementu. Aby se
+všechny volby do záložky vešly, jsou volby rozčleněny do jednotlivých
+panelů, které se podle potřeby odkrývají a zakrývají, viz obrázek
+č. \ref{fig:QGIS_panel}. Tento ovládací prvek nemá ustálený název
+a pro některé uživatele může být nezvyklý. Mne osobně přijde
+velice užitečný, protože ušetří mnoho místa a zároveň jsou volby
+dostupné a přehledně uspořádané pod sebou. Neuškodilo by však větší
+zvýraznění jednotlivých položek.
 
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.4\textwidth]{./GUI_screenshots/QGIS_panel.png}
+\caption{QGIS: Hlavní ovládací prvek}
+\label{fig:QGIS_panel}
+\end{figure}
+
+Map Composer používá k ovládání pohledu na mapu pouze tři tlačítka
+na panelu nástrojů a postranní lišty. I když je ovládání méně
+komfortní, má tu výhodu, že se uživatel nemusí dlouze zamýšlet nad
+tím, které z mnoha podobných tlačítek s lupou je to správné.
+
+Grafické rozhraní QGISu je poměrně jednoduché i proto, že program
+neposkytuje tak široké možnosti. Pro mnoho uživatelů to však
+může znamenat i výhodu, jelikož není třeba provádět tolik voleb.
+Z estetického hlediska mi grafické rozhraní QGISu vyhovuje ze všech výše
+jmenovaných programů asi nejvíce, což je sice nepodstatné kritérium
+při volbě softwaru, ale dokáže zpříjemnit jeho používání.
 \subsubsection{GRASS -- wx.psmap}
 
 \subsection{Výsledek porovnání}
@@ -868,7 +1109,8 @@ Nové grafické uživatelské rozhraní wx.psmap bylo stejně jako wxGUI
 GRASSu vyvinuto pomocí knihovny wxPython,
 proto bylo nutné se s knihovnou podrobněji seznámit. Jedním z
 nejvýznamnějších zdrojů informací je demo pro wxPython \cite{demo},
-ve kterém je názorně ukázáno chování všech dostupných widgetů. Při
+ve kterém je názorně ukázáno chování všech dostupných ovládacích
+prvků. Při
 hledání vhodného widgetu pro aplikaci je demo velice užitečné.
 
 Při psaní programu jsem pracovala s knihovnou \emph{GRASS Python

@@ -309,6 +309,8 @@ class Instruction:
         w = units.convert(value = mapRect.Get()[2], fromUnit = 'inch', toUnit = 'meter') / toM
         map['scale'] = w / abs((region['w'] - region['e']))
         
+        SetResolution(dpi = 300, width = map['rect'].width, height = map['rect'].height)
+        
         # read file again, now with information about map bounds
         isBuffer = False
         buffer = []
@@ -316,7 +318,8 @@ class Instruction:
         vectorMapNumber = 1
         file.seek(0)
         for line in file:
-
+            if not line.strip(): 
+                continue
             line = line.strip()
             if isBuffer:
                 buffer.append(line)
@@ -625,7 +628,7 @@ class MapFrame(InstructionObject):
         # default values
         self.defaultInstruction = dict( map = None, mapType = None, drawMap = True, region = None,
                                         rect = wx.Rect2D(), scaleType = 0, scale = None, center = None,
-                                        border = 'y', width = 1, color = '0:0:0') 
+                                        resolution = 300, border = 'y', width = 1, color = '0:0:0') 
         # current values
         self.instruction = dict(self.defaultInstruction)
         
@@ -656,7 +659,7 @@ class MapFrame(InstructionObject):
         
         # scale
         if self.instruction['scaleType'] == 3: #fixed scale
-            scaleInstruction = "scale 1:%.0f" % 1/self.instruction['scale']
+            scaleInstruction = "scale 1:%.0f" % (1/self.instruction['scale'])
             instr += scaleInstruction
             instr += '\n'
         # border
@@ -862,7 +865,7 @@ class Text(InstructionObject):
         
     def __str__(self):
         text = self.instruction['text'].replace('\n','\\n')
-        instr = "text %.3f %.3f" % (self.instruction['east'], self.instruction['north'])
+        instr = "text %s %s" % (self.instruction['east'], self.instruction['north'])
         instr += " %s\n" % text
         instr += string.Template("    font $font\n    fontsize $fontsize\n    color $color\n").substitute(self.instruction)
         instr += string.Template("    hcolor $hcolor\n").substitute(self.instruction)
@@ -920,9 +923,9 @@ class Text(InstructionObject):
                 elif sub == 'rotate':
                     instr['rotate'] = float(line.split(None, 1)[1])
                 elif sub == 'xoffset':
-                    instr['xoffset'] = float(line.split(None, 1)[1])
+                    instr['xoffset'] = int(line.split(None, 1)[1])
                 elif sub == 'yoffset':
-                    instr['yoffset'] = float(line.split(None, 1)[1])
+                    instr['yoffset'] = int(line.split(None, 1)[1])
                 elif sub == 'opaque':
                     if line.split(None, 1)[1].lower() in ('n', 'none'):
                         instr['background'] = 'none'
@@ -1507,7 +1510,7 @@ class VProperties(InstructionObject):
             if line.startswith('lpos'):
                 instr['lpos'] = int(line.split()[1])
             elif line.startswith('label'):
-                instr['label'] = line.split()[1]
+                instr['label'] = line.split(None, 1)[1]
             elif line.startswith('layer'):
                 instr['layer'] = line.split()[1]
             elif line.startswith('masked'):
@@ -2019,6 +2022,19 @@ class MapFramePanel(wx.Panel):
         sizerC.Add(self.centerSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         gridBagSizer.Add(sizerC, pos = (3, 0), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
         
+        
+        #resolution
+        flexSizer = wx.FlexGridSizer(rows = 1, cols = 2, hgap = 5, vgap = 5)
+        
+        resolutionText = wx.StaticText(self, id = wx.ID_ANY, label = _("Map max resolution (dpi):"))
+        self.resolutionSpin = wx.SpinCtrl(self, id = wx.ID_ANY, min = 1, max = 1000, initial = 300)
+        
+        flexSizer.Add(resolutionText, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        flexSizer.Add(self.resolutionSpin, proportion = 0, flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
+        self.resolutionSpin.SetValue(self.mapFrameDict['resolution'])
+        
+        gridBagSizer.Add(flexSizer, pos = (4, 0), flag = wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border = 0)
+        
         sizer.Add(gridBagSizer, proportion = 1, flag = wx.EXPAND|wx.ALL, border = 5)
         border.Add(item = sizer, proportion = 0, flag = wx.ALL | wx.EXPAND, border = 5)
         
@@ -2184,7 +2200,8 @@ class MapFramePanel(wx.Panel):
     def update(self):
         """!Save changes"""
         mapFrameDict = dict(self.mapFrameDict)
-        
+        # resolution
+        mapFrameDict['resolution'] = self.resolutionSpin.GetValue()
         #scale
         scaleType = self.scaleType
         mapFrameDict['scaleType'] = scaleType
@@ -2257,6 +2274,9 @@ class MapFramePanel(wx.Panel):
                         RunCommand('g.region', vect = mapFrameDict['map'], rast = self.instruction[rasterId]['raster'])
                     else:
                         RunCommand('g.region', vect = mapFrameDict['map'])
+                
+                    
+                
             else:
                 wx.MessageBox(message = _("No map selected!"),
                                     caption = _('Invalid input'), style = wx.OK|wx.ICON_ERROR)
@@ -2326,6 +2346,9 @@ class MapFramePanel(wx.Panel):
         
             ComputeSetRegion(self, mapDict = mapFrameDict)
         
+        # check resolution
+        SetResolution(dpi = mapFrameDict['resolution'], width = mapFrameDict['rect'].width,
+                                                        height = mapFrameDict['rect'].height)
         # border
         mapFrameDict['border'] = 'y' if self.borderCheck.GetValue() else 'n'
         if mapFrameDict['border'] == 'y':
@@ -2466,6 +2489,7 @@ class VectorPanel(wx.Panel):
         
         if notebook:
             self.parent.AddPage(page = self, text = _("Vector maps"))
+            self.parent = self.parent.GetParent()
             
     def _layout(self):
         """!Do layout"""
@@ -2473,7 +2497,7 @@ class VectorPanel(wx.Panel):
         
         # choose vector map
         
-        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " %s " % _("Choose map"))
+        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " %s " % _("Add map"))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
         
@@ -2496,7 +2520,7 @@ class VectorPanel(wx.Panel):
         
         # manage vector layers
         
-        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " %s " % _("Vector maps order"))
+        box   = wx.StaticBox (parent = self, id = wx.ID_ANY, label = " %s " % _("Manage vector maps"))
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         gridBagSizer = wx.GridBagSizer (hgap = 5, vgap = 5)
         gridBagSizer.AddGrowableCol(0,2)
@@ -2511,7 +2535,7 @@ class VectorPanel(wx.Panel):
         self.btnDel = wx.Button(self, id = wx.ID_ANY, label = _("Delete"))
         self.btnProp = wx.Button(self, id = wx.ID_ANY, label = _("Properties"))
         
-        self.updateListBox()
+        self.updateListBox(selected = 0)
         
         
         gridBagSizer.Add(text, pos = (0,0), span = (1,2), flag = wx.ALIGN_CENTER_VERTICAL, border = 0)
@@ -2533,6 +2557,8 @@ class VectorPanel(wx.Panel):
         
         self.SetSizer(border)
         self.Fit()
+        
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.OnProperties, self.listbox)
 
     def OnVector(self, event):
         """!Gets info about toplogy and enables/disables choices point/line/area"""
@@ -2580,6 +2606,7 @@ class VectorPanel(wx.Panel):
             self.listbox.SetSelection(0)  
             self.listbox.EnsureVisible(0)
             self.btnProp.SetFocus()
+            self.enableButtons()
             
     def OnDelete(self, event):
         """!Deletes vector map from the list"""
@@ -2593,6 +2620,8 @@ class VectorPanel(wx.Panel):
                 if self.vectorList[i][3]:# can be 0
                     self.vectorList[i][3] -= 1
             self.updateListBox(selected = pos if pos < len(self.vectorList) -1 else len(self.vectorList) -1)
+            if self.listbox.IsEmpty():
+                self.enableButtons(False)
             
             
     def OnUp(self, event):
@@ -2627,7 +2656,12 @@ class VectorPanel(wx.Panel):
             
             self.parent.FindWindowById(wx.ID_OK).SetFocus()
            
-
+    def enableButtons(self, enable = True):
+        """!Enable/disable up, down, properties, delete buttons"""
+        self.btnUp.Enable(enable)
+        self.btnDown.Enable(enable)
+        self.btnProp.Enable(enable)
+        self.btnDel.Enable(enable)
     
     def updateListBox(self, selected = None):
         mapList = ["%s - %s" % (item[0], item[1]) for item in self.vectorList]
@@ -2635,6 +2669,10 @@ class VectorPanel(wx.Panel):
         if selected is not None:
             self.listbox.SetSelection(selected)  
             self.listbox.EnsureVisible(selected)  
+        if self.listbox.IsEmpty():
+            self.enableButtons(False)
+        else:
+            self.enableButtons(True)
               
     def reposition(self):
         """!Update position in legend, used only if there is no vlegend yet"""
@@ -2681,7 +2719,7 @@ class VectorPanel(wx.Panel):
     
 class RasterDialog(PsmapDialog):
     def __init__(self, parent, id, settings):
-        PsmapDialog.__init__(self, parent = parent, id = id, title = "Choose raster map", settings = settings)
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Raster map settings", settings = settings)
         self.objectType = ('raster',)
         
         self.rPanel = RasterPanel(parent = self, id = self.id, settings = self.instruction, notebook = False)
@@ -2718,7 +2756,7 @@ class RasterDialog(PsmapDialog):
                 
 class MainVectorDialog(PsmapDialog):
     def __init__(self, parent, id, settings):
-        PsmapDialog.__init__(self, parent = parent, id = id, title = "Choose vector maps", settings = settings)
+        PsmapDialog.__init__(self, parent = parent, id = id, title = "Vector maps settings", settings = settings)
         self.objectType = ('vector',)
         self.vPanel = VectorPanel(parent = self, id = self.id, settings = self.instruction, notebook = False)
 
@@ -5051,18 +5089,12 @@ class TextDialog(PsmapDialog):
         #effects
         if self.effect['backgroundCtrl'].GetValue():
             background = self.effect['backgroundColor'].GetColour()
-##            if background.GetAsString(wx.C2S_NAME) in PSMAP_COLORS:
-##                self.textDict['background'] = background.GetAsString(wx.C2S_NAME)
-##            else:
             self.textDict['background'] = convertRGB(background)
         else:
             self.textDict['background'] = 'none'        
                 
         if self.effect['borderCtrl'].GetValue():
             border = self.effect['borderColor'].GetColour()
-##            if border.GetAsString(wx.C2S_NAME) in PSMAP_COLORS:
-##                self.textDict['border'] = border.GetAsString(wx.C2S_NAME)
-##            else:
             self.textDict['border'] = convertRGB(border)
         else:
             self.textDict['border'] = 'none' 
@@ -5071,9 +5103,6 @@ class TextDialog(PsmapDialog):
         
         if self.effect['highlightCtrl'].GetValue():
             highlight = self.effect['highlightColor'].GetColour()
-##            if highlight.GetAsString(wx.C2S_NAME) in PSMAP_COLORS:
-##                self.textDict['hcolor'] = highlight.GetAsString(wx.C2S_NAME)
-##            else:
             self.textDict['hcolor'] = convertRGB(highlight)
         else:
             self.textDict['hcolor'] = 'none'
@@ -5267,6 +5296,20 @@ def AutoAdjust(self, scaleType,  rect, map = None, mapType = None, region = None
     cN = (currRegionDict['n'] + currRegionDict['s'])/2
     return scale, (cE, cN), wx.Rect2D(x, y, rWNew, rHNew) #inch
 
+def SetResolution(dpi, width, height):
+    """!If resolution is too high, lower it
+    
+    @param dpi max DPI
+    @param width map frame width
+    @param height map frame height
+    """
+    region = grass.region()
+    if region['cols'] > width * dpi or region['rows'] > height * dpi:
+        rows = height * dpi
+        cols = width * dpi
+        RunCommand('g.region', rows = rows, cols = cols)
+        
+        
 def ComputeSetRegion(self, mapDict):
     """!Computes and sets region from current scale, map center coordinates and map rectangle"""
 
