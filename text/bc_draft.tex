@@ -62,11 +62,8 @@ morecomment=[l]{\#},
 \renewcommand{\refname}{Použité zdroje}
 
 \section{Úvod}
-
-\section{Programy pro tvorbu mapových výstupů}
-
 Tvorba map dnes již dávno není pouze věcí specializovaných
-pracovišť. Rozvoj geografických informačních systémů natolik
+pracovišť. Rozvoj geografických informačních systémů (GIS) natolik
 zjednodušil tvorbu mapových výstupů, že mapy, ať už jakékoli kvality,
 potkáváme na každém kroku. Různé formy map se staly moderním doplňkem
 v novinách, televizních zprávách, letácích a především na internetu,
@@ -76,7 +73,31 @@ Definic geografického informačního systému (dále jen GIS) existuje mnoho
 a další časem pravděpodobně ještě vzniknou, jak se bude tato oblast
 vyvíjet. Někteří odborníci v definicích vyzdvihují význam složky
 datové, jiní zas analytické, v souvislosti s tématem této práce je
-ale důležité především znázornění dat.
+ale důležité především kartografické znázornění dat.
+
+GRASS GIS patří mezi nejpoužívanější geografické informační systémy v kategorii
+svodného softwaru (tzv. open source software). Je to mimo jiné výborný nástroj
+pro zpracování geografických dat  a jejich analýzu, nicméně v tvorbě mapových
+výstupů nedostačuje dnešním požadavkům. GRASS disponuje modulem ps.map, který
+vytváří mapové výstupy ve formátu PostScript, nicméně není uživatelsky
+přívětivý z důvodu absence grafického uživatelského rozhraní. Úkolem této práce
+bylo tento nedostatek alespoň z části napravit  poskytnutím
+komfortnějšího ovládání tohoto modulu přes grafické rozhraní.
+Grafické rozhraní wx.psmap je napsané za pomoci grafické knihovny wxPython a tím
+navazuje na moderní wxGUI systému GRASS GIS.
+
+Součástí práce bylo i prozkoumání možností několika komerčních i nekomerčních
+programů z hlediska jejich kartografických výstupů. Soustředila jsem se spíše
+na konkrétní vlastnosti, které mne určitým způsobem zaujaly, než na kompletní
+rozbor funkcionality. Následuje i porovnání jejich grafických rozhraní, která
+zásadně ovlivňují použitelnost programů a také jejich oblíbenost. Vyšla jsem z
+obecných zásad tvorby grafického rozhraní, doplněných jasnými příklady jejich
+nerespektování. 
+
+Výsledky této práce snad přispějí ke zvýšení konkurenceschopnosti systému GRASS
+GIS v oblasti kartografických výstupů a usnadní práci novým i dosavadním
+uživatelům modulu \modul{ps.map}. 
+\section{Programy pro tvorbu mapových výstupů}
 
 Existuje poměrně velké množství programů umožňujících tvorbu
 mapových výstupů. Většinou tato funkcionalita nestojí samostatně,
@@ -109,7 +130,7 @@ open source programy \emph{gvSIG 1.10}, \emph{Quantum GIS} verze
 \emph{1.6.0-Copiapo} a samozřejmě modul \modul{ps.map} systému \emph{GRASS
 GIS}.
 Toto porovnání si neklade za cíl vytvořit kompletní seznam
-funcionality programů, což by bylo téma pro samostatnou práci,
+funkcionality programů, což by bylo téma pro samostatnou práci,
 cílem je pouze zdůraznit některé zajímavé možnosti, které programy
 nabízí. Detailněji je pak popsán modul \modul{ps.map}, jehož možnosti
 bylo třeba zkoumat do nejmenších podrobností.
@@ -126,7 +147,7 @@ zatímco Layout View je použit pro vytvoření mapového výstupu,
 zobrazuje výřez mapy na stránce. Tyto dva módy jsou propojené a
 změny se projevují v obou. ArcGIS podporuje pokročilé nastavení
 symbologie a vytváření kartogramů či kartodiagramů. Tato nastavení se
-pak promítjí v legendě. V Layout View lze zobrazit vodící linky a
+pak promítají v legendě. V Layout View lze zobrazit vodící linky a
 mřížku pro přesnější pozicování  a  přidávat mapové elementy:
 legenda, měřítko grafické a číselné, směrovou růžici, titulek,
 text, dynamický text, rámeček, obrázek, jiný objekt (tabulku, graf).
@@ -220,9 +241,9 @@ GRASS GIS (viz část \ref{sec:grass} na straně \pageref{sec:grass})
 jakožto významný představitel open source geografických informačních
 systémů má v tvorbě mapových výstupů značné rezervy. Prakticky
 jediným vhodným nástrojem, kterým GRASS GIS v současnosti disponuje,
-je modul \modul{ps.map}\footnote{V současné době je vyvíjen modul
+je modul \modul{ps.map}.\footnote{V současné době je vyvíjen modul
 \modul{ps.output}, který rozšiřuje možnosti \modul{ps.map} a možná
-jej v budoucnu nahradí, nicméně zatím je k dispozici jen v grass-addons.}.
+jej v budoucnu nahradí, nicméně zatím je k dispozici jen v grass-addons.}
 
 Pro uživatele je základním rozdílem mezi \modul{ps.map} a ostatními
 programy pro tvorbu mapových výstupů  absence grafického uživatelského
@@ -237,7 +258,7 @@ zbytku programu. To se projevuje tím, že je nutné explicitně uvést
 všechny mapové vrstvy, které se mají zobrazit, a také nastavit jejich
 vzhled, nehledě na mapové vrstvy aktuálně zobrazované  v grafickém
 uživatelském prostředí GRASSu. Modul \modul{psmap} nevytváří
-tematicke mapy přímo, lze si ale pomoci modulem \emph{d.vect.thematic},
+tematické mapy přímo, lze si ale pomoci modulem \emph{d.vect.thematic},
 který umí vygenerovat příslušnou část konfiguračního souboru.
 
 Modul \modul{ps.map} nepodporuje češtinu, což je dáno použitým
@@ -248,13 +269,17 @@ kvůli některým chybějícím znakům s diakritikou. Navíc některé texty
 
 Mapový výstup \modul{ps.map} obsahuje většinu standardních prvků jako
 legenda, měřítko apod. Možnosti nastavení jejich vzhledu nejsou tak
-široké jako u jiných programů, což v některých případech nevadí.
+široké jako u jiných programů, což v některých případech není na závadu. Od
+ostatních programů se odlišují také tím, že se v jednom mapovém výstupu může
+daný mapový prvek objevit pouze jednou.\footnote{Výjimkou jsou například
+instrukce \instr{text, point, line} a \instr{rectangle}.} Toto omezení většinou
+nevadí s výjimkou mapového rámce (viz následující část). 
 
 \paragraph*{Mapový rámec}
 Nevýhodou \modul{ps.map} je chybějící podpora pro více mapových
 rámců. V jednom mapovém výstupu lze tak zobrazit pouze jednu
-oblast\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou,
-ale to není dostatečně komfortní řešení.}. Dalším omezením je
+oblast.\footnote{Toto omezení se dá obejít vložením EPS souboru s mapou,
+ale to není dostatečně komfortní řešení.} Dalším omezením je
 vykreslení maximálně jedné rastrové mapy (případně složené 3 vrstvy
 jako RGB). Vektorových map lze nicméně přidat libovolný počet. Lze u
 nich nastavit vzhled (symboly, styl čáry, barevnost, výplň, ...) a také
@@ -266,7 +291,7 @@ V mapovém rámci lze dále zobrazit zeměpisnou síť (grid), popisky
 \paragraph*{Legenda}
 Vzhled legendy \modul{ps.map} se v zásadě příliš neliší od ostatních
 programů. V podstatě jediným podstatnějším rozdílem je fakt, že
-\modul{ps.map} striktně rozlišuje rastrovou a vektorou legendu. Jde o dva
+\modul{ps.map} striktně rozlišuje rastrovou a vektorovou legendu. Jde o dva
 oddělené objekty, což není obvyklé a asi ani žádoucí řešení. Vzhled
 rastrové legendy závisí na typu dat, je buď spojitá, nebo rozdělená
 podle kategorií, to je běžné i v ostatních programech.
@@ -336,7 +361,7 @@ GUI je dnes natolik samozřejmou součástí aplikace, že jej mnoho
 uživatelů považuje za program samotný a neuvědomuje si, že jde
 pouze o rozhraní. Pokud je grafické rozhraní navrženo špatně,
 může být samotný program sebelepší a přesto jej nebude chtít nikdo
-používat\footnote{Naopak to samozřejmě platí také.}. Navrhnout dobře
+používat.\footnote{Naopak to samozřejmě platí také.} Navrhnout dobře
 vypadající a funkční grafické rozhraní není vůbec jednoduché a to
 především u rozsáhlých programů se širokou funkcionalitou.
 
@@ -389,7 +414,7 @@ potřebnou vlastností je bezpečnost, tedy pokud uživatel udělá chybu,
 mělo by být snadné situaci napravit. Uživatelé tak mohou s klidem
 zkoumat další funkcionalitu a nemusí se bát, že něco zkazí.
 
-\item [Postatné je dodávat informace a ne pouze data.] Pokud program
+\item [Podstatné je dodávat informace a ne pouze data.] Pokud program
 zobrazuje data, kterých si kvůli špatnému umístění nebo nedostatečnému
 zvýraznění nikdo nevšimne, nepřináší uživatelům vlastně žádné
 informace. Zároveň není vhodné při zobrazení nových informací výrazně
@@ -491,7 +516,7 @@ průvodce nastavením přeskočit. Proč nemůže být tlačítko
 \emph{Dokončit} přítomné neustále?
 
 Koncept průvodce nastavením má ještě jednu chybu. Pokud chcete vytvořenou
-legendu v zápětí měnit, otevře se dialog se záložkami, které ovšem
+legendu vzápětí měnit, otevře se dialog se záložkami, které ovšem
 strukturou a použitými názvy příliš neodpovídají průvodci nastavením,
 což vede ke zmatení uživatele.
 
@@ -741,7 +766,7 @@ Nejjednodušší je nainstalovat stabilní verzi GRASS 6.4, která je
 dostupná v balíčku. Lze ji proto nainstalovat pomocí správce balíčků
 \emph{Synaptic}. Nebo do příkazové řádky napsat:
 \begin{alltt}
-{\footnotesize sudo apt-get install grass grass-doc}
+{\footnotesize \$ sudo apt-get install grass grass-doc}
 \end{alltt}
 
 Nové grafické rozhraní pro modul \modul{ps.map} je funkční pro verze 6.5
@@ -751,23 +776,24 @@ spustit instalační skript. Tyto soubory jsou týdně aktualizovány. Pokud
 chcete i zdrojový kód, lze si soubory stáhnout z repozitáře SVN, a to buď
 formou tzv. \emph{SVN snapshot} bez založení lokálního repozitáře nebo
 se založením lokálního repozitáře pomocí následujících příkazů:
-\begin{alltt}
-{\footnotesize
-svn checkout https://svn.osgeo.org/grass/grass/branches/develbranch_6
-grass6_devel}
-\end{alltt}
+\begin{footnotesize}
+\begin{verbatim}
+$ svn checkout https://svn.osgeo.org/grass/grass/branches/develbranch_6 grass6_devel
+\end{verbatim}
+\end{footnotesize}
 pro verzi 6.5 a pro verzi 7:
-\begin{alltt}
-{\footnotesize
-svn checkout https://svn.osgeo.org/grass/grass/trunk grass_trunk}
-\end{alltt}
+\begin{footnotesize}
+\begin{verbatim}
+$ svn checkout https://svn.osgeo.org/grass/grass/trunk grass_trunk
+\end{verbatim}
+\end{footnotesize}
 Tato možnost má tu výhodu, že po instalaci lze jednoduše provádět
 aktualizaci pomocí \verb|svn up|. Postup instalace je následující: ve
 vybraném adresáři (například \verb|/usr/local/src|) s právem zápisu
 spustťe výše uvedený příkaz a po stažení repozitáře pokračujte
 spuštěním
 \begin{alltt}
-{\footnotesize ./configure}
+{\footnotesize \$ ./configure}
 \end{alltt}
 Velmi pravděpodobně skript skončí předčasně
 kvůli chybějící knihovně. Je třeba se podívat,
@@ -792,7 +818,8 @@ parametrech skriptu configure.
 Pro nápovědu použijte \verb|./configure --help|.
 Správnou cestu lze pak nastavit například takto:
 \begin{alltt}
-{\footnotesize./configure --with-freetype-includes=/usr/include/freetype2   }
+{\footnotesize \$ ./configure --with-freetype-includes=/usr/include/freetype2
+}
 \end{alltt}
 
 Po korektním skončení \verb|configure| následuje kompilace pomocí
@@ -832,6 +859,10 @@ Window]{\includegraphics[width=0.45\textwidth]{./wxgui_map_display.png}}
 \caption{Dvě hlavní komponenty wxGUI v GRASS 7\label{fig:wxgui}}
 
 \end{figure}
+
+Alternativou vlastního grafického rozhraní GRASS GIS, je již zmiňovaný
+program QGIS. Díky úzké spolupráci obou programů, lze QGIS používat i jako GUI
+pro GRASS a mnoho uživatelů si tento způsob oblíbilo.
 
 \subsection{Modul ps.map}
 \label{sec:psmap}
@@ -951,7 +982,7 @@ První z nich -- souřadnicový systém papíru -- má počátek v levém
 horním rohu, kladná osa \emph{x} směřuje doprava a osa \emph{y} směrem
 dolů (tedy odpovídá systému obvyklému v počítačové grafice).
 Je-li poloha určena v tomto sytému, očekávanou jednotkou je inch\footnote{
-česky palec, odpovídá $2{},54$ cm}.
+česky palec, odpovídá $2{,}54$ cm}.
 
 Druhý systém -- systém mapového rámce -- má počátek souřadnic v
 levém dolním rohu mapového rámce s pravotočivou orientací os obvyklou v
@@ -998,9 +1029,9 @@ V mnoha instrukcích se vyskytuje nastavení barvy. Bohužel velká část
 instrukcí omezuje výběr barev tím, že vyžaduje zadat barvu ve formě
 jejího jména, tedy např. \emph{aqua}, \emph{black}, \emph{blue}, \ldots
 Některé jiné instrukce však umožňují zadat barvu i ve tvaru R:G:B. Bylo
-by proto logické, kdyby RGB podporovaly všechny instrukce\footnote{Tyto
+by proto logické, kdyby RGB podporovaly všechny instrukce.\footnote{Tyto
 problémy jsou již v současnosti vyřešené, alespoň pro instrukce,
-které wx.psmap podporuje}.
+které wx.psmap podporuje.}
 
 \paragraph*{Jednořádkové a víceřádkové instrukce}
 \label{sec:psmap:singleline}
@@ -1025,13 +1056,16 @@ smyslu, když tuto instrukci neuvedu, legenda se prostě nevykreslí.
 
 \paragraph*{Mapinfo}
 \label{sec:psmap:mapinfo}
-Mapový prvek \emph{mapinfo}, se v některých případech špatně
+Mapový element \emph{mapinfo}, se v některých případech špatně
 vykreslí. Problém nastává, když jej uživatel chce umístit nalevo
 od mapového rámce. Modul \modul{ps.map} přesune mapinfo tak, že se
 vertikálně zarovná k mapovému rámci, neboli převezme \emph{x}-ovou
-sořadnici rámce. Další chybou je špatné barevné vykreslení barvy
+sořadnici rámce. Dalším problémem je špatné barevné vykreslení barvy
 pozadí a ohraničující linie. Barvy se nevykreslí, když je mapinfo
 mimo mapový rámec.
+Do budoucna bych navrhovala mapinfo přepsat do takové podoby, aby umožnil
+zobrazit své jednotlivé části samostatně (číselné měřítko, rozsah, síť), tím
+by se zvýšila jeho použitelnost.
 
 \paragraph*{Nekonzistence u instrukce \instr{vlines}}
 \label{sec:psmap:vlines}
@@ -1078,8 +1112,8 @@ Výstupní soubor má titulek \emph{Mapset = \textless aktuální
 mapset\textgreater}, což mnoho neříká a navíc rovnítko v titulku
 nepůsobí hezky. Uživatel by mohl mít možnost změnit titulek,
 případně by se titulek měl převzít z aktuálního rastru, případně
-vektoru\footnote{GUI aplikace by sice mohla napravit tento nedostatek,
-nicméně je vhodnější toto upravit přímo v modulu \modul{ps.map}.}.
+vektoru.\footnote{GUI aplikace by sice mohla napravit tento nedostatek,
+nicméně je vhodnější toto upravit přímo v modulu \modul{ps.map}.}
 
 
 
@@ -1099,11 +1133,8 @@ Pro fungování wx.psmap je potřeba mít nainstalovanou verzi
 GRASS 6.5 a vyšší. Na operačním systému MS Windows je wx.psmap
 součástí instalačních souborů, na Linuxu lze wx.psmap instalovat buď
 prostřednictvím wxGUI GRASSu nebo z příkazové řádky GRASSu. Konkrétní
-postup je uveden na GRASS-Wiki na stránce tohoto projektu \cite{wiki_wxpsmap}
-% % Aplikace je napsána primárně pro GRASS 7 a měla by fungovat i v
-% GRASS 6.5. %a testována pod operačním systémem Linux, distribuce Ubuntu
-% 10.04 LTS.
-% % Popíši postup pro GRASS 7.
+postup je uveden na GRASS-Wiki na stránce tohoto projektu \cite{wiki_wxpsmap}.
+
 \subsection{Podklady a použité knihovny}
 Nové grafické uživatelské rozhraní wx.psmap bylo stejně jako wxGUI
 GRASSu vyvinuto pomocí knihovny wxPython,
@@ -1124,18 +1155,18 @@ V následujícím textu jsou shrnuty hlavní vlastnosti wx.psmap a možnosti
 jejího využití.
 
 \paragraph*{Podporované instrukce}
-    Aplikace v současné době podporuje pouze vybrané instrukce, a to:
-    \instr{border}, \instr{colortable}, \instr{mapinfo}, \instr{maploc},
-    \instr{paper}, \instr{raster}, \instr{scale}, \instr{scalebar},
-    \instr{text}, \instr{vareas}, \instr{vlines}, \instr{vpoints} a
-    \instr{vlegend}. Prakticky to znamená, že mapový výstup může
-    obsahovat rastrovou mapu, libovolný počet map vektorových, legendu (pro
-    rastr a pro vektorovou mapu), grafické měřítko, informace o regionu
-    s číselným měřítkem a libovolné množství textu. V budoucnu se
-    počítá s podporou dalších instrukcí. Pokud uživatel potřebuje
-    použít některé dosud nepodporované instrukce, má možnost část
-    práce vykonat v GUI aplikaci a nechat si vygenerovat konfigurační
-    soubor. Tam tyto instrukce doplní a spustí přímo modul \modul{ps.map}.
+Aplikace v současné době podporuje pouze vybrané instrukce, a to:
+\instr{border}, \instr{colortable}, \instr{mapinfo}, \instr{maploc},
+\instr{paper}, \instr{raster}, \instr{scale}, \instr{scalebar},
+\instr{text}, \instr{vareas}, \instr{vlines}, \instr{vpoints} a
+\instr{vlegend}. Prakticky to znamená, že mapový výstup může
+obsahovat rastrovou mapu, libovolný počet map vektorových, legendu (pro
+rastr a pro vektorovou mapu), grafické měřítko, informace o regionu
+s číselným měřítkem a libovolné množství textu. V budoucnu se
+počítá s podporou dalších instrukcí. Pokud uživatel potřebuje
+použít některé dosud nepodporované instrukce, má možnost část
+práce vykonat v GUI aplikaci a nechat si vygenerovat konfigurační
+soubor. Tam tyto instrukce doplní a spustí přímo modul \modul{ps.map}.
 
 \paragraph*{Možné výstupy aplikace}
 Výsledkem práce s wx.psmap je mapový výstup ve formátu PostScript,
@@ -1152,8 +1183,8 @@ je ale načítat soubor vytvořený touto aplikací. To dáno tím, že
 aplikace při vytváření konfiguračního souboru zapisuje i informace o
 regionu do komentáře, což není standardní součástí konfiguračního
 souboru. Navíc je aplikace více otestovaná právě pro načítání
-vlastních souborů\footnote{Je nutné podotknout, že si aplikace nevytváří
-žádný vlastní odlišný formát.}.
+vlastních souborů.\footnote{Je nutné podotknout, že si aplikace nevytváří
+žádný vlastní odlišný formát.}
 
 \paragraph*{Koncept a náhled}
 Aplikace rozlišuje dva módy -- koncept a náhled (\emph{Draft mode}
@@ -1349,13 +1380,44 @@ byly používané souřadnicové systémy a jednotky (viz část
  v příslušném dialogu vyplnit velikost fontu a další parametry
  ovlivňující rozměry, jsou-li k dispozici. Opět je výjimkou mapový
  rámec, jehož rozměry lze měnit interaktivně. Při označení objektu
- se objeví v pravém dolním rohu značka, když se na ní najede kurzorem a
- podrží se levé tlačítko myši, mapový rámec mění své rozměry. Jde
- sice o jednoduchý způsob, ale snad dostatečný.
+ se objeví v pravém dolním rohu značka. Když na ní uživatel klikne levým
+tlačítkem myši a pohybuje kurzorem, mapový rámec mění své rozměry. Podle
+aktuálně nastaveného regionu se při změně velikosti rámce zachovává poměr délek
+jeho stran tak, aby rozměry mapového rámce v módu konceptu odpovídaly těm
+skutečně vykresleným modulem \modul{ps.map}.
 
 
 
 \section{Závěr}
+Cílem této práce  bylo vytvoření grafického uživatelského rozhraní  pro modul
+\modul{ps.map} systému GRASS GIS. Tento modul slouží ke tvorbě mapových
+výstupů, a přestože nepodporuje tak širokou funkcionalitu jako některé jiné
+programy, pro běžné kartografické práce plně postačuje. Jeho nevýhoda spočívá
+převážně ve způsobu ovládání, vytvoření konfiguračního souboru je totiž poměrně
+pracné.
+
+Grafické rozhraní bylo napsáno pomocí grafické knihovny wxPython. Snažila jsem
+se dodržovat obecné i konkrétní zásady pro tvorbu GUI tak, aby byl program
+jednoduše ovladatelný a použitelný. Zároveň vzhledově odpovídá
+současnému  grafickému rozhraní systému GRASS GIS.
+
+Výsledkem této práce je funkční aplikace wx.psmap s oficiálním názvem Hardcopy
+Map Output Utility, vytvářející mapový výstup právě pomocí modulu
+\modul{ps.map}. Umožňuje uživatelům pohodlně poskládat
+základní mapové elementy na stránku a vygenerovat dva druhy výstupu -- obrazový
+(ve formátu PostScript) a textový (konfigurační soubor). Druhý zmíněný soubor
+lze programem také načíst a dále upravit.
+
+Při práci jsem se potýkala s jistou nekonzistencí instrukcí u modulu
+\modul{ps.map} a také jsem zaznamenala určitá problematická chování modulu. V
+průběhu práce se podařilo vývojářům GRASS GIS některé menší komplikace
+odstranit, čímž se tvorba grafického rozhraní alespoň částečně zjednodušila.
+
+
+V rámci této práce byla implementována větší část funkcionality modulu a to
+tak, že byly vybrány nejdůležitější instrukce. V plánu je podpora dalších
+instrukcí, záležet bude především na mých časových možnostech v dalších
+měsících.
 
 \begin{thebibliography}{9}
 \label{literatura}
