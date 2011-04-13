@@ -76,9 +76,9 @@ datové, jiní zas analytické, v souvislosti s tématem této práce je
 ale důležité především kartografické znázornění dat.
 
 GRASS GIS patří mezi nejpoužívanější geografické informační systémy v kategorii
-svodného softwaru (tzv. open source software). Je to mimo jiné výborný nástroj
+svobodného softwaru (tzv. open source software). Je to mimo jiné výborný nástroj
 pro zpracování geografických dat  a jejich analýzu, nicméně v tvorbě mapových
-výstupů nedostačuje dnešním požadavkům. GRASS disponuje modulem ps.map, který
+výstupů nedostačuje dnešním požadavkům. GRASS disponuje modulem \modul{ps.map}, který
 vytváří mapové výstupy ve formátu PostScript, nicméně není uživatelsky
 přívětivý z důvodu absence grafického uživatelského rozhraní. Úkolem této práce
 bylo tento nedostatek alespoň z části napravit  poskytnutím
@@ -257,7 +257,7 @@ Dalším výrazným rozdílem je oddělenost tvorby mapového výstupu od
 zbytku programu. To se projevuje tím, že je nutné explicitně uvést
 všechny mapové vrstvy, které se mají zobrazit, a také nastavit jejich
 vzhled, nehledě na mapové vrstvy aktuálně zobrazované  v grafickém
-uživatelském prostředí GRASSu. Modul \modul{psmap} nevytváří
+uživatelském prostředí GRASSu. Modul \modul{ps.map} nevytváří
 tematické mapy přímo, lze si ale pomoci modulem \emph{d.vect.thematic},
 který umí vygenerovat příslušnou část konfiguračního souboru.
 
@@ -893,7 +893,7 @@ pracné, umisťování mapových prvků na vhodnou pozici se často neobejde
 bez vedlejších výpočtů, což ke konformitě používání příliš
 nepřispívá. Z toho je zřejmé, že v současnosti \modul{ps.map} využívá
 pouze poměrně úzká komunita uživatelů GRASSu. Nové grafické rozhraní
-\emph{wx.pasmap} přímo vytváří konfigurační soubor, na základě
+\emph{wx.psmap} přímo vytváří konfigurační soubor, na základě
 něhož poté \modul{ps.map} vygeneruje mapový výstup. Není pak třeba
 se konfiguračním souborem zabývat, což může zpříjemnit používání
 tohoto modulu, a tím i rozšířit řady jeho uživatelů.
@@ -1335,7 +1335,7 @@ byly používané souřadnicové systémy a jednotky (viz část
  možnost zvolit si u textu jeho referenční bod, což znamená problémy
  při jeho zobrazování v GUI aplikaci. Situaci totiž komplikují další
  faktory jako rotace textu a odsazení (\emph{offset}).
- Gui aplikace by musela na základě těchto parametrů provádět zbytečně
+ GUI aplikace by musela na základě těchto parametrů provádět zbytečně
  složité výpočty, aby byla schopna určit přesné místo, kam se
  má text vykreslit a jaký je jeho ohraničující obdélník. V tomto
  místě jsem narazila na určité rezervy, které knihovna \emph{wxPython}
@@ -1424,7 +1424,7 @@ měsících.
 \bibitem{manual}
 GRASS Development Team. \textit{GRASS GIS 7.0.svn Reference
 Manual} [online], c2003-2011 [cit. 2011-03-19].\\ URL:
-\url{http://grass.fbk.eu/grass70/manuals/html70_user/ps.map.html}
+\url{http://grass.osgeo.org/grass70/manuals/html70_user/ps.map.html}
 
 \bibitem{grass_gis}
 NETELER, Markus; MITASOVA, Helena. \textit{Open Source GIS: A
@@ -1459,7 +1459,7 @@ GUI for ps.map [online], poslední aktualizace
  \url{http://geo.fsv.cvut.cz/gwiki/153YZOD_Zpracov%C3%A1n%C3%AD_obrazov%C3%BDch_dat_-_cvi%C4%8Den%C3%AD_1}
 
 \bibitem{grass_page}
-\url{http://grass.fbk.eu}
+\url{http://grass.osgeo.org}
 
 \bibitem{wxGUI_clanek}
 \url{http://geo.fsv.cvut.cz/~landa/publications/2008/gis-ostrava-08/paper/landa-grass-gui-wxpython.pdf}
