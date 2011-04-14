@@ -3,7 +3,7 @@
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
 \usepackage{xcolor}
-\usepackage[czech]{babel}
+\usepackage[english, czech]{babel}
 \usepackage[pdftex, final]{graphicx}
 \usepackage[pdftex, final, colorlinks=true]{hyperref}
 \usepackage{verbatim}
@@ -16,7 +16,7 @@
 \parskip=0.8ex plus 0.4ex minus 0.1 ex
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% Listings %%%%%%%%%%%%%%%%%
 \usepackage[final]{listings}
 
 \definecolor{lightGrey}{RGB}{250,250,250}
@@ -51,16 +51,59 @@ morecomment=[l]{\#},
 {\lstset{style=psmap,
    #1}}
    {}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\refname}{Použité zdroje}
+\newcommand{\klicslova}[2]{\noindent\textbf{#1: }#2}
 \newcommand{\modul}[1]{\emph{#1}}
 \newcommand{\instr}[1]{\lstinline[style=psmapInline]|#1|}
 \author{Anna Kratochvílová}
 % \pagecolor{darkGrey}
 
-\begin{document}
-\tableofcontents
-\renewcommand{\refname}{Použité zdroje}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\begin{abstract}
+Cílem této bakalářské práce bylo vytvoření grafického uživatelského rozhraní
+(GUI) pro tvorbu mapových výstupů v systému GRASS. Mapové výstupy jsou
+vytvářeny modulem ps.map na základě textového souboru s instrukcemi. Nové
+grafické rozhraní umožňuje interaktivní tvorbu mapových výstupů a
+tím ji uživatelům usnadňuje. GUI implementuje větší část funcionality modulu
+ps.map a je napsáno pomocí grafické knihovny wxPython.
+Text bakalářské práce se dále věnuje problematickým částem modulu ps.map a
+zároveň obsahuje i  srovnání vybraných programů pro tvorbu mapových výstupů z
+hlediska jejich funkcionality a grafických rozhraní.
+\bigskip
+
+\klicslova{Klíčová slova}{GIS, GRASS GIS, ps.map, GUI, wxPython, mapový výstup}
+\end{abstract}
+
+\selectlanguage{english}
+\begin{abstract}
+The aim of this bachelor thesis was to develop a graphical user interface
+(GUI) for composing hardcopy map outputs in the GRASS GIS. Hardcopy maps
+are created by module ps.map which requires a text file with instructions. New
+graphical interface allows to compose  maps interactively to make it more
+comfortable for users. GUI implements most of the ps.map funcionality and it is
+developed with the GUI toolkit wxPython.
+Additionally, this thesis  deals with the problematic features of the
+module ps.map and it also includes the comparison of selected software for
+creating hardcopy map outputs terms of their functionality and graphical
+interface.
+\bigskip
+
+\klicslova{Keywords}{GIS, GRASS GIS, ps.map, GUI, wxPython, hardcopy map output}
+\end{abstract}
+\selectlanguage{czech}
+
+\newpage
+\tableofcontents
+
+
+
+
+\newpage
 \section{Úvod}
 Tvorba map dnes již dávno není pouze věcí specializovaných
 pracovišť. Rozvoj geografických informačních systémů (GIS) natolik
@@ -690,7 +733,6 @@ může znamenat i výhodu, jelikož není třeba provádět tolik voleb.
 Z estetického hlediska mi grafické rozhraní QGISu vyhovuje ze všech výše
 jmenovaných programů asi nejvíce, což je sice nepodstatné kritérium
 při volbě softwaru, ale dokáže zpříjemnit jeho používání.
-\subsubsection{GRASS -- wx.psmap}
 
 \subsection{Výsledek porovnání}
 Je důležité, aby software pro mapové výstupy splňoval poměrně
