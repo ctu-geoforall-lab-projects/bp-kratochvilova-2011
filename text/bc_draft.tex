@@ -66,6 +66,16 @@ morecomment=[l]{\#},
    frame=lines,
    backgroundcolor=\color{lightGrey},
 }
+
+
+\lstdefinestyle{script}{
+    language=bash,
+    basicstyle={\ttfamily\footnotesize},
+    keywordstyle={\bfseries},
+    commentstyle={\itshape},
+    frame=lines,
+    backgroundcolor=\color{lightGrey}
+}
 \lstnewenvironment{psmap}[1][]
 {\lstset{style=psmap,
    #1}}
@@ -201,10 +211,10 @@ open source varianta, a to jen kvůli neznalosti.
 V rámci práce na grafickém rozhraní pro modul \modul{ps.map} bylo
 vhodné se seznámit s funkcionalitou aspoň některých programů, které
 se používají pro mapové výstupy. Vzhledem k dostupnosti softwaru byl
-pro porovnání vybrán proprietární software \emph{ArcGIS 10.0} a
-open source programy \emph{gvSIG 1.10}, \emph{Quantum GIS} verze
-\emph{1.6.0-Copiapo} a samozřejmě modul \modul{ps.map} systému \emph{GRASS
-GIS}.
+pro porovnání vybrán proprietární software \emph{ArcGIS 10.0} %, OCAD
+a open source programy \emph{gvSIG 1.10}, \emph{Quantum GIS} verze
+\emph{1.6.0-Copiapo}, \emph{GMT} verze 4.5.1 a samozřejmě modul \modul{ps.map}
+systému \emph{GRASS}.
 Toto porovnání si neklade za cíl vytvořit kompletní seznam
 funkcionality programů, což by bylo téma pro samostatnou práci,
 cílem je pouze zdůraznit některé zajímavé možnosti, které programy
@@ -289,8 +299,7 @@ konvertovat velké množství formátů.
 
 \subsubsection{QGIS}
 Quantum GIS\footnote{\url{http://www.qgis.org}} je rychle rostoucí GIS projekt
-psaný v C++/Qt, je opět
-šířený
+psaný v C++/Qt, je opět šířený
 pod licencí GNU/GPL. Pro tvorbu mapových výstupů slouží \emph{Map
 Composer}, jehož funkcionalita plně nedosahuje úrovně programů ArcGIS
 ani gvSIG, nicméně pro ne příliš sofistikované mapové výstupy je to
@@ -314,6 +323,67 @@ vrstvu, z tabulky se dají vybrat pouze některé atributy a také lze
 vhodně záznamy seřadit. Tuto funkcionalitu z porovnávaných programů
 poskytuje pouze ArcGIS, ale nastavení vlastností tabulky zde už není
 tak jednoduché.
+
+\subsubsection{GMT}
+\label{sec:porovnani:gmt}
+\emph{GMT} neboli \emph{Generic Mapping Tools} \cite{GMT} je software
+specializovaný na zobrazení dvourozměrných a třírozměrných dat v mnoha
+kartografických projekcích, jejich
+analýzu a další zpracování (vzorkování, fitování, triangulace a jiné). Software
+GMT vznikal od roku 1998 pod licení GNU/GPL, skládá se z více podprogramů (přes
+60), které jsou napsány v jazyce C. Je především určen pro unixové systémy, i
+když na operačním systému Windows jej lze za určitých podmínek také používat. 
+Oproti výše zmíněným programům se GMT odlišuje jednak vysokou specializací na
+mapové výstupy a také způsobem ovládání. GMT je totiž ovládán pomocí příkazové
+řádky, kdy jednotlivé programy jsou typicky volány ve skriptu, což umožňuje
+automatizaci úkonů a zvyšuje efektivitu. Vzhledem k množství různých nastavení
+by bylo velice obtížné vytvořit použitelné grafické rozhraní, které by nabízelo
+stejnou funkcionalitu. Existuje sice několik málo GUI, například
+\emph{iGMT}\footnote{\url{http://geodynamics.usc.edu/~becker/igmt/}}, nicméně
+tyto projekty se příliš nerozvíjí. GMT je proto software především pro
+inženýry a vědecké pracovníky, využíván je nejen v geografii, ale i v
+matematických, fyzikálních či medicínských výzkumech a také v komerční sféře.
+Naučit se ovládat tento software je relativně náročné, odměnou jsou ale
+efektní a originální mapové výstupy. Na stránkách GMT \cite{GMT} je dostupný
+manuál, tutoriál a mnoho příkladů i s potřebnými daty.
+
+Popisovat veškerou funkcionalitu GMT je již nad rámec tohoto textu, variabilita
+mapových výstupů je tak vysoká, že zkušený uživatel dokáže s GMT vykreslit
+téměř cokoliv. Z nejčastěji používaných příkazů, které slouží přímo k
+vykreslování map a mapových elementů, zmíním například \verb|grdimage| pro
+zobrazení rastrových dat, \verb|psbasemap| pro mapový rámec a existují další
+jako \verb|pslegend|, \verb|psscale|, \verb|pstext|. Jak názvy programů
+naznačují, hlavním výstupem z GMT je PostScript.
+V porovnání s mapovými výstupy z ostatních programů jsou výstupy z GMT
+zajímavější, obzvlášť znatelné je to například pro legendu. Legenda v ArcGISu si
+bude i přes různá nastavení pořád podobná, s GMT tomu tak být nemusí (i když za
+cenu větší námahy).
+
+Na ukázku zde uvádím zkrácený příklad převzatý z \cite[příklad č.
+2]{GMT}.\footnote{Pro spuštění skriptu (na unixových sytémech) předpokládám, že
+cesta k příkazům GMT je v proměnné \texttt{PATH} (vyhledávací cesty
+spustitelných souborů) a že je přítomný soubor \texttt{HI\_geoid2.nc}
+v adresáři se skriptem.} Jak je z ukázky patrné, nastavení parametrů příkazů
+není příliš čitelné. Výsledný mapový výstup je na obrázku č. \ref{fig:gmt}. 
+ 
+\begin{lstlisting}[style=script]
+#!/bin/bash
+ps=./example_2.ps
+makecpt -Crainbow -T-2/14/2 > g.cpt
+grdimage HI_geoid2.nc -R160/20/220/30r -JOc190/25.5/292/69/4.5i \
+-E50 -K -P -B10 -Cg.cpt -X1.5i -Y1.25i > $ps
+psscale -Cg.cpt -D5.1i/1.35i/2.88i/0.4i -O -K -Ac \
+-B2:GEOID:/:m: -E >> $ps
+\end{lstlisting}
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{%
+./map_vystupy/GMT/example_2.pdf}
+  \caption{Ukázka mapového výstupu GMT}
+  \label{fig:gmt}
+\end{figure}
 
 
 
@@ -534,9 +604,18 @@ nabídka na pravé tlačítko myši (\emph{context menu}). ArcGIS zvolil pro sv�
 grafické rozhraní uspořádání označované jako \emph{SDI} (\emph{Single Document
 Interface}). To znamená, že operační systém s jednotlivými okny aplikace
 zachází samostatně, okna používají vlastní panely nástrojů a nemají
-své \uv{rodiče}, více viz \cite{}.
+své \uv{rodiče}, více viz \cite{wiki_SDI}.
 
-GUI ArcGISu samozřejmě není zdaleka dokonalé, zde je několik problémů:
+Grafické rozhraní ArcGISu celkově trpí problémem vyplývajícím z jeho
+široké funkcionality. Nezkušenému uživateli asi bude chvíli trvat,
+ než se jej naučí ovládat, protože bude přehlcen všemi možnými
+ nastaveními. Osobně jsem se při porovnávání funkcionality v kapitole
+ \ref{sec:porovnani_moznosti:ArcGIS} potýkala s problémem, že jsem si
+ několikrát myslela, že ArcGIS určitou funcionalitu nepodporuje, protože
+ jsem ji nenašla. Až v návodu na internetu \cite{ArcGIS_help} jsem zjistila
+opak.
+
+Zde je uvedeno několik problémů, na které jsem při testování narazila:
 
 \paragraph*{Mnoho úrovní dialogových oken} Z některých dialogových oken
 lze vyvolat další a tímto způsobem se lze dostat v jejich hierarchii velice
@@ -659,13 +738,7 @@ nepřekáží. Zároveň se panely dají různě posouvat, jsou součástí
 lišty nebo mohou stát samostatně.
 
 
-Grafické rozhraní ArcGISu celkově trpí problémem vyplývajícím z jeho
-široké funkcionality. Nezkušenému uživateli asi bude chvíli trvat,
-než se jej naučí ovládat, protože bude přehlcen všemi možnými
-nastaveními. Osobně jsem se při porovnávání funkcionality v kapitole
-\ref{sec:porovnani_moznosti:ArcGIS} potýkala s problémem, že jsem si
-několikrát myslela, že ArcGIS určitou funcionalitu nepodporuje, protože
-jsem ji nenašla. Až v návodu na internetu jsem zjistila opak.
+
 
 
 
@@ -889,10 +962,12 @@ některé mají své samostatně vytvořené dialogy.
 \begin{figure}[h!]
 \centering
 \subfloat[][Layer
-Manager]{\includegraphics[width=0.45\textwidth]{./wxgui_layer_manager.png}}
+Manager]{\includegraphics[width=0.45\textwidth]{%
+./GUI_screenshots/wxgui_layer_manager.png} }
 \quad
 \subfloat[][Map Display
-Window]{\includegraphics[width=0.45\textwidth]{./wxgui_map_display.png}}
+Window]{\includegraphics[width=0.45\textwidth]{%
+./GUI_screenshots/wxgui_map_display.png}}
 \caption{Dvě hlavní komponenty wxGUI v GRASS 7\label{fig:wxgui}}
 
 \end{figure}
@@ -1483,6 +1558,7 @@ měsících.
 \textbf{GIS}& Geographic Information System (Geografický informační systém)\\
 \textbf{GRASS}& Geographical Resources Analysis Support System\\
 \textbf{QGIS}& Quantum GIS\\
+\textbf{GMT}& Generic Mapping Tools\\
 % gvSIG& Generalitat Valenciana, Sistema d'Informació Geogràfica.\\
 \textbf{GUI}& Graphical User Interface (Grafické uživatelské rozhraní)\\
 \textbf{TUI}& Text User Interface (Textové uživatelské rozhraní)\\
@@ -1557,6 +1633,11 @@ Multiple document interface. In \emph{Wikipedia : the free encyclopedia}
 last modified on 15 February 2011 [cit. 2011-04-15]. URL:
 \url{http://en.wikipedia.org/wiki/Multiple_document_interface}.
 
+\bibitem{ArcGIS_help}
+\url{http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html}
+
+\bibitem{GMT}
+\url{http://www.soest.hawaii.edu/gmt}
 
 \bibitem{YZOD}
  \url{http://geo.fsv.cvut.cz/gwiki/153YZOD_Zpracov%C3%A1n%C3%AD_obrazov%C3%BDch_dat_-_cvi%C4%8Den%C3%AD_1}

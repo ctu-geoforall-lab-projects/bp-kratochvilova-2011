@@ -1,0 +1,105 @@
+# timestamp: 2011-04-16 10:49
+# location: cr-jtsk
+# mapset: PERMANENT
+# g.region vect=prachatice@PERMANENT
+
+maploc 0.579 1.334  7.074 6.596
+border y
+    width 3
+    color black
+    end
+
+paper a4
+    left 0.5
+    right 0.5
+    bottom 1.0
+    top 1.0
+    end
+raster dem_srtm@PERMANENT
+text -789901 -1155452 Prachatice
+    font Helvetica
+    fontsize 18.0
+    color black
+    hcolor white
+    hwidth 2
+    border none
+    background none
+    ref center center
+    xoffset 0
+    yoffset 30
+    end
+scalebar f
+    where 5.161 8.623
+    length 30.0
+    units kilometers
+    height 0.1
+    segment 3
+    numbers 1
+    fontsize 12.0
+    background y
+    end
+colortable y
+    raster dem_srtm@PERMANENT
+    where 0.680 8.207
+    discrete n
+    tickbar n
+    font Helvetica
+    fontsize 10
+    color black
+    end
+vlegend
+    where 0.604 9.844
+    font Helvetica
+    fontsize 15
+    width 0.4
+    cols 1
+    border black
+    end
+mapinfo
+    where 3.197 9.290
+    font Helvetica
+    fontsize 12
+    color black
+    background none
+    border none
+    end
+
+vlines reky@PERMANENT
+    type line or boundary
+    layer 1
+    masked n
+    color 0:11:255
+    width 1.0
+    style solid
+    linecap butt
+    label reky
+    lpos 1
+    end
+vareas mesta_p@PERMANENT
+    layer 1
+    masked n
+    color black
+    width 1.0
+    fcolor 181:181:181
+    label mesta
+    lpos 2
+    end
+vareas voda@PERMANENT
+    layer 1
+    masked n
+    color 0:4:255
+    width 1.0
+    fcolor 4:116:255
+    label vodni plochy
+    lpos 3
+    end
+text -796457 -1133551 Data SRTM - okres Prachatice
+    font Helvetica-Bold
+    fontsize 22
+    color black
+    hcolor none
+    border none
+    background none
+    ref center center
+    end
+end
