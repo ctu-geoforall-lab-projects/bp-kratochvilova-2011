@@ -206,7 +206,7 @@ z~obecných zásad tvorby grafického rozhraní, doplněných jasnými příklad
 nerespektování.
 \fi
 
-Výsledky této práce snad přispějí ke zvýšení konkurenceschopnosti GRASSu
+Věřím, že výsledky této práce přispějí ke zvýšení konkurenceschopnosti GRASSu
  v~oblasti kartografických výstupů a usnadní práci novým i dosavadním
 uživatelům modulu ps.map.
 
@@ -512,7 +512,7 @@ systému pomocí automaticky generovaného textu (\emph{Dynamic text}).\fi
 \paragraph*{Směrová růžice}
 Symbol severu v~modulu ps.map vůbec není k~dispozici, což je velkou
 nevýhodou, jelikož určení severu je v~mapových výstupech obvyklé. Tento
-problém lze řešit buď přidáním obrázku ve formátu EPS, případně
+problém lze řešit buď přidáním obrázku ve formátu EPS, nebo
 lze šipku vytvořit složením z~jiných grafických objektů (postup lze
 najít na webové stránce \cite{wiki_psmap_north}).
 
@@ -521,7 +521,7 @@ Modul dále umožňuje kreslit základní tvary jako obdélník, linii a
 bod. K~mapovému výstupu lze připojit hlavičku, kde jsou uvedeny základní
 informace o~mapě. Text hlavičky je uložen v~externím souboru, používá
 speciální formátovací značky pro vložení aktuálního data, názvu
-rastru, lokaci apod. Jinak samozřejmě mapový výstup může obsahovat
+rastru, lokaci apod. Jinak  mapový výstup může samozřejmě obsahovat
 jakékoli množství textu, ten lze různě barevně zvýrazňovat. Texty lze
 modulem ps.map umisťovat na konkrétní pozici zadáním mapových
 souřadnic, což ostatní programy \ifbc\else pro tvorbu mapových výstupů \fi
@@ -934,14 +934,14 @@ AddOns}\footnote{\url{http://grass.osgeo.org/wiki/GRASS_AddOns}}, aby mohly být
 v~budoucnu součástí hlavní distribuce GRASSu. GRASS GIS je napsán v~jazyce C a
 je multiplatformní.
 
-GRASS GIS je projektem s~dlouhou historií. Byl původně vyvíjen od roku
+GRASS GIS je projektem s~dlouhou historií. Byl vyvíjen od roku
 1982 laboratořemi v~USA (\emph{USA-CERL}) pro vojenské účely. Koncem
 80. let poskytl CERL zdrojové kódy veřejnosti a GRASS se během několika
 let rozšířil po celém světě. Vývoj převzaly \emph{Baylor University}
-v~Texasu, \emph{Universtät Hannover} a další pod souhrnným názvem
+v~Texasu, \emph{Universtät Hannover} a další instituce pod souhrnným názvem
 \emph{GRASS Development Team}. V~roce 1998 byla uvolněna verze GRASS
 4.2.1 a v~současnosti je poslední uvolněnou verzí GRASS 6.4. Vývoj
-nyní probíhá na nejnovější verzi GRASS 7, která sice ještě není
+nyní probíhá na nejnovější verzi GRASS 7, která sice ještě není plně
 připravená k~uvolnění, ale je funkční.
 
 Pro více informací o~vývoji, funkčnosti a použití GRASS GIS nahlédněte
@@ -963,7 +963,7 @@ kterou GRASS používá. Pro podrobnější informace náhledněte do \cite{gras
 
 \begin{description}
 \item[Database] neboli databanka představuje adresář (často bývá nazýván 
-\emph{grassdata}), který obsahuje veškerá data, se kterými GRASS pracuje.
+\emph{grassdata}), který obsahuje veškerá data, s nimiž GRASS pracuje.
 \item [Location] neboli lokace je adresář nacházející se
 v~databance. Určen je souřadni\-covým systémem a územním rozsahem. Jedna
 lokace většinou odpovídá jednomu projektu.
@@ -978,7 +978,7 @@ pojem, protože při práci v~GRASSu je třeba nastavení regionu často
 řešit.  Rozlišujeme výchozí region (pro celou lokaci) a aktuální
 (výpočetní) region. Téměř veškeré manipulace s~rastrovými daty se pak
 týkají aktuálně nastaveného regionu. K~nastavení regionu slouží
-modul \emph{g.region}, umožní nastavit region podle konkrétní mapy,
+modul \emph{g.region}, který umožní nastavit region podle konkrétní mapy,
 přímým zadá\-ním hraničních souřadnic, nebo z~již uloženého regionu
 (\emph{named region}).
  \end{description}
@@ -1117,7 +1117,7 @@ zobrazit. K~tomu slouží modul \emph{g.region}. V~konfigu\-račním souboru
 tedy nelze rozsah území ovlivnit.
 Modul ps.map tedy nejprve zjistí požadované rozměry a měřítko
 z~konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí
-aplikovat na rozměry současného výpočetního regionu. Když by se mapový
+aplikovat na rozměry současného výpočetního regionu. Pokud by se mapový
 rámec při požadovaném měřítku nevešel na daný formát papíru,
 modul měřítko upraví. Podobně upraví rozměry mapového rámce, aby
 poměry stran odpovídaly výpočetnímu regionu.
@@ -1305,15 +1305,19 @@ se tato tato volba neměla provést již v~konfiguračním souboru v~rámci
 instrukce \instr{paper}, kam logicky patří. Význam by přepínač měl,
 kdybychom chtěli vytvořit ze stejného konfiguračního souboru výstupy
 s~různou orientací stránky, to ale smysl příliš nedává.
-
-\paragraph*{Titulek výstupního souboru}
-Výstupní soubor má titulek \emph{Mapset = \textless aktuální
-mapset\textgreater}, což mnoho neříká a navíc rovnítko v~titulku
-nepůsobí hezky. Uživatel by mohl mít možnost změnit titulek,
-případně by se titulek měl převzít z~aktuálního rastru, případně
-vektoru.\footnote{GUI aplikace by sice mohla napravit tento nedostatek,
-nicméně je vhodnější toto upravit přímo v~modulu ps.map.}
 \fi
+
+% OMYL! Kdyz je tam rastr, napise se jmeno rastru
+
+
+% \paragraph*{Titulek výstupního souboru}
+% Výstupní soubor má titulek \emph{Mapset = \textless aktuální
+% mapset\textgreater}, což mnoho neříká a navíc rovnítko v~titulku
+% nepůsobí hezky. Uživatel by mohl mít možnost změnit titulek,
+% případně by se titulek měl převzít z~aktuálního rastru, případně
+% vektoru.\footnote{GUI aplikace by sice mohla napravit tento nedostatek,
+% nicméně je vhodnější toto upravit přímo v~modulu ps.map.}
+
 
 
 \section[Grafické rozhraní pro modul ps.map]{Grafické rozhraní
@@ -1345,12 +1349,12 @@ distribuce systému GRASS verze 6.4.2. Na operačním systému MS Windows je
 wx.psmap součástí instalačních souborů, na Linuxu lze wx.psmap instalovat buď
 prostřednictvím wxGUI GRASSu nebo z~příkazové řádky GRASSu. Konkrétní
 postup je uveden na GRASS-Wiki na stránce tohoto projektu
-\cite{wiki_wxpsmap} \ifbc a také v~příloze \ref{priloha:instalace_GUI}\fi.
+\cite{wiki_wxpsmap}\ifbc a také v~příloze \ref{priloha:instalace_GUI}\fi.
 
 \subsection{Podklady a použité knihovny}
 Nové grafické uživatelské rozhraní wx.psmap bylo stejně jako wxGUI
 GRASSu vyvinuto pomocí knihovny wxPython,
-proto bylo nutné se s~knihovnou podrobněji seznámit. Jedním
+proto bylo nutné, abych se s~knihovnou podrobněji seznámila. Jedním
 z~nejvýznamnějších zdrojů informací je demo pro wxPython \cite{demo},
 ve kterém je názorně ukázáno chování všech dostupných ovládacích
 prvků. Při hledání vhodných ovládacích prvků pro aplikaci je demo velice
@@ -1364,9 +1368,12 @@ již napsané GRASS wxGUI moduly. Seznámila jsem se také s~funkcionalitou
 dalších  modulů GRASSu, zjišťovala
 jsem především, co umožňují, a jak je mohu pro práci využít.
 
-\subsection{Funkcionalita aplikace}
-V~následujícím textu jsou shrnuty hlavní vlastnosti wx.psmap a možnosti
-jejího využití.
+\subsection{Funkcionalita aplikace wx.psmap}
+V~následujícím textu jsou shrnuty hlavní vlastnosti aplikace wx.psmap a
+možnosti jejího využití.
+\ifbc\else V příloze \ref{priloha:vystupy:psmap} na
+straně \pageref{priloha:vystupy:psmap} je velice jednoduchý mapový výstup
+vytvořený aplikací wx.psmap, který demonstruje některé z jejích možností.\fi
 
 \paragraph*{Podporované instrukce}
 Aplikace v~současné době podporuje pouze vybrané instrukce, a to:
@@ -1379,8 +1386,9 @@ rastr a pro vektorovou mapu), grafické měřítko, informace o~regionu
 s~číselným měřítkem a libovolné množství textu. V~budoucnu se
 počítá s~podporou dalších instrukcí. Pokud uživatel potřebuje
 použít některé dosud nepodporované instrukce, má možnost část
-práce vykonat v~GUI aplikaci a nechat si vygenerovat konfigurační
-soubor. Tam tyto instrukce doplní a spustí přímo modul \modul{ps.map}.
+práce vykonat v~GUI aplikaci, nechat si vygenerovat konfigurační
+soubor a do něj tyto instrukce doplnit. Poté spustí přímo modul
+\modul{ps.map}.
 
 \paragraph*{Možné výstupy aplikace}
 Výsledkem práce s~wx.psmap je mapový výstup ve formátu \emph{PostScript},
@@ -1418,8 +1426,8 @@ Jiný případ nastává při zobrazení textu v~konceptu, text je zde
 zobrazen v~zadané velikost fontu (ne však zadaným fontem). Zvolená
 barva písma se také zobrazí správně, nicméně je-li nastavena barva
 pozadí, vykreslí se pouze barva bílá. Pravděpodobně jde o~problém
-knihovny wxPython, je možné, že na jiných platformách k~tomuto problému
-nedochází. Stejně tak ostatní efekty textu jako zvýraz\-nění a rámeček
+knihovny wxPython, je možné, že na různých platformách se toto chování
+liší. Stejně tak ostatní efekty textu jako zvýraz\-nění a rámeček
 se v~konceptu nezobrazují (bylo by to složité a zbytečné). Raději
 dodávám, že všechny tyto nastavené vlastnosti textu se ve výsledném
 mapovém výstupu zobrazí správně.
@@ -1439,12 +1447,10 @@ konverze rychlejší.
 \paragraph*{Ovládání pohledu}
 Aplikace wx.psmap umožňuje měnit přiblížení a posunovat papír
 s~vykreslenými objekty, a to jak v~konceptu, tak v~náhledu. Přibližování
-resp. oddalování je dostupné několika způsoby. Lze jej zvolit na panelu
-nástrojů, v~tom případě stačí kliknout na přibližované místo nebo
-táhnutím zvolit výřez, na nějž bude přiblíženo. Další alternativou
-je použití kolečka myši. K~posunu slouží další z~tlačítek na
-panelu nástrojů, kliknutím a táhnutím pak měníte aktuální výřez
-v~okně. Celkově je ovládání obdobné jaku u~ostatních podobných programů.
+resp. oddalování je dostupné několika způsoby (v závislosti na aktuálně zvoleném
+nástroji): kliknutím či zvolením výřezu na obrazovce nebo otáčením kolečka myši.
+Celkově je ovládání obdobné jaku u~ostatních podobných programů.
+
 
 \subsection{Vzhled a ovládání wx.psmap}
 
@@ -1454,19 +1460,21 @@ zásady popsané
 v knize \cite{bloopers}\fi.
 V dialogových oknech jsou ohraničeny prvky, které spolu význa\-mově souvisí,
 tak je dosaženo jednodušší orientace v nastaveních. Dialogová okna obsahují
- implicitní nastavení, aby se jimi uživatel nemusel příliš zabývat, pokuď
+ implicitní nastavení, aby se jimi uživatel nemusel příliš zabývat, pokud
 nechce.
 Také jsem se pokusila dodržet jednotný vzhled wxGUI GRASSu. V panelu nástrojů
 jsou ikonky používané pro stejné nebo podobné úkony v jiné části wxGUI
 (například pro ovládání pohledu).
-Autor\footnote{\url{http://robert.szczepanek.pl}} ikonek používaných ve
+Autor\footnote{%
+Szczepanek, Robert \url{http://robert.szczepanek.pl}} ikonek používaných ve
 wxGUI pro tuto aplikaci vytvořil i několik nových.
 
 
 
 Při spuštění programu se otevře okno s~ovládacími prvky -- hlavní
 nabídka a panel nástrojů v~horní části, dvě záložky pro volbu módu
-a stavový řádek v~dolní části.
+a stavový řádek v~dolní části. Pro lepší představu náhledněte do přílohy
+\ref{priloha:screenshot:psmap} na straně \pageref{priloha:screenshot:psmap}.
 
 
 
@@ -1508,14 +1516,14 @@ s~wx.psmap lze načíst a pokračovat v~něm.
 
 Samozřejmostí je možnost nastavení formátu a orientace stránky a
 také nápo\-věda, která se zobrazí v~internetovém prohlížeči. Další
-informace a postupy najdete na GRASS-Wiki \cite{wiki_wxpsmap}.
+informace a postupy najdete na GRASS-Wiki \cite{wiki_wxpsmap}. 
 
 
 \subsection[Problémy při tvorbě wx.psmap]{Problémy při tvorbě wx.psmap
 a jejich řešení}
 \label{sec:gui:problemy}
 Při práci jsem narazila na několik problematických oblastí,
-které se částečně kryjí se záležitostmi popsanými v~části
+ souvisejících s~částmi popsanými v 
 \ref{sec:psmap:rozsah} a \ref{sec:psmap:chyby}.
 
 \paragraph*{Výpočetní region} Připomeňme, že modul ps.map
@@ -1530,7 +1538,7 @@ uživatel nechá vygenerovat konfigurační soubor, který chce dále
 editovat ručně, je v~záhlaví v~komentáři napsán příkaz pro modul
 g.region, který informuje o~výpočetním regionu nastaveném v~době
 vzniku souboru. Tato informace se využívá i při čtení konfiguračního
-souboru vytvořeného touto aplikací.  Způsoby nastavení regionu jsou
+souboru vytvořeného touto aplikací.  Způsoby nastavení regionu v aplikaci jsou
 následující:
 \begin{enumerate*}
     \item nastavit region na zvolenou rastrovou či vektorovou mapu
@@ -1558,9 +1566,9 @@ byly používané souřadnicové systémy a jednotky (viz část
  v~dialozích k~objektům zadat přímo \emph{x}-ovou a \emph{y}-ovou
  souřadnici v~systému papíru. Zde jsem rozšířila stávající možnosti
 ps.map o~možnost zadat hodnoty v~dalších jednotkách (mm, cm).
- U~textového objektu, který se zadává v~druhém systému (tedy mapové
- souřadnice či procenta region), jsou uživateli nabídnuty možnosti
- dvě. Buď zadat souřadnice v~systému papíru, nebo pomocí mapových
+ U~textového objektu, který se v modulu ps.map zadává mapovými
+ souřadnicemi či procenty regionu, je uživateli nabídnuto
+ zadat souřadnice v~systému papíru, nebo pomocí mapových
  souřadnic. Možnost zadání procent regionu GUI aplikace zatím nepodporuje,
  myslím, že tato možnost není již tak potřebná, když lze polohu
  měnit jednoduchým tahem myší.
@@ -1594,25 +1602,25 @@ ps.map o~možnost zadat hodnoty v~dalších jednotkách (mm, cm).
  mají vlastní dialog, kde se nastavují jejich vlastnosti. Dialogy jsou
  různě rozsáhlé, ale mají podobný vzhled. Problém při tvorbě
  dialogů byla celková nejednotnost v~nastavitelných vlastnostech
- dialogů. Například, rastrová legenda umožňuje změnit barvu písma a
+ mapových prvků. Například, rastrová legenda umožňuje změnit barvu písma a
  neumožňuje vykreslit ohraničení (\emph{border}), zatímco u~vektorové
  legendy je to přesně naopak. Takových případů je víc a značně
  komplikují snahy o~ujednocení vzhledu dialogů. Proto by bylo příliš
  náročné vytvořit jakýsi jednotný dialog pro nastavení vlastností
- objektů, pravděpodobně by to vedlo k~větší nepřehlednosti.
+ objektů, pravděpodobně by to vedlo ke snížení přehlednosti.
 
  \paragraph*{Určení rozměru mapových prvků}
  V~módu konceptu se jednotlivé mapové prvky zobrazují na
  stránce jako obdélníky, které se od sebe liší barvou popiskem
  a rozměrem. Právě určení rozměru prvku je problém, který není
  uspokojivě vyřešen. Velikost mapového prvku je totiž v~zásadě dána
- velikostí fontu, ale i dalšími parametry, například počet sloupců
- a počet kategorií u~legendy. Aplikace wx.psmap na základě těchto
+ velikostí fontu, ale i dalšími parametry, například počtem sloupců
+ a počtem kategorií u~legendy. Aplikace wx.psmap na základě těchto
  vlastností odhaduje přibližné rozměry, ty se ovšem do jisté míry
  mohou lišit od rozměrů výsledného objektu vykresleného modulem
  ps.map. Ve wx.psmap tak opět dochází ke zbytečnému (a ne
- tak přesnému) opakování výpočtů, které provádí modul. Je třeba
- tudíž rozměry objektů v~konceptu brát jako orientační, s~výjimkou
+ tak přesnému) opakování výpočtů, které provádí modul. Je proto třeba brát
+ rozměry objektů v~konceptu  jako orientační, s~výjimkou
  mapového rámce, jehož rozměry lze určit přesně.
 
  Důsledkem tohoto problému je nemožnost měnit rozměry objektů
@@ -1632,7 +1640,7 @@ skutečně vykresleným modulem ps.map.
 
 \subsection{Budoucí vývoj aplikace wx.psmap}
 \label{sec:gui:future}
-Jak již bylo zmíněno, aplikace ještě nepodporuje některé důležité instrukce.
+Jak již bylo zmíněno, aplikace ještě nepodporuje některé  instrukce.
 Proto bude další vývoj směřován k doplnění funkcionality, a to především
 přidávání obrá\-zků ve formátu EPS (instrukce \instr{eps}). Bylo by možné
 nabídnout uživateli již připra\-vené obrázky, například i chybějící
@@ -1640,7 +1648,7 @@ směrovou růžici. Dalším krokem by pravděpo\-dobně byla i podpora instrukc
 \instr{grid} a \instr{geogrid} pro zobrazení zeměpisné sítě.
 Dále by také bylo možné zavést obecné nastavení aplikace, ale je otázkou, čeho
 by se tato nastavení týkala. Záleží zde hlavně na požadavcích uživatelů.
-Poznámky k vývoji aplikace a jejím možnostem je popsán na webových stránkách
+Poznámky k vývoji aplikace a jejím možnostem jsou popsány na webových stránkách
 \cite{trac_wxpsmap}.
 
 
@@ -1665,12 +1673,13 @@ Výsledkem této práce je funkční aplikace wx.psmap s~oficiálním názvem Ha
 Map Output Utility, vytvářející mapový výstup právě pomocí modulu
 ps.map. Umožňuje uživatelům pohodlně poskládat
 základní mapové elementy na stránku a vygenerovat dva druhy výstupu -- obrazový
-(ve formátu PostScript) a textový (konfigurační soubor). Druhý zmíněný soubor
-lze programem také načíst a dále upravit.
+(ve formátu PS nebo PDF) a textový (konfigurační soubor). Druhý zmíněný
+soubor lze programem také načíst a dále upravit.
 
 Při práci jsem se potýkala s~jistou nekonzistencí instrukcí u~modulu
-ps.map a také jsem zaznamenala určitá problematická chování modulu.
-V~průběhu práce se podařilo vývojářům GRASS GIS některé menší komplikace
+ps.map a také jsem zaznamenala určitá problematická chování modulu, o kterých
+jsem informovala vývojáře GRASSu.
+V~průběhu práce se jim podařilo  některé menší komplikace
 odstranit, čímž se tvorba grafického rozhraní alespoň částečně zjednodušila.
 
 
@@ -1961,7 +1970,7 @@ Po nainstalování spustíte program z~hlavní nabídky \emph{File $\rightarrow$
 
 \newpage
 \section{Screenshoty aplikace wx.psmap}
-\label{priloha:screenshot}
+\label{priloha:screenshot:psmap}
 \begin{figure}[h!]
   \centering
   \includegraphics[height=0.4\textheight]{./GUI_screenshots/psmap_main.png}
@@ -2010,7 +2019,7 @@ Po nainstalování spustíte program z~hlavní nabídky \emph{File $\rightarrow$
 
 \else
 \section{Mapový výstup vytvořený pomocí wx.psmap}
-\label{priloha:vystupy}
+\label{priloha:vystupy:psmap}
 \centering
 \includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
 \fi
