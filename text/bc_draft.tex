@@ -4,7 +4,7 @@
 \usepackage[utf8x]{inputenc}
 \usepackage{xcolor}
 \usepackage[english, czech]{babel}
-\usepackage[pdftex, draft]{graphicx}
+\usepackage[pdftex, final]{graphicx}
 % \usepackage[pdftex, final, colorlinks=true]{hyperref}
 \usepackage{verbatim}
 \usepackage{alltt}
@@ -12,14 +12,14 @@
 \usepackage{mdwlist}
 \usepackage{subfig}
 \usepackage[final]{pdfpages}
-\usepackage[final,pdftex, pagebackref, colorlinks=false]{hyperref}
+\usepackage[final,pdftex, colorlinks=true]{hyperref}
 %%%%%%%%%%%%%%%%%%%%%%%%%
 % pro podmineny preklad
 % false je defaultně
 
 
 \newif\ifbc % Pouze do bakalářské práce
-\bctrue
+ \bctrue
 
 %%%%%%%%%% fancy %%%%%%%%%%%
 \usepackage{fancyhdr}
@@ -92,6 +92,7 @@ morecomment=[l]{\#},
 {\lstset{style=psmap,
    #1}}
    {}
+\renewcommand{\lstlistingname}{Ukázka}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newcommand{\klicslova}[2]{\noindent\textbf{#1: }#2}
@@ -112,13 +113,15 @@ morecomment=[l]{\#},
 \pagestyle{empty}
 
 \ifbc\else
+\includepdf{/home/anna/Documents/svoc/svoc_titulni.pdf}
 \tableofcontents
 \newpage
 \fi
 
 \begin{abstract}
 Cílem této \ifbc bakalářské \fi práce  bylo vytvoření grafického uživatelského
-rozhraní (GUI) pro tvorbu mapových výstupů v~systému GRASS. Mapové výstupy jsou
+rozhraní (GUI) pro tvorbu mapových výstupů v~systému GRASS. Mapové vý\-stupy
+jsou
 vy\-tvářeny modulem ps.map na základě textového souboru s~instrukcemi. Nové
 grafické rozhraní umožňuje interaktivní tvorbu mapových výstupů a
 tím ji uživatelům usnadňuje. GUI implementuje větší část funkcionality modulu
@@ -174,7 +177,7 @@ téměř každá informace má totiž vazbu na geografickou polohu.
 
 \ifbc
 Definic geografického informačního systému existuje mnoho
-a další časem pravděpodobně ještě vzniknou, jak se bude tato oblast
+a další časem pravdě\-podobně ještě vzniknou, jak se bude tato oblast
 vyvíjet. Někteří odborníci v~definicích vyzdvihují význam složky
 datové, jiní zas analytické, v~souvislosti s~tématem této práce je
 ale důležité především kartografické znázornění dat.
@@ -191,10 +194,9 @@ přívětivý z~důvodu absence grafického uživatelského rozhraní (\emph{GUI
 Úkolem této práce
 bylo tento nedostatek alespoň z~části napravit  poskytnutím
 komfortnějšího ovládání tohoto modulu přes grafické rozhraní.
-Nov0 grafické rozhraní \emph{wx.psmap} je napsané za pomoci grafické knihovny
+Nové grafické rozhraní \emph{wx.psmap} je napsané za pomoci grafické knihovny
 \emph{wxPython}\footnote{\url{http://www.wxpython.org}} a tím navazuje na
-moderní
-wxGUI \cite{wxGUI_clanek} systému GRASS.
+moderní wxGUI \cite{wxGUI_clanek} systému GRASS.
 
 \ifbc
 Součástí práce bylo i prozkoumání možností několika komerčních i nekomerčních
@@ -447,7 +449,7 @@ který umí vygenerovat příslušnou část konfiguračního souboru.
 
 \newcommand{\psmapMoznosti}{%
 Mapový výstup ps.map obsahuje většinu standardních prvků jako
-legenda, měřítko apod. Možnosti nastavení jejich vzhledu nejsou tak
+legenda, mě\-řítko apod. Možnosti nastavení jejich vzhledu nejsou tak
 široké jako u~jiných podobných programů, což v~některých případech není na
 závadu.
 \ifbc
@@ -745,9 +747,9 @@ nastavovat znovu. Na tento problém jsem v~ostatních průvodcích nenarazila.
 ArcGIS má grafické uživatelské rozhraní velice propracované, proto
 bych chtěla několik detailů vyzdvihnout:
 \paragraph*{Místní nabídka (\emph{Context Menu})}
-Nabídka vyvolaná zmáčknutím pravého tlačítka myši, která je v~ArcGISu
+Nabídka vyvolaná zmáčknutím pravého tla\-čítka myši, která je v~ArcGISu
 hojně využívaná, je efektivním nástrojem, díky kterému se uživatel
-rychle dostane, kam potřebuje. Navíc orientaci v~nabídce usnadňují
+rychle dostane, kam potřebuje. Navíc orientaci v~nabídce usnad\-ňují
 postranní ikonky, díky kterým uživatel hned pochopí, co funkce znamená.
 
 \paragraph*{Rozvržení ovládacích prvků}
@@ -759,7 +761,7 @@ správných řešení, které má následující výhody:
 \begin{inparaenum}[\itshape 1\upshape)]
 \item obrázek zobrazuje vliv různých přepínačů a tím usnadňuje
 uživateli volbu;
-\item vhodné rozdělení a popis textových polí jasně uživateli sděluje,
+\item vhodné roz\-dělení a popis textových polí jasně uživateli sděluje,
 v~jakém formátu má co kam zadat;
 \item vhodně použité rámečky vizuálně sdružují související
 ovládací prvky.
@@ -823,7 +825,7 @@ nesouvisí s~ostatními tlačítky v~řadě.
 \end{figure}
 
 Další věcí, se kterou jsem nebyla příliš spokojená, je panel
-nástrojů. Při přesouvání jednotlivých částí nereagoval, jak bych
+nástrojů. Při pře\-souvání jednotlivých částí nereagoval, jak bych
 čekala. Navíc ovládáním pohledu (\uv{zoomováním}) se zabývalo tolik
 podobných tlačítek, že ve výsledku jsem netušila, které zvolit. To by
 nevadilo, kdyby šlo přibližovat kolečkem myši, což ale nefunguje. Jak je
@@ -893,30 +895,35 @@ při volbě softwaru, ale dokáže zpříjemnit jeho používání.
 \subsection{Shrnutí porovnání}
 Je důležité, aby software pro mapové výstupy splňoval poměrně
 konzervativní kartografické zásady, a na to nejsou potřeba
-desítky různých nastavení. Příliš široké možnosti v nastavení
+desítky různých nastavení. Příliš široké možnosti v~nastavení
 mají několik důsledků. Grafické uživatelské rozhraní musí být nutně
 složitější, aby pokrylo veškerou funkcionalitu, je tedy náročnější
-ho navrhnout. Například v případě ArcGISu, který je z vybraných programů s
+ho navrhnout. Například v~případě ArcGISu, který je z~vybraných programů s
 grafickým rozhraním nejrozsáhlejší, se GUI dá považovat za poměrně dobře
 navržené. 
 Dalším důsledkem rozsáhlých nastavení je fakt, že podněcují nezkušené uživatele,
 aby vyzkoušeli a použili všechna dostupná nastavení, což posléze vede
-k~překombinovanému a nevkusnému výsledku. To hrozí hlavně u programů s
-grafickým rozhraním, nastavování přes příkazovou řádku u GMT totiž vyžaduje
+k~překombinovanému a nevkusnému výsledku. To hrozí hlavně u~programů s
+grafickým rozhraním, nastavování přes příkazovou řádku u~GMT totiž vyžaduje
 větší soustředění.
 
 Při rozhodování, který software zvolit, je dobré se zamyslet nad tím, jaká
 funkcionalita je potřebná a kolik financí a času lze investovat. Některé
 programy jako GMT a OCAD jsou specializované na tvorbu mapových výstupů, v
 některých jiných oblastech GISu by ale pravděpodobně nedostačovaly. Také je
-nutné zvážit, v jakém formátu jsou dostupná data, programy pracují s daty v
+nutné zvážit, v~jakém formátu jsou dostupná data, programy pracují s~daty v
 různých formátech a konverze jsou sice běžnou součástí funkcionality programů,
-ale ne vždy proběhnou bez problémů. Jedním z dalších faktorů je kvalifikovanost
-uživatelů -- práci s ArcGISem zvládne i méně zkušený uživatel, naopak u GRASSu
-a GMT je vhodná alespoň částečná znalost z oblasti GIS a informačních
+ale ne vždy proběhnou bez problémů. Jedním z~dalších faktorů je kvalifikovanost
+uživatelů -- práci s~ArcGISem zvládne i méně zkušený uživatel, naopak u~GRASSu
+a GMT je vhodná alespoň částečná znalost z~oblasti GIS a informačních
 technologií.
 
-
+V příloze \ref{priloha:vystupy} jsou k~nahlédnutí mapové výstupy vytvořené
+v~programech ArcGIS, QGIS a ps.map (prostřednictvím nového GUI wx.psmap).
+Výstupy jsou vytvořeny s~jednotnou kompozicí a ze stejných dat
+(\emph{FreeGeoDataCZ, dostupné z~\cite{FreeGeoDataCZ}}).
+Tyto mapové výstupy jsou velice jednoduché a mají za cíl pouze demonstrovat
+vzhled základních mapových prvků.
 
 \fi
 \section{Systém GRASS GIS}
@@ -958,12 +965,12 @@ stránkách \cite{instalace}.
 Jelikož jsou v~dalším textu použity některé pojmy specifické pro GRASS,
 je třeba je alespoň trochu přiblížit čtenářům bez předchozích
 znalostí systému GRASS. Tyto pojmy
-(čerpáno z návodů na cvičení \cite{YZOD}) souvisí především se strukturou dat,
+(čerpáno z~návodů na cvičení \cite{YZOD}) souvisí především se strukturou dat,
 kterou GRASS používá. Pro podrobnější informace náhledněte do \cite{grass_gis}.
 
 \begin{description}
 \item[Database] neboli databanka představuje adresář (často bývá nazýván 
-\emph{grassdata}), který obsahuje veškerá data, s nimiž GRASS pracuje.
+\emph{grassdata}), který obsahuje veškerá data, s~nimiž GRASS pracuje.
 \item [Location] neboli lokace je adresář nacházející se
 v~databance. Určen je souřadni\-covým systémem a územním rozsahem. Jedna
 lokace většinou odpovídá jednomu projektu.
@@ -1080,8 +1087,9 @@ lze zapisovat pomocí znaku \#, prázdné řádky jsou ignorovány. Pořadí
 instrukcí většinou nehraje roli s~výjimkou instrukcí \instr{vpoints},
 \instr{vlines} a \instr{vareas}, které vykreslují vektorové vrstvy. První
 uvedená vektorová vrstva bude vykreslena nejvýše. Více napoví ukázka
-jednoduchého konfiguračního souboru:
-\begin{psmap}
+jednoduchého konfiguračního souboru na straně \pageref{konfig}.
+\begin{psmap}[float=h, title=Příklad jednoduchého konfiguračního souboru,
+label=konfig]
 paper a3
 end
 raster soils            # priklad jednoradkove instrukce
@@ -1095,6 +1103,7 @@ vpoints archsites
 end
 end                     # konec instrukci
 \end{psmap}
+
 Význam jednotlivých instrukcí je popsán v~manuálové stránce k~modulu,
 která je dostupná buď z~dosavadního GUI nebo na webových stránkách
 \cite{manual}.
@@ -1138,7 +1147,12 @@ Při tvorbě grafického rozhraní bylo nutné prozkoumat chování
 modulu ps.map o~něco detailněji, než je nutné pro jeho běžné
 užívání. Vycházela jsem především z~manu\-álové stránky \cite{manual}
 a vlastního experimentování s~modulem.
-\ifbc\else
+\ifbc
+U některých problémů jsou uvedeny
+odkazy na hlášení o~chybách (\emph{bug report}) na vývojářské stránce
+GRASSu \cite{trac} využívající systém pro správu projektů
+\emph{Trac}\footnote{\url{http://trac.edgewall.org}}.
+\else
 Uvedené jsou zde pouze některé závažnější problémy modulu nebo ty, které
 komplikovaly určitým způsobem tvorbu GUI.
 \fi
@@ -1150,7 +1164,8 @@ kódováním. Ps.map očekává konfigurační soubor v~kódování
 \emph{Latin-1} (pře\-něji ISO-8859-1), které není pro češtinu použitelné
 kvůli některým chybějícím zna\-kům s~diakritikou. Navíc některé texty
 (například jednotky u~grafického měřítka) jsou v~angličtině a nedají se
-libovolně změnit.
+libovolně změnit. (hlášení \href{https://trac.osgeo.org/grass/ticket/1349}{%
+\#1349})
 
 \paragraph*{Souřadnicové systémy a jednotky}
 \label{sec:psmap:sour_systemy}
@@ -1203,7 +1218,7 @@ pak mohl vybrat, který z~nich je pro danou situaci nejvhodnější.
 \paragraph*{Referenční bod objektu}
 \label{sec:psmap:referencepoint}
 Modul ps.map u~většiny objektů nepodporuje volbu referenčního
-bodu, tedy bodu objektu, ke kterému se vztahuje zadaná poloha. Výjimkou
+bodu, tedy bodu objektu, ke kterému se vztahuje zadaná poloha. Výjim\-kou
 je text, u~nějž si lze vybrat jeden z~devíti referenčních bodů. Je
 zřejmé, že u~textu má tato volba smysl, u~ostatních objektů je otázka,
 zda by tato vlastnost byla využívaná.
@@ -1224,11 +1239,12 @@ Některé jiné instrukce však umožňují zadat barvu i ve tvaru R:G:B. Bylo
 by proto logické, kdyby RGB podporovaly všechny instrukce.\footnote{Tyto
 problémy jsou již v~současnosti vyřešené, alespoň pro instrukce,
 které wx.psmap podporuje.}
+(hlášení \href{https://trac.osgeo.org/grass/ticket/192}{\#192})
 
 \ifbc
 \paragraph*{Jednořádkové a víceřádkové instrukce}
 \label{sec:psmap:singleline}
-Instrukce \instr{border} (ohraničení mapového rámce) a \instr{colortable}
+Instrukce \instr{border} (ohraničení mapo\-vého rámce) a \instr{colortable}
 (rastrová legenda) mohou být jednořádkové i víceřádkové, což mimo
 jiné znamená, že někdy je \instr{end} za příkazem vyžadováno a někdy
 naopak následovat nesmí. Záleží, zda za zmíněné instrukce do stejného
@@ -1260,6 +1276,8 @@ mimo mapový rámec.
 Do budoucna bych navrhovala mapinfo přepsat do takové podoby, aby umožnil
 zobrazit své jednotlivé části samostatně (číselné měřítko, rozsah, síť), tím
 by se zvýšila jeho použitelnost.
+(hlášení \href{https://trac.osgeo.org/grass/ticket/1333}{\#1333},
+\href{https://trac.osgeo.org/grass/ticket/1350}{\#1350})
 
 \ifbc
 \paragraph*{Nekonzistence u~instrukce \instr{vlines}}
@@ -1278,7 +1296,7 @@ jde. Bylo by vhodné tento přístup sjednotit.
 \ifbc
 \paragraph*{Nepřesnosti v~dokumentaci}
 \label{sec:psmap:manual}
-Manuálová stránka \cite{manual} k~modulu ps.map je poměrně
+Manuálová stránka \cite{manual} k~modulu ps.map je po\-měrně
 podrobná a vyčerpávající, přesto lze narazit na některé
 nepřesnosti. Například u~instrukce \instr{text} je k~popisu dílčí
 instrukce \instr{width} napsáno:
@@ -1371,9 +1389,9 @@ jsem především, co umožňují, a jak je mohu pro práci využít.
 \subsection{Funkcionalita aplikace wx.psmap}
 V~následujícím textu jsou shrnuty hlavní vlastnosti aplikace wx.psmap a
 možnosti jejího využití.
-\ifbc\else V příloze \ref{priloha:vystupy:psmap} na
+\ifbc\else V~příloze \ref{priloha:vystupy:psmap} na
 straně \pageref{priloha:vystupy:psmap} je velice jednoduchý mapový výstup
-vytvořený aplikací wx.psmap, který demonstruje některé z jejích možností.\fi
+vytvořený aplikací wx.psmap, který demonstruje některé z~jejích možností.\fi
 
 \paragraph*{Podporované instrukce}
 Aplikace v~současné době podporuje pouze vybrané instrukce, a to:
@@ -1456,14 +1474,14 @@ Celkově je ovládání obdobné jaku u~ostatních podobných programů.
 
 Při návrhu a implementaci grafického rozhraní jsem se snažila dodržet
 zásady popsané
-\ifbc v části \ref{sec:GUI_zasady}\else
+\ifbc v~části \ref{sec:GUI_zasady}\else
 v knize \cite{bloopers}\fi.
 V dialogových oknech jsou ohraničeny prvky, které spolu význa\-mově souvisí,
-tak je dosaženo jednodušší orientace v nastaveních. Dialogová okna obsahují
+tak je dosaženo jednodušší orientace v~nastaveních. Dialogová okna obsahují
  implicitní nastavení, aby se jimi uživatel nemusel příliš zabývat, pokud
 nechce.
-Také jsem se pokusila dodržet jednotný vzhled wxGUI GRASSu. V panelu nástrojů
-jsou ikonky používané pro stejné nebo podobné úkony v jiné části wxGUI
+Také jsem se pokusila dodržet jednotný vzhled wxGUI GRASSu. V~panelu nástrojů
+jsou ikonky používané pro stejné nebo podobné úkony v~jiné části wxGUI
 (například pro ovládání pohledu).
 Autor\footnote{%
 Szczepanek, Robert \url{http://robert.szczepanek.pl}} ikonek používaných ve
@@ -1483,7 +1501,7 @@ jednotlivé mapové prvky. První sada tlačítek na panelu nástrojů
 (obrázek č. \ref{fig:psmap_toolbar})
 ovládá čtení a zápis konfiguračních souborů a nastavení stránky, druhá sada
 ovládá pohled na stránku (posun, přiblížení, oddálení, zobrazení
-celé stránky), třetí sada slouží k~přidání a editaci objektů na
+celé stránky), třetí sada slouží k~při\-dání a editaci objektů na
 stránce a čtvrtá ovládá tvorbu mapových výstupů. Při
 najetí kurzorem na tlačítko se objeví kratší kontextová nápověda
 a delší nápověda na stavovém řádku.
@@ -1523,8 +1541,8 @@ informace a postupy najdete na GRASS-Wiki \cite{wiki_wxpsmap}.
 a jejich řešení}
 \label{sec:gui:problemy}
 Při práci jsem narazila na několik problematických oblastí,
- souvisejících s~částmi popsanými v 
-\ref{sec:psmap:rozsah} a \ref{sec:psmap:chyby}.
+ souvisejících s~částmi popsanými v~\ref{sec:psmap:rozsah} a
+\ref{sec:psmap:chyby}.
 
 \paragraph*{Výpočetní region} Připomeňme, že modul ps.map
 pracuje s~aktuálním výpočet\-ním regionem a vykresluje mapy pouze v~tomto
@@ -1538,7 +1556,7 @@ uživatel nechá vygenerovat konfigurační soubor, který chce dále
 editovat ručně, je v~záhlaví v~komentáři napsán příkaz pro modul
 g.region, který informuje o~výpočetním regionu nastaveném v~době
 vzniku souboru. Tato informace se využívá i při čtení konfiguračního
-souboru vytvořeného touto aplikací.  Způsoby nastavení regionu v aplikaci jsou
+souboru vytvořeného touto aplikací.  Způsoby nastavení regionu v~aplikaci jsou
 následující:
 \begin{enumerate*}
     \item nastavit region na zvolenou rastrovou či vektorovou mapu
@@ -1566,7 +1584,7 @@ byly používané souřadnicové systémy a jednotky (viz část
  v~dialozích k~objektům zadat přímo \emph{x}-ovou a \emph{y}-ovou
  souřadnici v~systému papíru. Zde jsem rozšířila stávající možnosti
 ps.map o~možnost zadat hodnoty v~dalších jednotkách (mm, cm).
- U~textového objektu, který se v modulu ps.map zadává mapovými
+ U~textového objektu, který se v~modulu ps.map zadává mapovými
  souřadnicemi či procenty regionu, je uživateli nabídnuto
  zadat souřadnice v~systému papíru, nebo pomocí mapových
  souřadnic. Možnost zadání procent regionu GUI aplikace zatím nepodporuje,
@@ -1641,14 +1659,14 @@ skutečně vykresleným modulem ps.map.
 \subsection{Budoucí vývoj aplikace wx.psmap}
 \label{sec:gui:future}
 Jak již bylo zmíněno, aplikace ještě nepodporuje některé  instrukce.
-Proto bude další vývoj směřován k doplnění funkcionality, a to především
+Proto bude další vývoj směřován k~doplnění funkcionality, a to především
 přidávání obrá\-zků ve formátu EPS (instrukce \instr{eps}). Bylo by možné
 nabídnout uživateli již připra\-vené obrázky, například i chybějící
 směrovou růžici. Dalším krokem by pravděpo\-dobně byla i podpora instrukce
 \instr{grid} a \instr{geogrid} pro zobrazení zeměpisné sítě.
 Dále by také bylo možné zavést obecné nastavení aplikace, ale je otázkou, čeho
 by se tato nastavení týkala. Záleží zde hlavně na požadavcích uživatelů.
-Poznámky k vývoji aplikace a jejím možnostem jsou popsány na webových stránkách
+Poznámky k~vývoji aplikace a jejím možnostem jsou popsány na webových stránkách
 \cite{trac_wxpsmap}.
 
 
@@ -1677,7 +1695,7 @@ základní mapové elementy na stránku a vygenerovat dva druhy výstupu -- obra
 soubor lze programem také načíst a dále upravit.
 
 Při práci jsem se potýkala s~jistou nekonzistencí instrukcí u~modulu
-ps.map a také jsem zaznamenala určitá problematická chování modulu, o kterých
+ps.map a také jsem zaznamenala určitá problematická chování modulu, o~kterých
 jsem informovala vývojáře GRASSu.
 V~průběhu práce se jim podařilo  některé menší komplikace
 odstranit, čímž se tvorba grafického rozhraní alespoň částečně zjednodušila.
@@ -1777,9 +1795,16 @@ GRASS-Wiki. \textit{GUI for ps.map} [online]. Last modified
 16 April 2011 [cit. 2011-04-18]. URL: \textless
 \url{http://grass.osgeo.org/wiki/GUI_for_ps.map\#Installation}\textgreater
 
+\ifbc
+\bibitem{trac}
+\textit{GRASS GIS Tracker and Wiki} [online]. Last modified 12 April 2011
+[cit. 2011-04-20].
+URL: \textless\url{http://trac.osgeo.org/grass}\textgreater
+\fi
+
 \bibitem{trac_wxpsmap}
 \textit{wxGUIDevelopment/GUIForPs.map -- GRASS GIS} [online]. Last modified
-04/16/11 [cit. 2011-04-18]. URL: \textless
+16 April 2011 [cit. 2011-04-18]. URL: \textless
 \url{http://trac.osgeo.org/grass/wiki/wxGUIDevelopment/GUIForPs.map}
 \textgreater
 
@@ -1790,6 +1815,13 @@ GRASS-Wiki. \textit{Installation Guide} [online]. Last modified
 \url{%
 http://grass.osgeo.org/grass-wiki/index.php?title=Installation_Guide&oldid=8141}
 \textgreater
+
+\bibitem{FreeGeoDataCZ}
+GRASSwikiCZ. \textit{FreeGeodataCZ ve formátu GRASS} [online].
+Naposledy editováno 10. 7. 2008 [cit. 2011-04-20]. URL: \textless
+\url{http://grass.fsv.cvut.cz/wiki/index.php?%
+title=FreeGeodataCZ_ve_form\%C3\%A1tu_GRA%
+SS&oldid=2436} \textgreater
 \fi
 
 \bibitem{YZOD}
@@ -1856,7 +1888,7 @@ systému. Stručně popíši způsob instalace na operační systém Linux
 (MS Windows a Mac OS X) je popsána na GRASS-Wiki \cite{instalace}.
 
 Nejjednodušší je nainstalovat stabilní verzi GRASS 6.4, která je
-dostupná v~balíčku. Lze ji proto nainstalovat pomocí správce balíčků
+dostupná v~ba\-líčku. Lze ji proto nainstalovat pomocí správce balíčků
 \emph{Synaptic}. Nebo do příkazové řádky napsat:
 \begin{alltt}
 {\footnotesize \$ sudo apt-get install grass grass-doc}
@@ -1992,11 +2024,12 @@ Po nainstalování spustíte program z~hlavní nabídky \emph{File $\rightarrow$
 \newpage
 \ifbc
 \section{Testovací mapový výstup}
+\label{priloha:vystupy}
 \subsection{ArcGIS}
 \label{priloha:vystupy:arcgis}
 
 \begin{center}
-% \includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
+\includegraphics[width=0.8\textwidth]{./map_vystupy/ArcGIS/data_SRTM_ArcGIS.pdf}
 \end{center}
 
 \newpage
@@ -2004,7 +2037,9 @@ Po nainstalování spustíte program z~hlavní nabídky \emph{File $\rightarrow$
 \label{priloha:vystupy:qgis}
 
 \begin{center}
-% \includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
+
+\includegraphics[width=0.8\textwidth]{%
+./map_vystupy/QGIS/data_SRTM_QGIS.pdf}
 \end{center}
 
 
@@ -2014,7 +2049,7 @@ Po nainstalování spustíte program z~hlavní nabídky \emph{File $\rightarrow$
 \label{priloha:vystupy:psmap}
 
 \begin{center}
-% \includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
+ \includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
 \end{center}
 
 \else
