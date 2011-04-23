@@ -1,0 +1,49 @@
+\begin{center}
+%napisy
+\newcommand{\napisCVUT}{České vysoké učení technické v Praze}
+\newcommand{\napisFS}{Fakulta stavební}
+\newcommand{\napisObor}{Obor geoinformatika}
+\newcommand{\napisKatedra}{Katedra mapování a kartografie}
+\newcommand{\napisVedouci}{Ing. Martin Landa}
+\newcommand{\napisAutor}{Anna Kratochvílová}
+\newcommand{\napisDatum}{květen 2011}
+\newcommand{\napisNazevI}{Grafické uživatelské rozhraní pro tvorbu}
+\newcommand{\napisNazevII}{mapových výstupů v~systému GRASS}
+\newcommand{\napisBakalarka}{Bakalářská práce}
+\newcommand{\napisPraha}{Praha 2011}
+%
+% prikazy
+%\newcommand{\velka}[1]{\uppercase{#1}}
+\newcommand{\velka}[1]{\textsc{#1}}
+%
+% 
+\newif\ifpatitul
+\patitultrue
+
+\ifpatitul
+{\Large\velka{\napisCVUT}}\\
+\velka{\Large\napisFS}\\
+\vfill
+{\LARGE\velka{\napisBakalarka}}
+\vfill
+{\large\napisPraha\hfill\napisAutor}
+\newpage
+\fi%patitul
+
+
+{\Large\velka{\napisCVUT}}\\
+{\Large\velka{\napisFS}}\\
+{\Large\velka{\napisObor}}
+\vfill
+\includegraphics[width=3cm]{logo_cvut_cb} %~
+\vfill
+{\Large\velka{\napisBakalarka}}\\
+{\Large\velka{\napisNazevI\\
+\napisNazevII}}
+\vfill
+{\large%
+Vedoucí práce: \napisVedouci\\
+\napisKatedra\\
+\bigskip
+\napisDatum\hfill\napisAutor}
+\end{center}

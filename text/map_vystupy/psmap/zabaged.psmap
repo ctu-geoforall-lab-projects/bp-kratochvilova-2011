@@ -1,0 +1,272 @@
+# timestamp: 2011-04-23 12:48
+# location: krovak2
+# mapset: PERMANENT
+# g.region n=-1055201.0 s=-1057599.0 e=-562038.0 w=-563862.0 rows=27 cols=30 
+
+maploc 0.500 1.057
+scale 1:10000
+border y
+    width 1
+    color black
+    end
+
+paper a4
+    left 0.5
+    right 0.5
+    bottom 1.0
+    top 1.0
+    end
+
+vpoints ZdrojPodzemnichVod@PERMANENT
+    type point or centroid
+    masked n
+    color none
+    fcolor 99:217:226
+    symbol basic/point
+    size 10
+    label ZdrojPodzemnichVod(PERMANENT)
+    lpos 1
+    end
+vpoints KrizSloupKulturnihoVyznamu@PERMANENT
+    type point or centroid
+    masked n
+    color none
+    fcolor black
+    symbol basic/cross2
+    size 10
+    label KrizSloupKulturnihoVyznamu(PERMANENT)
+    lpos 2
+    end
+vlines LiniovaVegetace@PERMANENT
+    type line or boundary
+    masked n
+    color 41:183:31
+    width 3.0
+    style dotted
+    linecap round
+    label LiniovaVegetace(PERMANENT)
+    lpos 3
+    end
+vpoints KotovanyBod@PERMANENT
+    type point or centroid
+    masked n
+    color 114:60:0
+    width 1.5
+    fcolor none
+    symbol basic/triangle
+    size 10
+    label KotovanyBod(PERMANENT)
+    lpos 4
+    end
+vpoints OsamelyStromLesik@PERMANENT
+    type point or centroid
+    masked n
+    color black
+    width 1.0
+    fcolor 13:121:9
+    symbol demo/smrk
+    size 12
+    label OsamelyStromLesik(PERMANENT)
+    lpos 5
+    end
+vlines ElektrickeVedeni@PERMANENT
+    type line or boundary
+    masked n
+    color black
+    width 2.0
+    style dashdotted
+    linecap butt
+    label ElektrickeVedeni(PERMANENT)
+    lpos 6
+    end
+vlines VrstevniceZesilena@PERMANENT
+    type line or boundary
+    masked n
+    color 158:115:30
+    width 0.8
+    style solid
+    linecap butt
+    label VrstevniceZesilena(PERMANENT)
+    lpos 7
+    end
+vlines VrstevniceZakladni@PERMANENT
+    type line or boundary
+    masked n
+    color 183:151:44
+    width 0.2
+    style solid
+    linecap butt
+    label VrstevniceZakladni(PERMANENT)
+    lpos 8
+    end
+vlines Cesta@PERMANENT
+    type line or boundary
+    masked n
+    color 85:37:0
+    width 0.9
+    style dashed
+    linecap butt
+    label Cesta(PERMANENT)
+    lpos 9
+    end
+vareas Skladka@PERMANENT
+    masked n
+    color black
+    width 1.0
+    fcolor 119:95:95
+    label Skladka(PERMANENT)
+    lpos 10
+    end
+vlines SilniceDalnice@PERMANENT
+    type line or boundary
+    masked n
+    color 255:251:55
+    hwidth 1.0
+    hcolor 247:171:1
+    width 1.5
+    style solid
+    linecap butt
+    label SilniceDalnice(PERMANENT)
+    lpos 11
+    end
+vlines ZeleznicniTrat@PERMANENT
+    type line or boundary
+    masked n
+    color white
+    hwidth 1.0
+    hcolor black
+    width 2.0
+    style 000000111111
+    linecap butt
+    label ZeleznicniTrat(PERMANENT)
+    lpos 12
+    end
+vareas BudovaBlokBudov@PERMANENT
+    masked n
+    color none
+    fcolor 201:9:9
+    label BudovaBlokBudov(PERMANENT)
+    lpos 13
+    end
+vareas OstatniPlochaVSidlech@PERMANENT
+    masked n
+    color 74:74:74
+    width 0.3
+    fcolor 216:216:216
+    label OstatniPlochaVSidlech(PERMANENT)
+    lpos 14
+    end
+vareas UcelovaZastavba@PERMANENT
+    masked n
+    color 107:107:107
+    width 0.3
+    fcolor 165:165:165
+    label UcelovaZastavba(PERMANENT)
+    lpos 15
+    end
+vareas OkrasnaZahradaPark@PERMANENT
+    masked n
+    color 255:202:234
+    width 1.0
+    fcolor 255:201:240
+    pat /usr/local/src/develbranch_6/dist.i686-pc-linux-gnu/etc/paint/patterns/diag_up_dash.eps
+    pwidth 5
+    scale 1
+    label OkrasnaZahradaPark(PERMANENT)
+    lpos 16
+    end
+vareas OvocnySadZahrada@PERMANENT
+    masked n
+    color 182:234:61
+    width 0.2
+    fcolor 184:255:134
+    label OvocnySadZahrada(PERMANENT)
+    lpos 17
+    end
+vareas Hrbitov@PERMANENT
+    masked n
+    color none
+    fcolor 255:254:139
+    label Hrbitov(PERMANENT)
+    lpos 18
+    end
+vlines Brehovka@PERMANENT
+    type line or boundary
+    masked n
+    color 0:118:255
+    width 0.3
+    style solid
+    linecap butt
+    label Brehovka(PERMANENT)
+    lpos 19
+    end
+vareas VodniPlocha@PERMANENT
+    masked n
+    color none
+    fcolor 84:174:243
+    label VodniPlocha(PERMANENT)
+    lpos 20
+    end
+vlines VodniTok@PERMANENT
+    type line or boundary
+    masked n
+    color 21:146:239
+    width 1.0
+    style solid
+    linecap butt
+    label VodniTok(PERMANENT)
+    lpos 21
+    end
+vareas LoukaPastvina@PERMANENT
+    masked n
+    color 173:187:86
+    width 0.2
+    fcolor 222:235:143
+    label LoukaPastvina(PERMANENT)
+    lpos 22
+    end
+vareas LesniPudaSeStromy@PERMANENT
+    masked n
+    color 9:97:9
+    width 0.2
+    fcolor 88:182:57
+    label LesniPudaSeStromy(PERMANENT)
+    lpos 23
+    end
+vareas OrnaPudaAOstatniNeurcenePlochy@PERMANENT
+    masked n
+    color 203:150:79
+    width 0.2
+    fcolor 226:184:104
+    label OrnaPudaAOstatniNeurcenePlochy(PERMANENT)
+    lpos 24
+    end
+scalebar f
+    where 1.536 10.913
+    length 500.0
+    units meters
+    height 0.1
+    segment 5
+    numbers 1
+    fontsize 10
+    background y
+    end
+text -562954 -1055096  Visualization of ZABAGED near Stare Mesto pod Sneznikem
+    font Helvetica
+    fontsize 18
+    color black
+    hcolor none
+    border none
+    background none
+    ref center center
+    end
+text -562583 -1057680 Created by Anna Kratochvilova within her bachelor thesis in 2011.\nData source: ZABAGED (http://www.cuzk.cz)
+    font Helvetica
+    fontsize 10
+    color black
+    hcolor none
+    border none
+    background none
+    ref center center
+    end
+end

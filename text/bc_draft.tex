@@ -12,7 +12,7 @@
 \usepackage{mdwlist}
 \usepackage{subfig}
 \usepackage[final]{pdfpages}
-\usepackage[final,pdftex, colorlinks=true]{hyperref}
+\usepackage[final,pdftex, colorlinks=false]{hyperref}
 %%%%%%%%%%%%%%%%%%%%%%%%%
 % pro podmineny preklad
 % false je defaultně
@@ -112,7 +112,14 @@ morecomment=[l]{\#},
 \begin{document}
 \pagestyle{empty}
 
-\ifbc\else
+\ifbc
+\input{titulbp}
+\newpage
+\input{listsezadanim} % resi si zalomeni sam
+
+
+
+\else
 \includepdf{/home/anna/Documents/svoc/svoc_titulni.pdf}
 \tableofcontents
 \newpage
@@ -158,6 +165,8 @@ interface.\fi
 \selectlanguage{czech}
 
 \ifbc
+\newpage
+\input{prohlaseniapodekovani}
 \newpage
 \tableofcontents
 \fi
@@ -979,7 +988,7 @@ jedné lokace. Jedna lokace obsahuje minimálně jeden mapset s~názvem
 \emph{PERMANENT}, který  slouží jako zdroj dat pro další mapsety, které jsou
 pracovní. Tyto mapsety zpravidla odpovídají jednotlivým uživatelům,
 případně různým analýzám.
-\item [Region] určuje územní rozsah ve tvaru obdélníka a také
+\item [Region] určuje územní rozsah ve tvaru obdélníku a také
 rozlišení u~rastrových map. Jde o~klíčový
 pojem, protože při práci v~GRASSu je třeba nastavení regionu často
 řešit.  Rozlišujeme výchozí region (pro celou lokaci) a aktuální

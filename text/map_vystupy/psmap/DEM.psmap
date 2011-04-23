@@ -1,0 +1,110 @@
+# timestamp: 2011-04-23 15:25
+# location: krovak
+# mapset: PERMANENT
+# g.region rast=w001001@PERMANENT cols=587 rows=872
+
+maploc 0.529 1.284  5.010 7.477
+border y
+    width 1
+    color black
+    end
+
+paper a4
+    left 0.5
+    right 0.5
+    bottom 1.0
+    top 1.0
+    end
+raster w001001@PERMANENT
+scalebar s
+    where 3.039 9.129
+    length 100.0
+    units kilometers
+    height 0.1
+    segment 4
+    numbers 2
+    fontsize 12
+    background y
+    end
+colortable y
+    raster w001001@PERMANENT
+    where 6.269 1.511
+    discrete n
+    height 3.0
+    tickbar n
+    range 200.0 1400.0
+    font Helvetica
+    fontsize 12.0
+    color black
+    end
+vlegend
+    where 5.866 5.161
+    font Helvetica
+    fontsize 12.0
+    width 0.4
+    cols 1
+    border none
+    end
+mapinfo
+    where 0.529 9.869
+    font Helvetica
+    fontsize 12
+    color black
+    background none
+    border none
+    end
+text -765315 -1197269 Created by Anna Kratochvilova\nwithin her bachelor thesis in 2011.\nData source:  ArcCR copyright 1997\nARCDATA PRAHA, s.r.o.
+    font Helvetica
+    fontsize 10
+    color black
+    hcolor none
+    border none
+    background none
+    ref center center
+    end
+text -821632 -973914 Digital Elevation Model of Western Bohemia
+    font Helvetica
+    fontsize 20
+    color black
+    hcolor none
+    border none
+    background none
+    ref center center
+    end
+
+vlines vod_tok@PERMANENT
+    type line or boundary
+    masked n
+    color blue
+    width 0.5
+    style solid
+    linecap butt
+    label streams
+    lpos 1
+    end
+vareas sidlap@PERMANENT
+    masked n
+    color black
+    width 0.5
+    fcolor 107:107:107
+    label towns
+    lpos 3
+    end
+vareas vod_pl@PERMANENT
+    masked n
+    color blue
+    width 0.5
+    fcolor 0:124:255
+    label water areas
+    lpos 2
+    end
+text -766895 -986274 DEM
+    font Helvetica-Bold
+    fontsize 10
+    color black
+    hcolor none
+    border none
+    background none
+    ref center center
+    end
+end
