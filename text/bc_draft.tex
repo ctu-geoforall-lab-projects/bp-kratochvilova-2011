@@ -26,7 +26,7 @@
 
 \fancyhead[L]{ČVUT Praha}
 
-
+\setlength{\headheight}{16pt}
 
 % \usepackage{stdpage}
 
@@ -339,6 +339,7 @@ k~existujícím grafickým editorům, které jsou schopné načíst a
 konvertovat velké množství formátů.
 
 \subsubsection{QGIS}
+\label{sec:porovnani_moznosti:QGIS}
 Quantum GIS\footnote{\url{http://www.qgis.org}} je rychle rostoucí GIS projekt
 psaný v~C++/Qt, je opět šířený
 pod licencí GNU/GPL. Pro tvorbu mapových výstupů slouží \emph{Map
@@ -926,13 +927,41 @@ ale ne vždy proběhnou bez problémů. Jedním z~dalších faktorů je kvalifik
 uživatelů -- práci s~ArcGISem zvládne i méně zkušený uživatel, naopak u~GRASSu
 a GMT je vhodná alespoň částečná znalost z~oblasti GIS a informačních
 technologií.
-
-V příloze \ref{priloha:vystupy} jsou k~nahlédnutí mapové výstupy vytvořené
-v~programech ArcGIS, QGIS a ps.map (prostřednictvím nového GUI wx.psmap).
-Výstupy jsou vytvořeny s~jednotnou kompozicí a ze stejných dat
-(\emph{FreeGeoDataCZ, dostupné z~\cite{FreeGeoDataCZ}}).
+\subsubsection{Ukázky mapových výstupů}
+V~příloze \ref{priloha:vystupy}, v~částech \ref{priloha:vystupy:arcgis1} až
+\ref{priloha:vystupy:psmap1} jsou k~nahlédnutí mapové výstupy vytvořené
+ v~programech ArcGIS, QGIS a ps.map (prostřednictvím nového GUI
+wx.psmap). 
+Výstupy jsou vytvořeny s~podobnou kompozicí a ze stejných dat (ukázková data
+z~digitální vektorové geografické databáze ArcČR 500 dostupná
+z~\cite{ArcCR500}). Výstupy jsou vytvářeny tak, aby si byly co nejvíce podobné,
+ale zároveň, aby ukázaly alespoň některé  rozdíly mezi programy.
+% (\emph{FreeGeoDataCZ, dostupné z~\cite{FreeGeoDataCZ}}).
 Tyto mapové výstupy jsou velice jednoduché a mají za cíl pouze demonstrovat
-vzhled základních mapových prvků.
+vzhled základních mapových prvků jako legenda, měřítko a textový popis. Výstupy
+obsahují jednu rastrovou a několik vektorových vrstev. Jejich zobrazení se
+v~podstatě neliší. Největší rozdíl lze pozorovat u legendy. Jak bylo již zmíněno
+v~části \ref{sec:porovnani_moznosti:QGIS}, QGIS se nedokáže vypořádat
+s~rastrovou legendou. Grafické měřítko je u~všech výstupů podobné, pouze QGIS
+neumožňuje vynechat popisky nad segmenty měřítka. Číselné měřítko u~modulu
+ps.map bylo nahrazeno objektem mapinfo (viz \ref{sec:porovnani:psmap}). Směr na
+sever není ve výstupu z wx.psmap dostupný. U~výstupu z programu ArcGIS je
+přidána orientační mapka, ta u ostatních výstupů nelze jednoduše
+vytvořit a tudíž chybí. Text je záměrně uveden v~anglickém jazyce, protože
+ps.map češtinu nepodporuje.
+
+V příloze \ref{priloha:vystupy:arcgis2} a \ref{priloha:vystupy:psmap2} je
+ukázka vizualizace dat ZABAGED\footnote{\url{http://www.cuzk.cz}}. Použila jsem
+již hotový mapový výstup vypracovaný v~rámci předmětu Topografická a tematická
+kartografie \cite{TTKH} v~programu ArcGIS a podobný výstup jsem vytvořila
+prostřednictvím wx.psmap. Bylo vynecháno několik vrstev, které buď nebyly
+podstatné, nebo je nešlo adekvátně zobrazit (lanovka), a také číselné měřítko
+z~výše zmíněných důvodů. Legendu jsem nevyhotovovala, její vzhled by byl
+podobný jako v~ukázce \ref{priloha:vystupy:psmap1}. Titulek a tiráž jsou
+v~anglickém jazyce, viz výše. Výsledek ukazuje, že s~pomocí modulu ps.map
+(prostřednictvím wx.psmap) lze dosáhnout mapových výstupů kvalitativně
+srovnatelných s ArcGISem.
+
 
 \fi
 \section{Systém GRASS GIS}
@@ -1736,6 +1765,7 @@ měsících.
 \textbf{EPS}& Encapsulated PostScript\\
 \textbf{PDF}& Portable Document Format\\
 \textbf{GPL}& General Public License\\
+\textbf{ZABAGED}& Základní báze geografických dat České republiky\\
 
 \end{tabular}
 \fi
@@ -1825,23 +1855,39 @@ GRASS-Wiki. \textit{Installation Guide} [online]. Last modified
 http://grass.osgeo.org/grass-wiki/index.php?title=Installation_Guide&oldid=8141}
 \textgreater
 
-\bibitem{FreeGeoDataCZ}
-GRASSwikiCZ. \textit{FreeGeodataCZ ve formátu GRASS} [online].
-Naposledy editováno 10. 7. 2008 [cit. 2011-04-20]. URL: \textless
-\url{http://grass.fsv.cvut.cz/wiki/index.php?%
-title=FreeGeodataCZ_ve_form\%C3\%A1tu_GRA%
-SS&oldid=2436} \textgreater
+% \bibitem{FreeGeoDataCZ}
+% GRASSwikiCZ. \textit{FreeGeodataCZ ve formátu GRASS} [online].
+% Naposledy editováno 10. 7. 2008 [cit. 2011-04-20]. URL: \textless
+% \url{http://grass.fsv.cvut.cz/wiki/index.php?%
+% title=FreeGeodataCZ_ve_form\%C3\%A1tu_GRA%
+% SS&oldid=2436} \textgreater
+
+
+\bibitem{ArcCR500}
+ARCDATA PRAHA, s.r.o. \textit{ARCDATA PRAHA - ArcČR 500} [online].
+c1992–2006 ARCDATA PRAHA, s.r.o., poslední změna: 7. 12. 2007 [cit. 2011-04-23].
+URL: \textless
+\url{http://old.arcdata.cz/data/} \textgreater
+
 \fi
 
 \bibitem{YZOD}
 GeoWikiCZ. \textit{153YZOD Zpracování obrazových dat -- cvičení 1} [online].
-Last modified 2010-10-04 [cit. 2011-04-02].
+Naposledy editováno 4. 10. 2010 [cit. 2011-04-02].
 URL: \textless\url{http://geo.fsv.cvut.cz/wiki/index.php?title=153YZOD_%
 Zpracov\%C3\%A1n\%C3\%AD_obrazov\%C3\%BDch_dat_-_%
 cvi\%C4\%8Den\%C3\%AD_1&oldid=17633%
 }\textgreater
 
+
+
 \ifbc
+\bibitem{TTKH}
+GeoWikiCZ. \textit{153TTKA Topografická a tematická kartografie G} [online].
+Naposledy editováno 8. 10. 2009 [cit. 2011-04-02].
+URL: \textless\url{http://geo.fsv.cvut.cz/gwiki/153TTKH}\textgreater
+
+
 \bibitem{wiki_SDI}
 Wikipedia: the free encyclopedia. \textit{Single document interface}
 [online]. c2011, last modified on 31 March 2011 [cit. 2011-04-15]. URL: 
@@ -2032,40 +2078,64 @@ Po nainstalování spustíte program z~hlavní nabídky \emph{File $\rightarrow$
 
 \newpage
 \ifbc
-\section{Testovací mapový výstup}
+\section{Testovací mapové výstupy}
 \label{priloha:vystupy}
-\subsection{ArcGIS}
-\label{priloha:vystupy:arcgis}
+\subsection{Ukázka 1: ArcGIS}
+\label{priloha:vystupy:arcgis1}
 
 \begin{center}
-\includegraphics[width=0.8\textwidth]{./map_vystupy/ArcGIS/data_SRTM_ArcGIS.pdf}
+\includegraphics[width=0.9\textwidth]{./map_vystupy/ArcGIS/dem.pdf}
+%\includegraphics[width=0.8\textwidth]
+%{./map_vystupy/ArcGIS/data_SRTM_ArcGIS.pdf
+
 \end{center}
 
 \newpage
-\subsection{QGIS}
-\label{priloha:vystupy:qgis}
+\subsection{Ukázka 1: QGIS}
+\label{priloha:vystupy:qgis1}
 
 \begin{center}
 
-\includegraphics[width=0.8\textwidth]{%
-./map_vystupy/QGIS/data_SRTM_QGIS.pdf}
+\includegraphics[width=0.9\textwidth]{%
+./map_vystupy/QGIS/DEM_QGIS.pdf}
+% ./map_vystupy/QGIS/data_SRTM_QGIS.pdf}
 \end{center}
 
 
 
 \newpage
-\subsection{wx.psmap}
-\label{priloha:vystupy:psmap}
+\subsection{Ukázka 1: wx.psmap}
+\label{priloha:vystupy:psmap1}
 
 \begin{center}
- \includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
+ \includegraphics[width=0.9\textwidth]
+ {./map_vystupy/psmap/DEM.pdf}
+%  {./map_vystupy/psmap/dem_srtm.pdf}
+\end{center}
+
+\newpage
+\subsection{Ukázka 2: ArcGIS}
+\label{priloha:vystupy:arcgis2}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]
+{./map_vystupy/ArcGIS/zabaged.pdf}
+\end{center}
+
+\newpage
+\subsection{Ukázka 2: wx.psmap}
+\label{priloha:vystupy:psmap2}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]
+{./map_vystupy/psmap/zabaged.pdf}
 \end{center}
 
 \else
 \section{Mapový výstup vytvořený pomocí wx.psmap}
 \label{priloha:vystupy:psmap}
 \centering
-\includegraphics[width=0.8\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
+\includegraphics[width=0.9\textwidth]{./map_vystupy/psmap/dem_srtm.pdf}
 \fi
 
 
