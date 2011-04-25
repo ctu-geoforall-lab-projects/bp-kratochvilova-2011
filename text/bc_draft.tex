@@ -465,8 +465,8 @@ závadu.
 \ifbc
 Od ostatních programů se odlišují také tím, že se v~jednom mapovém výstupu může
 daný mapový prvek objevit pouze jednou.\footnote{Výjimkou jsou například
-instrukce \instr{text, point, line} a \instr{rectangle}.} Toto omezení většinou
-nevadí s~výjimkou mapového rámce (viz následující část). 
+instrukce \instr{text, point, line} a \instr{rectangle}.} Toto omezení 
+vadí především u~mapového rámce (viz následující část).
 \fi
 
 \paragraph*{Mapový rámec}
@@ -900,7 +900,8 @@ neposkytuje tak široké možnosti. Pro mnoho uživatelů to však
 může znamenat i výhodu, jelikož není třeba provádět tolik voleb.
 Z~estetického hlediska mi grafické rozhraní QGISu vyhovuje ze všech výše
 jmenovaných programů asi nejvíce, což je sice nepodstatné kritérium
-při volbě softwaru, ale dokáže zpříjemnit jeho používání.
+při volbě softwaru, ale hezké grafické rozhraní dokáže zpříjemnit jeho
+používání.
 
 \subsection{Shrnutí porovnání}
 Je důležité, aby software pro mapové výstupy splňoval poměrně
@@ -1105,7 +1106,7 @@ vytváří
 mapový výstup na základě konfiguračního souboru, což je oby\-čejný
 textový soubor s~instrukcemi. Vytvořit tento soubor je většinou poměrně
 pracné, umisťování mapových prvků na vhodnou pozici se často neobejde
-bez vedlejších výpočtů, což ke konformitě používání příliš
+bez vedlejších výpočtů, což ke komfortu používání příliš
 nepřispívá. Z~toho je zřejmé, že v~součas\-nosti ps.map využívá
 pouze poměrně úzká komunita uživatelů GRASSu. Nové grafické rozhraní
 \emph{wx.psmap} přímo vytváří konfigurační soubor, na základě
@@ -1405,7 +1406,7 @@ distribuce systému GRASS verze 6.4.2. Na operačním systému MS Windows je
 wx.psmap součástí instalačních souborů, na Linuxu lze wx.psmap instalovat buď
 prostřednictvím wxGUI GRASSu nebo z~příkazové řádky GRASSu. Konkrétní
 postup je uveden na GRASS-Wiki na stránce tohoto projektu
-\cite{wiki_wxpsmap}\ifbc a také v~příloze \ref{priloha:instalace_GUI}\fi.
+ \cite{wiki_wxpsmap} \ifbc a také v~příloze \ref{priloha:instalace_GUI}\fi.
 
 \subsection{Podklady a použité knihovny}
 Nové grafické uživatelské rozhraní wx.psmap bylo stejně jako wxGUI
@@ -1529,7 +1530,7 @@ wxGUI pro tuto aplikaci vytvořil i několik nových.
 
 Při spuštění programu se otevře okno s~ovládacími prvky -- hlavní
 nabídka a panel nástrojů v~horní části, dvě záložky pro volbu módu
-a stavový řádek v~dolní části. Pro lepší představu náhledněte do přílohy
+a stavový řádek v~dolní části. Pro lepší představu nahlédněte do přílohy
 \ref{priloha:screenshot:psmap} na straně \pageref{priloha:screenshot:psmap}.
 
 
@@ -1560,7 +1561,7 @@ jen to nejnutnější. Pokud zapomene zadat požadované informace, je na
 tuto skutečnost upozorněn. Po potvrzení se na stránce objeví objekt,
 který představuje vybraný mapový prvek. Lze jej po stránce libovolně
 posouvat a pokud chce uživatel jeho nastavení změnit, nejjednodušší je
-na něj poklikat myší, čímž se otevře dialog s~aktuálně nastavenými
+na něj dvojkliknout myší, čímž se otevře dialog s~aktuálně nastavenými
 hodnotami. Tento dialog lze vyvolat i z~panelu nástrojů a hlavní nabídky.
 
 Výsledek práce lze zobrazit v~módu náhledu, který je dostupný ve
@@ -1592,8 +1593,8 @@ použije k~zobrazení. Stávající výpočetní region, který mezitím
 mohou používat další moduly GRASSu, zůstane nezměněný. Když si
 uživatel nechá vygenerovat konfigurační soubor, který chce dále
 editovat ručně, je v~záhlaví v~komentáři napsán příkaz pro modul
-g.region, který informuje o~výpočetním regionu nastaveném v~době
-vzniku souboru. Tato informace se využívá i při čtení konfiguračního
+g.region, který informuje o~nastavení výpočetního regionu.
+ Tato informace se využívá i při čtení konfiguračního
 souboru vytvořeného touto aplikací.  Způsoby nastavení regionu v~aplikaci jsou
 následující:
 \begin{enumerate*}
@@ -1666,7 +1667,8 @@ ps.map o~možnost zadat hodnoty v~dalších jednotkách (mm, cm).
  objektů, pravděpodobně by to vedlo ke snížení přehlednosti.
 
  \paragraph*{Určení rozměru mapových prvků}
- V~módu konceptu se jednotlivé mapové prvky zobrazují na
+ V~módu konceptu se jednotlivé mapové prvky (legenda, měřítko, text, \ldots)
+zobrazují na
  stránce jako obdélníky, které se od sebe liší barvou popiskem
  a rozměrem. Právě určení rozměru prvku je problém, který není
  uspokojivě vyřešen. Velikost mapového prvku je totiž v~zásadě dána
@@ -1757,8 +1759,8 @@ měsících.
 \textbf{GUI}& Graphical User Interface (Grafické uživatelské rozhraní)\\
 \textbf{TUI}& Text User Interface (Textové uživatelské rozhraní)\\
 \textbf{CLI}& Command Line Interface (příkazový řádek)\\
-\textbf{SDI}& Single Document Interface (příkazový řádek)\\
-\textbf{MDI}& Multiple Document Interface (příkazový řádek)\\
+\textbf{SDI}& Single Document Interface\\
+\textbf{MDI}& Multiple Document Interface\\
 \textbf{XML}& Extensible Markup Language\\
 \textbf{Tcl}& Tool Command Language\\
 \textbf{PS}& PostScript\\
@@ -1867,7 +1869,7 @@ http://grass.osgeo.org/grass-wiki/index.php?title=Installation_Guide&oldid=8141}
 ARCDATA PRAHA, s.r.o. \textit{ARCDATA PRAHA - ArcČR 500} [online].
 c1992–2006 ARCDATA PRAHA, s.r.o., poslední změna: 7. 12. 2007 [cit. 2011-04-23].
 URL: \textless
-\url{http://old.arcdata.cz/data/} \textgreater
+\url{http://old.arcdata.cz/data/arccr} \textgreater
 
 \fi
 
@@ -1940,7 +1942,7 @@ URL: \textless\url{http://www.soest.hawaii.edu/gmt}\textgreater
 Instalace systému GRASS je závisí na jeho verzi a operačním
 systému. Stručně popíši způsob instalace na operační systém Linux
 (distribuci Ubuntu), podrobnosti k~instalaci i na ostatních systémech
-(MS Windows a Mac OS X) je popsána na GRASS-Wiki \cite{instalace}.
+(MS Windows a Mac OS X) jsou popsány na GRASS-Wiki \cite{instalace}.
 
 Nejjednodušší je nainstalovat stabilní verzi GRASS 6.4, která je
 dostupná v~ba\-líčku. Lze ji proto nainstalovat pomocí správce balíčků
@@ -1981,7 +1983,6 @@ spuštěním
 Velmi pravděpodobně skript skončí předčasně
 kvůli chybějící knihovně. Je třeba se podívat,
 zda je na počítači instalován veškerý vyžadovaný
-
 software\footnote{\url{http://grass.osgeo.org/grass64/source/REQUIREMENTS.html}}
 a pokud ne, pak jej doinstalovat (nejlépe pomocí balíčků). Téměř
 úplný seznam nutných balíčků na distribuci \emph{Debian} a \emph{Ubuntu}:
@@ -2029,7 +2030,7 @@ napište následující příkaz:
 
 \begin{alltt}
 g.extension.py -s svnurl=https://svn.osgeo.org/grass/grass-addons
-extension=wx.psmap
+ extension=wx.psmap
 \end{alltt}
 
 \item[GRASS 7]
@@ -2037,7 +2038,7 @@ Do příkazové řádky GRASSu (v~terminálu) napište následující příkaz:
 
 \begin{alltt}
 g.extension -s svnurl=https://svn.osgeo.org/grass/grass-addons
-extension=wx.psmap
+ extension=wx.psmap
 \end{alltt}
 
 Nebo ve wxGUI v~okně Layer Manager vyberte v~hlavní nabídce
