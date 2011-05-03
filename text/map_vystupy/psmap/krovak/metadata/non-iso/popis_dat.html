@@ -1,0 +1,2600 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs"><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+<style type="text/css">
+	 body { 
+	    background-color: #FFFFFF;
+	    margin:           10px; 
+	    font-family:      sans-serif, verdana, arial;
+	    color:            #000000;
+	    text-decoration:  none;
+	    font-size:        10pt;
+	 }
+	 h1 { 
+	    color:       black;
+	    font-size:   19px; 
+	    text-align:  center; 
+	 }
+	 h2 { 
+	    color:       black;
+	    font-size:   14px; 
+	    font-weight: bold;
+	    text-align:  left;
+	    margin-left: 5px;
+	 }
+	 h3 { 
+	    color:       black;
+	    font-size:   12px; 
+	    font-weight: bold;
+	    text-align:  left;
+	    margin-left: 10px;
+	 }
+	 table.vrstva {
+	    width:           95%;
+	    border:          solid 1px #000000;
+	    border-collapse: collapse;
+	    margin-bottom:   10px;
+	 }
+	 table.vnitrni {
+	    width:           100%;
+	    border:          0px;
+	    margin:          0px;
+	 }
+	 td.polozka {
+	    border:           solid 1px #000000;
+	    border-collapse:  collapse;
+	    padding:          3px;
+	    font-size:        10pt;
+	    width:            15%;
+	    background-color: #acacac;
+	    text-align:       left;
+	 }
+	 td.polozka_data {
+	    border:           solid 1px #000000;
+	    border-collapse:  collapse;
+	    padding:          3px;
+	    font-size:        10pt;
+            text-align:       left;
+	 }
+	 td.id {
+	    border:           solid 1px #000000;
+	    border-collapse:  collapse;
+	    padding:          3px;
+	    font-size:        10pt;
+	    background-color: #dbdbdb;	 
+            text-align:       left;
+	 }
+	 td.vnitrni {
+	    border:          0px;
+	    padding:         0px;
+            text-align:      left;
+	 }
+	 hr {
+	    border-bottom: 1px solid black;
+	    border-top: 1px;
+	    color: black;
+	    height: 1px;
+	 }
+	 a { 
+	 color:           #00417e;
+	 text-decoration: none; 
+	 }
+	 a:hover { 
+	 color:           #000000;
+	 text-decoration: none; 
+	 }
+       </style><title>Geografická data ČR pro GRASS -- popis dat</title></head><body><h1><a href="http://gama.fsv.cvut.cz/~grass/geodata_cr/index.phtml" title="Oficiální stránky datasetu">Geografická data ČR pro GRASS</a> - popis dat</h1><div align="right"><table><tr xmlns="">
+<td>Mapset <b>PERMANENT</b>
+</td>
+<td>:</td>
+<td>verze</td>
+<td>0.3.0</td>
+<td>/</td>
+<td>2005-03-21</td>
+</tr>
+<tr xmlns="">
+<td>Mapset <b>klimadata</b>
+</td>
+<td>:</td>
+<td>verze</td>
+<td>0.1</td>
+<td>/</td>
+<td>2005-03-30</td>
+</tr></table></div><hr></hr><font style="font-size: 14px;"><b>Obsah datasetu:</b></font><h2 xmlns="">PERMANENT:</h2>
+<ul xmlns="">
+<li>rastrové vrstvy (2):
+      <ul>
+<li><a href="#dem_gtopo30" title="digitální výškový model (GTOPO30)">dem_gtopo30</a></li>
+<li><a href="#dem_srtm" title="digitální výškový model (SRTM)">dem_srtm</a></li>
+</ul>
+</li>
+<li>vektorové vrstvy (21):
+      <ul>
+<li><a href="#casti_obce" title="části obce">casti_obce</a></li>
+<li><a href="#cesty" title="turistické trasy (okres Žďár nad Sázavou)">cesty</a></li>
+<li><a href="#cfm" title="různé, nezařazeno">cfm</a></li>
+<li><a href="#cr" title="státní hranice ČR">cr</a></li>
+<li><a href="#czfree_nodes" title="uzly sítě CZFree">czfree_nodes</a></li>
+<li><a href="#dsnimky" title="náhledová mapa družicových snímků">dsnimky</a></li>
+<li>
+<a href="#hranice" title="administrativní hranice">hranice</a>
+	[odebráno]
+      </li>
+<li><a href="#klad_zm10" title="klad listů Základní mapy 1:10 000">klad_zm10</a></li>
+<li><a href="#kraje_pseudo" title="nepravá mapa krajů">kraje_pseudo</a></li>
+<li><a href="#mes_casti" title="městské části">mes_casti</a></li>
+<li><a href="#mesta_b" title="obce">mesta_b</a></li>
+<li><a href="#mesta_p" title="města">mesta_p</a></li>
+<li><a href="#obce" title="obce">obce</a></li>
+<li><a href="#okresy_pseudo" title="nepravá mapa okresů">okresy_pseudo</a></li>
+<li><a href="#reky" title="vodní toky">reky</a></li>
+<li><a href="#silnice" title="silniční síť">silnice</a></li>
+<li><a href="#silnice_pasport" title="silniční síť - pasporty">silnice_pasport</a></li>
+<li><a href="#silnice_useky" title="úseky silniční sítě">silnice_useky</a></li>
+<li><a href="#silnice_uzly" title="uzly silniční sítě">silnice_uzly</a></li>
+<li><a href="#voda" title="vodní plochy">voda</a></li>
+<li><a href="#zeleznice" title="železniční síť">zeleznice</a></li>
+</ul>
+</li>
+</ul>
+<h2 xmlns="">klimadata:</h2>
+<ul xmlns=""><li>rastrové vrstvy (1):
+      <ul><li><a href="#bio_X" title="průměrná roční teplota">bio_X</a></li></ul>
+</li></ul>
+<hr></hr><h2 xmlns="">PERMANENT:</h2>
+<h3 xmlns="">Rastrové vrstvy:</h3>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="dem_gtopo30"><tt>dem_gtopo30</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>digitální výškový model (GTOPO30)</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Jde o globální digitální výškový model s prostorovým rozlišením
+	30 úhlových vteřin (tj. pro území ČR přibližně 900 x 600 m).
+	Více informací naleznete na http://edcdaac.usgs.gov/gtopo30/README.asp.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">výšková data, rozsah: 123 - 1511 m</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://lpdaac.usgs.gov/gtopo30/gtopo30.asp" title="GTOPO30">http://lpdaac.usgs.gov/gtopo30/gtopo30.asp</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="dem_srtm"><tt>dem_srtm</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>digitální výškový model (SRTM)</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Prostorové rozlišení těchto dat jsou 3 úhlové vteřiny,
+	tj. pro území ČR přibližně 90 x 60 m. Data byla pořízena při
+	misi raketoplánu Endeavour - mohl tak vzniknout poměrně přesný globální
+	výškový model (nasnímáno 80% povrchu souše metodou radarové interferometrie).
+	Maximální přesnost tohoto modelu dosahuje 15 metrů v poloze a 12 metrů ve výšce.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">výšková data, rozsah: 47 - 1594 m</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://edcsgs9.cr.usgs.gov/pub/data/srtm/" title="SRTM">http://edcsgs9.cr.usgs.gov/pub/data/srtm/</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<h3 xmlns="">Vektorové vrstvy:</h3>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="casti_obce"><tt>casti_obce</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>části obce</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Vektorová mapa byla vygenerována na základě souřadnic uložených
+	ve sloupcích "sxcob" a "sycob".</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kn</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód kraje (pracovní)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód okresu (pracovní)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodnuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">klasifikační jednotka NUTS</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pracovní kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">dosud platné kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ko</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kontrolní znak</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>icob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo základní územní jednotky</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mo</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">městský obvod</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">městská část</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodcob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>porcob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadí části obce v okrese</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcob_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název části obce (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcoba</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcoba_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"> (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodcob_m</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód nečleněné části obce podle MPSV</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kcm</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kontrolní znak nečleněné části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazdomcob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazdomcob_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"> (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">PSČ</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc_2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">druhé PSČ v části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc_3</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">třetí PSČ v části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc_4</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">čtvrté PSČ v části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc_5</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">páté PSČ v části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc_6</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">šesté PSČ v části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc_7</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">sedmé PSČ v části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souhrná složka pro PSČ</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob91</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB91</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob01</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB01</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mapa</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">mapový list ZM10</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sycob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y v S-JTSK</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sxcob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X v S-JTSK</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>porob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadí obce v okrese</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pormc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadové číslo městské části/městského obvodu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodmc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód městské části/městského obvodu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcs</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>alkcob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">alternativní (původní) kód části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>akc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">alternativní (původní) kontrolní znak části obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenazaz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna záznamu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenapol</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna položky</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">
+<a href="http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</a>
+	  (pouze atributy)
+	</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.1</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="cesty"><tt>cesty</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>turistické trasy (okres Žďár nad Sázavou)</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">barva trasy</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">popis</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="cfm"><tt>cfm</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>různé, nezařazeno</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz/" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="cr"><tt>cr</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>státní hranice ČR</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Ručně upravená hranice ČR z vrstvy hranice, převedená na plochu. Velmi přibližná!</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">oficiální název státu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">oficiální název státu (bez diakritiky)</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="" title=""></a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="czfree_nodes"><tt>czfree_nodes</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>uzly sítě CZFree</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">CZFree.Net - projekt neziskové broadband telekomunikační sítě v České Republice.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni"></table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://www.czfree.net" title="CZFree">http://www.czfree.net</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="dsnimky"><tt>dsnimky</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>náhledová mapa družicových snímků</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Mapa zobrazuje území pokrytá družicovými daty, které jsou volně dostupná
+	na http://glcfapp.umiacs.umd.edu.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cat</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">číselný identifikátor snímku</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>id</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">textový identifikátor</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>datum</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">datum pořízení dat</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>skener</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">použitý skener</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nosic</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">nosič</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>georef</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">georeference</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>format</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">formát dat</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>uzemi</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">dotčené státy</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ul_y</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y (S-JTSK) horního levého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ul_x</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X (S-JTSK) horního levého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ll_y</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y (S-JTSK) dolního levého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ll_x</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X (S-JTSK) dolního levého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ur_y</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y (S-JTSK) horního pravého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ur_x</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X (S-JTSK) horního pravého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>lr_y</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y (S-JTSK) dolního pravého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>lr_x</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X (S-JTSK) dolního pravého rohu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ce_y</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y (S-JTSK) středu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ce_x</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X (S-JTSK) středu scény</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zona</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">UTM zóna originálních dat</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>url</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">URL zdroje dat</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://glcfapp.umiacs.umd.edu" title="Global Land Cover Facility">http://glcfapp.umiacs.umd.edu</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.3.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id" style="background-color: #c80000"><a name="hranice"><tt>hranice</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>administrativní hranice</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni"></table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 5%">0.2.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">odebráno (nahrazeno kraje_pseudo)</td>
+</tr>
+</table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="klad_zm10"><tt>klad_zm10</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>klad listů Základní mapy 1:10 000</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>entity_nam</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>color</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>weight</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>layer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>block</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>txt</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">textový popisek</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://www.cuzk.cz" title="ČÚZK">http://www.cuzk.cz</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="kraje_pseudo"><tt>kraje_pseudo</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>nepravá mapa krajů</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Tato mapa vznikla na základě interpolace z vrstev obce,
+	casti_obce a mes_casti
+	(identifikační číslo kraje - položka kn). Hranice krajů jsou tedy velmi přibližné!
+	Nakonec byla ručně upravena (vnější hranice odpovídá vrstvě cr) tak,
+	aby rozdíl známé a vypočtené výměry nepřesahoval 5 000 ha.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nk</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kn</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikátor kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodnuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód NUTS</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazkr</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazkr_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název kraje (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>vymera</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">výměra v ha</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob91</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB91</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob01</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB01</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>obakt</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel aktuální (2004)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcs</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenazaz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna záznamu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenapol</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna položky</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">
+<a href="http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</a>
+	  (pouze atributy)
+	</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.1</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="mes_casti"><tt>mes_casti</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>městské části</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Vektorová mapa byla vygenerována na základě souřadnic uložených
+	ve sloupcích "sxmc" a "symc".</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kn</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód kraje (pracovní)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód okresu (pracovní)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodnuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">klasifikační jednotka NUTS</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">dosud platné kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ko</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kontrolní znak</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>icob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>porob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadí obce v okrese</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo základní územní jednotky</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodmc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód městské části/městského obvodu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mo</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">městský obvod</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">městská část</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pormc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadové číslo městské části/městského obvodu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pormcs</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadové číslo městské části v rámci správního obvodu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazmc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název městské části</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazmc_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název městské části (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazevur</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazevur_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název úřadu (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ico</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo organizace</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ur</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">typ úřadu v obci</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sm</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">PSČ</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob91</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB91</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob01</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB01</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>spros</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">právní obvod v Hl.m. Praze, zřízen od 1.7.2001</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodpo</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce s pověřeným obecním úřadem</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodst</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód stavebního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>porcsu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodfi</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód finančního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cfu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">číslo finančního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodma</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód matričního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pcmat</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadové číslo matričního úřadu podle číselníku ČSÚ</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>symc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y v S-JTSK</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sxmc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X v S-JTSK</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mapa</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">mapový list ZM10</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcs</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenazaz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna záznamu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenapol</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna položky</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">
+<a href="http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</a>
+	  (pouze atributy)
+	</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.1</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="mesta_b"><tt>mesta_b</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>obce</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">K městům byla připojena data z ČSÚ (http://www.czso.cz), tam kde byl název
+	unikátní - jak v mesta_b, tak v číselníku obcí. Takto se podařilo připojit
+	3829 obcí z celkových 6248 uvedených v číselníku obcí. Bohužel i když byly použity
+	pouze unikátní názvy, obsahují tyto atributy některé chyby, tj. atributy přísluší
+	jiné obci. Atribut 'oby_celkem' je celkový počet obyvatel v roce 2002.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">krátký popis</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dupl</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>obec_kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>postaveni</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>okres_id</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikátor okresu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>okres_kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód okresu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>okres</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název okresu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kraj_id</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikátor kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kraj_kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kraj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>oblast_id</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikátor oblasti</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>oblast_kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód oblasti</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>oblast</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název oblasti</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>oby_celkem</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">obyvatel celkem</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz/" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="mesta_p"><tt>mesta_p</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>města</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Větší města (plocha).</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://www.cuzk.cz" title="ČÚZK">http://www.cuzk.cz</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="obce"><tt>obce</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>obce</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Vektorová mapa byla vygenerována na základě souřadnic uložených
+	ve sloupcích "sxob" a "syob".</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nk</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kn</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód kraje (pracovní)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód okresu (pracovní)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodnuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">klasifikační jednotka NUTS</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pracovní kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">dosud platné kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>porob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadí obce v okrese</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ko</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kontrolní znak</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>icob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo základní územní jednotky</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazob_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazevur</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazevur_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název úřadu (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ico</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikační číslo organizace</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>om</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">příznak okresního města (např. 1=hlavní město, 2=krajské město,
+	  3=krajské město v rámci krajů z roku 1960, 4=další krajské město (současné),
+	  9=jiná obec)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ur</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">typ úřadu v obci</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sm</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>psc</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">PSČ</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>vymera</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">výměra obce v ha</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob91</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB91</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob01</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB01</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>obakt</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel aktuální (2004)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodst</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód stavebního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>porcsu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodfi</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód finančního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cfu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">číslo finančního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodma</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód matričního úřadu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pcmat</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pořadové číslo matričního úřadu podle číselníku ČSÚ</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>probl</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">hospodářsky problémové oblasti (např. 1=celé okresy
+	  v letech 1996 a 1997, 2=mikroregiony, 3=strukturálně postižené regiony v 1998,
+	  4=hospodářsky slabé regiony)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>syob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice Y v S-JTSK</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sxob</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">souřadnice X v S-JTSK</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>mapa</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">mapový list ZM10</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcs</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenazaz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna záznamu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenapol</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna položky</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cispou</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">číslo (kód) správního obvodu obce s pověřeným obecním úřadem</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>okpo</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód okresu obce s pověřeným obecním úřadem</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodpo</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce s pověřeným obecním úřadem</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazpo</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce s pověřeným obecním úřadem</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazpo_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce s pověřeným obecním úřadem (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cisorp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">číslo (kód) správního obvodu obce s rozšířenou působností</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>okorp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód okresu obce s rozšířenou působností</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodorp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód obce s rozšířenou působností</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazorp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce s rozšířenou působností</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazorp_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název obce s rozšířenou působností (bez diakritiky)</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">
+<a href="http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</a>
+	  (pouze atributy)
+	</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.1</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="okresy_pseudo"><tt>okresy_pseudo</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>nepravá mapa okresů</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Tato mapa vznikla na základě interpolace z vrstev obce, casti_obce
+	a mes_casti (identifikační číslo okresu - položka knok). Hranice okresů jsou
+	tedy velmi přibližné! Nakonec byla ručně upravena (vnější hranice odpovídá
+	vrstvě cr) tak, aby rozdíl známé a vypočtené výměry nepřesahoval 5 000 ha.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nk</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kn</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikátor kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">identifikátor okresu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodnuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">kód NUTS</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>knuts</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">pracovní kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kodok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">dosud platné kódy okresů</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazkr</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název kraje</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazkr_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název kraje (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazok</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název okresu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazok_a</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">název okresu (bez diakritiky)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>vymera</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">výměra v ha</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob91</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB91</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>ob01</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel dle SLDB01</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>obakt</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">počet obyvatel aktuální (2004)</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazcs</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenazaz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna záznamu</td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>zmenapol</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">změna položky</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">
+<a href="http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</a>
+	  (pouze atributy)
+	</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.1</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="reky"><tt>reky</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>vodní toky</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz/" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="silnice"><tt>silnice</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>silniční síť</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Velmi přibližný a zjednodušený obraz silniční sítě.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz/" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="silnice_pasport"><tt>silnice_pasport</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>silniční síť - pasporty</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dminj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>silnice</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poradi_us</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cis_useku</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cis_sekce</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>stan_zac</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>stan_kon</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dopr_smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sir_nepras</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>variace</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poc_jpruhu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poc_jpruhl</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>druh_voz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj_text</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>tvar_kr_mk</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>riz_dopr</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dat_zaznam</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://www.rsd.cz" title="Ředitelství silnic a dálnic ČR">http://www.rsd.cz</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="silnice_useky"><tt>silnice_useky</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>úseky silniční sítě</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Jedná se o spojnice jednotlivých uzlů (silnice_uzly) silniční sítě.
+	Spojnice jsou realizovány pouze jednou linií.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cis_useku</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dat_zaznam</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>adminj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>delka_us</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dopr_smery</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>papr_vetev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_tr_kom</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>silnice</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>vybr_sit</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>vym_tahy</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>peaz_kom1</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>peaz_kom2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>peaz_kom3</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>peaz_kom4</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>etah1</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>etah2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>etah3</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>etah4</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poradi_us</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://www.rsd.cz" title="Ředitelství silnic a dálnic ČR">http://www.rsd.cz</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="silnice_uzly"><tt>silnice_uzly</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>uzly silniční sítě</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Vrstva obsahuje uzly silniční sítě s poměrně rozsáhlými popisnými informacemi.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>cislo_uzlu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>adm1</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>adm2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>iczuj_text</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sou_x</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>sou_y</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>vys_sou_z</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>char_uzlu</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>char_text</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pockr_duz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>pocv_duz</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel1</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel3</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel4</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel5</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel6</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel7</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kr_uzel8</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient1</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel1</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel2</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient3</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel3</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient4</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel4</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient5</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel5</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient6</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel6</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient7</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel7</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>orient8</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nav_uzel8</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>dat_zaznam</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://www.rsd.cz" title="Ředitelství silnic a dálnic ČR">http://www.rsd.cz</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.2.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="voda"><tt>voda</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>vodní plochy</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz/" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="zeleznice"><tt>zeleznice</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>železniční síť</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data"></td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr>
+<td class="vnitrni" style="width: 15%"><i>rgntyp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>nazev</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>smer</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>poityp</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+<tr>
+<td class="vnitrni" style="width: 15%"><i>kod_popis</i></td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni"></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni">
+<tr><td class="vnitrni"><a href="http://gps-maps.info/cz/" title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</a></td></tr>
+<tr><td class="vnitrni">
+<a href="http://home.tiscali.cz:8080/bytebox/topoguide" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</a>
+	  (pouze atributy)
+	</td></tr>
+</table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1.0</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<hr xmlns="">
+<h2 xmlns="">klimadata:</h2>
+<h3 xmlns="">Rastrové vrstvy:</h3>
+<div xmlns="" align="center"><table class="vrstva">
+<tr>
+<td class="polozka">zkrácený název:</td>
+<td class="id"><a name="bio_X"><tt>bio_X</tt></a></td>
+</tr>
+<tr>
+<td class="polozka">název:</td>
+<td class="polozka_data"><b>průměrná roční teplota</b></td>
+</tr>
+<tr>
+<td class="polozka">popis:</td>
+<td class="polozka_data">Jednotlivé vrstvy byly interpolovány z průměru měsíčních hodnot pro     
+	příslušné klimatické stanice v rastru o čtverci 30 úhlových vteřin.     
+	
+	Popis dat: http://biogeo.berkeley.edu/worldclim/methods.htm.            
+	
+	Pouze práce tisíců lidí ze všech zemí světa (těch, kteří zaznamenávali  
+	data i těch, kteří je soustředili v národních i mezinárodních           
+	databázích) umožnila vytvoření zdrojových celosvětových klimatických    
+	vrstev. Vznik těchto vrstev rovněž podpořila organizace NatureServe.
+	
+	Tato data tedy připravili Robert J. Hijmans, Susan Cameron, 
+	Juan Parra z Muzea zoologie obratlovců při Kalifornské universitě      
+	v Berkeley ve spolupráci s Peter Jones a Andrew Jarvis (CIAT)          
+	a s Karen Richardson z Rainforest CRC.                                  
+	
+	Vrstvy ohraničené státními hranicemi České republiky do S-JTSK převedl     
+	zaboj.hrazsky@seznam.cz pomocí GRASSu 6.0.0.</td>
+</tr>
+<tr>
+<td class="polozka">atributy:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni">hodnota = teplota * 10 [ve stupních Celsia]; rozlišení 00:00:30</td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">zdroj:</td>
+<td class="polozka_data"><table class="vnitrni"><tr><td class="vnitrni"><a href="http://biogeo.berkeley.edu/worldclim/worldclim.htm" title="biogeo.berkeley.edu">http://biogeo.berkeley.edu/worldclim/worldclim.htm</a></td></tr></table></td>
+</tr>
+<tr>
+<td class="polozka">historie:</td>
+<td class="polozka_data"><table class="vnitrni"><tr>
+<td class="vnitrni" style="width: 5%">0.1</td>
+<td class="vnitrni" style="width: 10px">-</td>
+<td class="vnitrni">přidáno</td>
+</tr></table></td>
+</tr>
+</table></div>
+<hr xmlns="">
+<table class="vnitrni"><tr><td class="vnitrni" style="width: 50%">Valid:
+	  <a href="http://validator.w3.org/check/referer" title="Valid XHTML 1.0">XHTML 1.0</a></td><td class="vnitrni" style="text-align: right">landa.martin <i>na</i> gmail.com</td></tr></table></body></html>

@@ -5,3 +5,50 @@ Nazev   : Graficke uzivatelske rozhrani pro tvorbu mapovych vystupu v systemu GR
 Student : Anna Kratochvilova
 Vedouci : Ing. Martin Landa
 Obhajoba: 06/2011
+
+Obsah CD
+--------
+* Vlastni program (zdrojovy kod, napoveda)
+    ./src/docs:
+    Makefile  wxGUI.PsMap.html
+
+    ./src/gui_modules:
+    psmap_dialogs.py  psmap.py
+
+    ./src/images:
+    Makefile  scalebar-fancy.png  scalebar-simple.png
+
+    ./src/xml:
+    menudata_psmap.xml
+  
+* Text bakalarske prace s pouzitymi obrazky:
+
+    ./text:
+    bc_draft.pdf  bc_draft.tex  listsezadanim.tex  prohlaseniapodekovani.tex  
+    titulbp.tex  mapinfo.svg  sour_systemy.svg  logo_cvut_cb.pdf
+    Makefile
+
+    ./text/GUI_screenshots:
+    ArcGIS_graticule_wizard.png  gvSIG_toolbar.png   psmap_toolbar.png
+    ArcGIS_legend_wizard.png     psmap_main.png      QGIS_panel.png
+    ArcGIS_text_dialog.png       psmap_scalebar.png  wxgui_layer_manager.png
+    gvSIG_dialogy.png            psmap_text.png      wxgui_map_display.png
+
+* Ukazka mapovych vystupu:
+
+    ./text/map_vystupy/ArcGIS:
+    data_SRTM_ArcGIS.pdf  dem.pdf  zabaged.pdf
+
+    ./text/map_vystupy/GMT:
+    example_2.pdf
+
+    ./text/map_vystupy/QGIS:
+    DEM_QGIS.pdf  data_SRTM_QGIS.pdf
+
+    ./text/map_vystupy/psmap:
+    DEM.pdf  DEM.psmap  dem_srtm.pdf
+    dem_srtm.psmap  zabaged.pdf  zabaged.psmap
+
+    ./map_vystupy/psmap/krovak:
+      (lokace se zdrojovymi daty)
+                     

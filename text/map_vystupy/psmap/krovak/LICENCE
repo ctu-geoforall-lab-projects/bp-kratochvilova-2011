@@ -1,0 +1,67 @@
+Dataset FreeGeodataCZ (Geograficka data CR pro GRASS)
+-------------------------------------------------------------------
+
+Veskera data obsazena v tamto baliku jsou poskytovana BEZ JAKEKOLIV
+ZARUKY a uzivatel prebira veskerou odpovednost za jejich pouziti.
+
+Data jsou ziskana z ruznych zdroju a plati pro ne puvodni licencni
+podminky, s jakymi jsou z techto zdroju distribuovana.
+
+Navic, pro prevod dat z "CZECH free map" z formatu 'Garmin IMG' do
+textu byla pouzita free verze programu gpsmapper, cehoz dusledkem je,
+ze data neni dovoleno prodavat (this map cannot be sold) i kdyby to
+pred timto prevodem bylo dovoleno.
+
+Zde je uvedeno, odkud jsou jednotliva data ziskana a uzivatel je
+povinen seznamit se s puvodnimi licencnimi podminkami pro jednotlive
+vrstvy.
+
+1. "CZECH free map" 
+-------------------
+Vrstvy: cesty, cfm, cr, hranice, mesta_b, mesta_p, reky, silnice, voda, zeleznice
+Zdroj: http://b.t.s.cz/map/
+
+2. "CSU"
+--------
+Vrstvy: mesta_b (atributy), okresy_pseudo (atributy)
+Zdroj: http://www.czso.cz
+
+3. "CZFree"
+-----------
+Vrstvy: czfree_nodes
+Zdroj: http://www.czfree.net
+
+4. "CUZK"
+---------
+Vrstvy: klad_zm10
+Zdroj: http://www.cuzk.cz
+
+5. "The Earth Resources Observation Systems (EROS)"
+---------------------------------------------------
+Vrstvy:	dem_gtopo30
+Zdroj:	http://lpdaac.usgs.gov/gtopo30/gtopo30.asp
+
+6. "The Earth Resources Observation Systems (EROS)"
+---------------------------------------------------
+Vrstvy:	dem_srtm
+Zdroj:	http://edcsgs9.cr.usgs.gov/pub/data/srtm/
+
+7. "Reditelstvi silnic a dalnic CR"
+-----------------------------------
+Vrstvy: silnice_pasport, silnice_useky, silnice_uzly
+Zdroj: http://www.rsd.cz/
+Poznamka: Data byla zaclenena se souhlasem RSD CR.
+
+8. "Uzemne identifikacni registr"
+---------------------------------
+Vrstvy: obce, casti_obci, mes_casti, kraje_pseudo, okresy_pseudo
+Zdroj: http:www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw
+Poznamka: Data z UIR-ZSJ byla zapracovana do tohoto projektu pri dodrzeni
+pravidel zverejnovani dat z jinych zdroju (udaje nepozmenovat, uvest
+zdroj).
+
+9. "Global Land Cover Facility"
+-------------------------------
+Vrstvy: dsnimky a souvisejici druzicove snimky
+Zdroj: http://glcfapp.umiacs.umd.edu
+Poznamka: Vice informaci nalezneta na http://glcf.umiacs.umd.edu/data/policy.shtml.

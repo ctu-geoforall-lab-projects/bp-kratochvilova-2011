@@ -1,0 +1,101 @@
+COMMAND: v.in.ogr -o dsn="./" output="useky" layer="useky" min_area=0.0001 snap=-1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: temp USER: martin DATE: Wed Nov  3 16:46:40 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="silnice_useky" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" key="cat" field=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Nov 12 20:49:37 2004
+---------------------------------------------------------------------------------
+COMMAND: v.proj input="silnice_useky" location="cr-jtsk" output="silnice_useky"
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Wed Dec  1 14:49:53 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="silnice_useky_1" driver="pg" database="g_cr" table="public.silnice_useky_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:46:48 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky_1" driver="pg" database="g_cr" table="public.silnice_useky_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:47:43 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="silnice_useky" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:37 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:45 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:56 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="pg" database="grass_cr" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:51 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="pg" database="grass_cr" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:57 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="pg" database="grass_cr" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:01:08 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:03:59 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:22 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:53 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:04 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="'${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf'" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:33 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database=""${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf"" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:06:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:41 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:46 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="pg" database="grass_cr" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:02 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="pg" database="grass_cr" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:22:32 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:35:07 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="silnice_useky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:43:42 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="silnice_useky" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="silnice_useky" key="cat" layer=1
+GISDBASE: /ssi0/ssi/landa/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: landa DATE: Wed Feb 14 13:48:49 2007

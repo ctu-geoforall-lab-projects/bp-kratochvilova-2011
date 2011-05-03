@@ -1,0 +1,124 @@
+COMMAND: v.in.db driver="pg" database="g_cr" table="obce" x="-syob" y="-sxob" key="cat" output="obce"
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: temp USER: martin DATE: Tue Nov 30 14:45:07 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="obce" driver="pg" database="g_cr" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: temp USER: martin DATE: Tue Nov 30 14:45:37 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="g_cr" table="obce_i" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Wed Dec  1 16:51:28 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="g_cr" table="public.obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Sun Dec  5 01:50:00 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="obce_1" driver="pg" database="g_cr" table="public.obce_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:46:48 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce_1" driver="pg" database="g_cr" table="public.obce_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:47:43 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce@PERMANENT" driver="dbf" database="/home/martin/grassdata/cr/PERMANENT/dbf" table="public.obce_i" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Sat Jan 15 01:39:18 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="obce" driver="dbf" database="/home/martin/grassdata/cr/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Jan 28 23:48:07 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Jan 28 23:48:09 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Jan 28 23:48:12 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="obce" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:36 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:44 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:55 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="grass_cr" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="grass_cr" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:57 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="grass_cr" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:01:08 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:03:59 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:52 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:04 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="'${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf'" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:33 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database=""${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf"" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:06:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:40 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:46 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="grass_cr" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:01 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="pg" database="grass_cr" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:22:32 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:35:06 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="obce" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:43:41 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="obce" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="obce" key="cat" layer=1
+GISDBASE: /ssi0/ssi/landa/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: landa DATE: Wed Feb 14 13:48:48 2007

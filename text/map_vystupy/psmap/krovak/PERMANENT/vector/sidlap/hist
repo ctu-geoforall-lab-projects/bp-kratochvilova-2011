@@ -1,0 +1,8 @@
+COMMAND: v.in.ogr -t -o dsn="/home/anna/Documents/grassdata/ArcCR500_v12/shapes/sidlap.shp" output="sidlap" layer="sidlap" min_area=0.0001 snap=-1
+GISDBASE: /home/anna/Documents/grassdata
+LOCATION: krovak MAPSET: PERMANENT USER: anna DATE: Thu Apr 21 17:34:17 2011
+-----------------------------------------------------
+34 input polygons
+Total area: 8.73343E+07 (34 areas)
+Overlapping area: 0 (0 areas)
+Area without category: 0 (0 areas)

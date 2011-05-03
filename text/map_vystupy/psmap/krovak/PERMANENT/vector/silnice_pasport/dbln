@@ -1,0 +1,1 @@
+1 silnice_pasport cat $GISDBASE/$LOCATION_NAME/$MAPSET/dbf/ dbf

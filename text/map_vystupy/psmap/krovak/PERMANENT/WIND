@@ -1,0 +1,18 @@
+proj:       99
+zone:       0
+north:      -985228.3368951
+south:      -1159632.11081753
+east:       -787319.17793978
+west:       -904259.05583984
+cols:       1949
+rows:       1938
+e-w resol:  59.99993735
+n-s resol:  89.99162741
+top:        1
+bottom:     0
+cols3:      1949
+rows3:      1938
+depths:     1
+e-w resol3: 59.99993735
+n-s resol3: 89.99162741
+t-b resol:  1

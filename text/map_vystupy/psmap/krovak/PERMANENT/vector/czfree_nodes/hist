@@ -1,0 +1,153 @@
+COMMAND: v.in.ascii output="czfree_nodes"
+GISDBASE: /ssi0/ssi/blazek/gdata/cr
+LOCATION: wgs84 MAPSET: PERMANENT USER: blazek DATE: Tue Jan 13 10:44:07 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="czfree_nodes" driver="pg" database="cr" table="czfree_nodes" key="cat" field=1
+GISDBASE: /ssi0/ssi/blazek/gdata/cr
+LOCATION: wgs84 MAPSET: PERMANENT USER: blazek DATE: Tue Jan 13 10:44:07 2004
+---------------------------------------------------------------------------------
+COMMAND: v.proj input="czfree_nodes" location="wgs84" mapset="PERMANENT" output="czfree_nodes"
+GISDBASE: /ssi0/ssi/blazek/gdata/cr
+LOCATION: jtsk MAPSET: PERMANENT USER: blazek DATE: Tue Jan 13 10:44:08 2004
+---------------------------------------------------------------------------------
+COMMAND: g.copy -o vect="czfree_nodes,czfree_nodes"
+GISDBASE: /ssi0/ssi/blazek/gdata/cr/output/cr/0.1/
+LOCATION: jtsk MAPSET: PERMANENT USER: blazek DATE: Tue Jan 13 11:07:20 2004
+---------------------------------------------------------------------------------
+COMMAND: v.proj input="czfree_nodes" location="cr-jtsk" output="czfree_nodes"
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Wed Dec  1 14:52:12 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:46:47 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:47:42 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Fri Dec 17 03:00:48 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Fri Dec 17 03:01:14 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="czfree_nodes_1" driver="pg" database="g_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Wed Jan  5 19:38:43 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Wed Jan  5 19:38:46 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Wed Jan  5 19:38:54 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Wed Jan  5 19:39:04 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Wed Jan  5 19:39:14 2005
+---------------------------------------------------------------------------------
+COMMAND: v.category input="czfree_nodes_1" output="cz" type="point,line,boundary,centroid,area" option="add" cat=1 layer=1 step=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Wed Jan  5 19:39:17 2005
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes_1" driver="pg" database="g_cr" table="public.czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Sat Jan 29 12:19:50 2005
+---------------------------------------------------------------------------------
+COMMAND: v.digit map="czfree_nodes_1"
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Sat Jan 29 12:31:25 2005
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="czfree_nodes" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:35 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:42 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:54 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="pg" database="grass_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:49 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="pg" database="grass_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:56 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="pg" database="grass_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:01:07 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:03:58 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:52 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:03 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="'${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf'" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:32 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database=""${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf"" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:06:20 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:40 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:46 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="pg" database="grass_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:01 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="pg" database="grass_cr" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:22:31 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:35:06 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:43:41 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="czfree_nodes" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="czfree_nodes" key="cat" layer=1
+GISDBASE: /ssi0/ssi/landa/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: landa DATE: Wed Feb 14 13:48:48 2007

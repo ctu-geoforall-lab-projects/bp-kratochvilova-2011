@@ -1,0 +1,51 @@
+2007-02-14 martin <landa.martin@gmail.com> **urgent**
+
+	* verze 0.3.2
+	* oprava cesty k DBF databance
+	
+2007-01-11 martin <landa.martin@gmail.com>
+
+	* verze 0.3.1
+	* prejmenovani a prepsani skriptu 
+	    * ds2grass.sh -> r.in.freegeodatacz
+	    * utm2loc.sh -> r.proj.freegeodatacz
+	* metadata presunuty do metadata/non-iso
+	* SQL davky v UTF-8
+	* layers.dm -> cr.dm
+	* cr.grc pro GIS Manager
+	
+2005-03-21 martin <landa.martin@gmail.com>
+
+	* verze 0.3.0
+	* VAR: fixace promenne DB_DATABASE
+	* dsnimky: pridano
+	* ds2grass.sh, utm2loc.sh: pridano
+	
+2005-01-05 martin <landa.martin@gmail.com>
+
+	* verze 0.2.1
+	* popis_dat: pridana polozka 'atributy'
+	* romans: latin2 pismo pro GRASS (FONTY_ISO_8859_2)
+	* obce: pridano
+	* casti_obce: pridano
+	* mes_casti: pridano
+	* kraje_pseudo: pridano
+	* okresy_pseudo: pridano
+	* hranice: odebrano
+	* cr: jemna zmena statni hranice 
+	* dem_gtopo30: odrazi zmenu ve vrstve 'cr'
+	* dem_srtm: odrazi zmenu ve vrstve 'cr'
+	* pg/: popisna data pro PostgreSQL
+	
+	
+2004-11-12 martin <landa.martin@gmail.com>
+
+	* verze 0.2.0
+	* vsechny_vektorove_vrstvy: doplneni metadat
+	* d.m: vytvoren soubor 'layers.dm'
+	* popis_dat: ve formatu pdf
+	* dem_gtopo30: pridano
+	* dem_srtm: pridano
+	* silnice_uzly: pridano
+	* silnice_useky: pridano
+	* silnice_pasport: pridano

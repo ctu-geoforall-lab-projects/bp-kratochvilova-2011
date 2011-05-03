@@ -58,6 +58,8 @@ Icons['psMap'] = {
                                 label = _('Load text file with mapping instructions')),                           
     'psExport'       : MetaIcon(img = iconSet['ps-export'],
                                 label = _('Generate PostScript output')),
+    'pdfExport'      : MetaIcon(img = iconSet['pdf-export'],
+                                label = _('Generate PDF output')),
     'pageSetup'  : MetaIcon(img = iconSet['page-settings'],
                             label = _('Page setup'),
                             desc = _('Specify paper size, margins and orientation')),
@@ -81,7 +83,7 @@ Icons['psMap'] = {
                            label = _('Quit Hardcopy Map Utility')),
     'addText'   : MetaIcon(img = iconSet['text-add'],
                             label = _('Add text')),
-    'addMapinfo': MetaIcon(img = iconSet['map-settings'],
+    'addMapinfo': MetaIcon(img = iconSet['map-info'],
                             label = _('Add map info')),
     'addLegend' : MetaIcon(img = iconSet['legend-add'],
                             label = _('Add legend')),
@@ -139,8 +141,10 @@ class PsMapToolbar(AbstractToolbar):
         self.preview = wx.NewId()
         self.instructionFile = wx.NewId()
         self.generatePS = wx.NewId()
+        self.generatePDF = wx.NewId()
         self.loadFile = wx.NewId()
         self.pan = wx.NewId()
+        self.help = wx.NewId()
 
         icons = Icons['psMap']
         return self._getToolbarData(((self.loadFile, 'loadFile', icons['scriptLoad'],
@@ -177,7 +181,11 @@ class PsMapToolbar(AbstractToolbar):
                                       self.parent.OnPreview),
                                      (self.generatePS, 'generatePS', icons['psExport'],
                                       self.parent.OnPSFile),
+                                    ( self.generatePDF, 'generatePDF', icons['pdfExport'],
+                                      self.parent.OnPDFFile),
                                      (None, ),
+                                     (self.help, "help", Icons['misc']['help'],
+                                      self.parent.OnHelp),
                                      (self.quit, 'quit', icons['quit'],
                                       self.parent.OnCloseWindow))
                                     )
@@ -291,7 +299,7 @@ class PsMapFrame(wx.Frame):
         self.cmdThread = CmdThread(self, self.requestQ, self.resultQ)
         
         self._layout()
-        self.SetMinSize(wx.Size(700, 600))
+        self.SetMinSize(wx.Size(750, 600))
         
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
@@ -338,17 +346,32 @@ class PsMapFrame(wx.Frame):
         return str(self.instruction)
 
     def OnPSFile(self, event):
+        """!Generate PostScript"""
         filename = self.getFile(wildcard = "PostScript (*.ps)|*.ps|Encapsulated PostScript (*.eps)|*.eps")
         if filename:
             self.PSFile(filename)
+    
+    
+    def OnPDFFile(self, event):
+        """!Generate PDF from PS with ps2pdf if available"""
+        try:
+            p = grass.Popen(["ps2pdf"], stderr = grass.PIPE)
+            p.stderr.close()
+        
+        except OSError:
+            GMessage(parent = self,
+                    message = _("Program ps2pdf is not available. Please install it first to create PDF."))
+            return
             
+        filename = self.getFile(wildcard = "PDF (*.pdf)|*.pdf")
+        if filename:  
+            self.PSFile(filename, pdf = True)   
+               
     def OnPreview(self, event):
         """!Run ps.map and show result"""
         self.PSFile()
-
-
         
-    def PSFile(self, filename = None):
+    def PSFile(self, filename = None, pdf = False):
         """!Create temporary instructions file and run ps.map with output = filename"""
         instrFile = grass.tempfile()
         instrFileFd = open(instrFile, mode = 'w')
@@ -358,13 +381,20 @@ class PsMapFrame(wx.Frame):
         
         temp = False
         regOld = grass.region()
-        if not filename:
+        
+        if pdf:
+            pdfname = filename
+        else:
+            pdfname = None
+        #preview or pdf
+        if not filename or (filename and pdf):
             temp = True
             filename = grass.tempfile()
-            if self.instruction.FindInstructionByType('map'):
-                mapId = self.instruction.FindInstructionByType('map').id
-                SetResolution(dpi = 100, width = self.instruction[mapId]['rect'][2],
-                                height = self.instruction[mapId]['rect'][3])
+            if not pdf: # lower resolution for preview
+                if self.instruction.FindInstructionByType('map'):
+                    mapId = self.instruction.FindInstructionByType('map').id
+                    SetResolution(dpi = 100, width = self.instruction[mapId]['rect'][2],
+                                    height = self.instruction[mapId]['rect'][3])
         
         cmd = ['ps.map', '--overwrite']
         if os.path.splitext(filename)[1] == '.eps':
@@ -373,10 +403,15 @@ class PsMapFrame(wx.Frame):
             cmd.append('-r')
         cmd.append('input=%s' % instrFile)
         cmd.append('output=%s' % filename)
-        self.SetStatusText(_('Generating preview...'), 0)
+        if pdf:
+            self.SetStatusText(_('Generating PDF...'), 0)
+        elif not temp:
+            self.SetStatusText(_('Generating PostScript...'), 0)
+        else:
+            self.SetStatusText(_('Generating preview...'), 0)
          
         self.cmdThread.RunCmd(cmd, userData = {'instrFile' : instrFile, 'filename' : filename,
-                                            'temp' : temp, 'regionOld' : regOld})
+                                            'pdfname' : pdfname, 'temp' : temp, 'regionOld' : regOld})
         
     def OnCmdDone(self, event):
         """!ps.map process finished"""
@@ -384,9 +419,28 @@ class PsMapFrame(wx.Frame):
         if event.returncode != 0:
             GMessage(parent = self,
                    message = _("Ps.map exited with return code %s") % event.returncode)
-            return 
+                
+            grass.try_remove(event.userData['instrFile'])
+            if event.userData['temp']:
+                grass.try_remove(event.userData['filename']) 
+            return
+        
+        if event.userData['pdfname']:
+            try:
+                proc = grass.Popen(['ps2pdf', '-dPDFSETTINGS=/prepress', '-r1200', 
+                                    event.userData['filename'], event.userData['pdfname']])
+                
+                ret = proc.wait()                        
+                if ret > 0:
+                    GMessage(parent = self,
+                    message = _("ps2pdf exited with return code %s") % ret)
 
-        if haveImage and event.userData['temp']:
+            except OSError, e:
+                GError(parent = self,
+                       message = _("Program ps2pdf is not available. Please install it to create PDF.\n\n %s") % e)
+          
+        # show preview only when user doesn't want to create ps or pdf 
+        if haveImage and event.userData['temp'] and not event.userData['pdfname']:
             RunCommand('g.region', cols = event.userData['regionOld']['cols'], rows = event.userData['regionOld']['rows'])
 ## wx.BusyInfo does not display the message
 ##            busy = wx.BusyInfo(message = "Generating preview, wait please", parent = self)
@@ -425,7 +479,11 @@ class PsMapFrame(wx.Frame):
                 s = '.' + s
             suffix.append(s)
         raster = self.instruction.FindInstructionByType('raster')
-        rasterId = raster.id if raster else None
+        if raster:
+            rasterId = raster.id 
+        else:
+            rasterId = None
+
 
         if rasterId and self.instruction[rasterId]['raster']:
             mapName = self.instruction[rasterId]['raster'].split('@')[0] + suffix[0]
@@ -521,11 +579,20 @@ class PsMapFrame(wx.Frame):
         
     def OnZoomAll(self, event):
         self.mouseOld = self.mouse['use']
-        self.cursorOld = self.canvas.GetCursor() if self.currentPage == 0 else self.previewCanvas.GetCursor()
+        if self.currentPage == 0:
+            self.cursorOld = self.canvas.GetCursor() 
+        else:
+            self.previewCanvas.GetCursor()
         self.mouse["use"] = "zoomin"
-        self.canvas.ZoomAll() if self.currentPage == 0 else self.previewCanvas.ZoomAll()
+        if self.currentPage == 0:
+            self.canvas.ZoomAll()
+        else:
+            self.previewCanvas.ZoomAll()
         self.mouse["use"] = self.mouseOld 
-        self.canvas.SetCursor(self.cursorOld)  if self.currentPage == 0 else self.previewCanvas.SetCursor(self.cursorOld)
+        if self.currentPage == 0:
+            self.canvas.SetCursor(self.cursorOld)
+        else:
+            self.previewCanvas.SetCursor(self.cursorOld)
         
         
     def OnAddMap(self, event, notebook = False):
@@ -767,7 +834,11 @@ class PsMapFrame(wx.Frame):
         scale = mapInitRect.Get()[2]/realWidth  
         
         initMap = self.instruction.FindInstructionByType('initMap')
-        id = initMap.id if initMap else None
+        if initMap:
+            id = initMap.id 
+        else:
+            id = None
+
         
         if not id:
             id = wx.NewId()
@@ -820,7 +891,11 @@ class PsMapFrame(wx.Frame):
                 
             if itype == 'text':
                 
-                rot = float(self.instruction[id]['rotate']) if self.instruction[id]['rotate'] else 0
+                if self.instruction[id]['rotate']:
+                    rot = float(self.instruction[id]['rotate']) 
+                else:
+                    rot = 0
+
                 
                 extent = self.getTextExtent(textDict = self.instruction[id].GetInstruction())
                 rect = wx.Rect2D(self.instruction[id]['where'][0], self.instruction[id]['where'][1], 0, 0)
@@ -1176,13 +1251,22 @@ class PsMapBufferedWindow(wx.Window):
 
                 if foundResize and foundResize[0] == self.idResizeBoxTmp:
                     self.mouse['use'] = 'resize'
+                    
+                    # when resizing, proportions match region
+                    if self.instruction[self.dragId].type == 'map':
+                        self.constraint = False
+                        self.mapBounds = self.pdcObj.GetIdBounds(self.dragId)
+                        if self.instruction[self.dragId]['scaleType'] in (0, 1, 2):
+                            self.constraint = True
+                            self.mapBounds = self.pdcObj.GetIdBounds(self.dragId)
+                    
                 elif found:
                     self.dragId = found[0]  
                     self.RedrawSelectBox(self.dragId)
                     if self.instruction[self.dragId].type != 'map':
                         self.pdcTmp.RemoveId(self.idResizeBoxTmp)
                         self.Refresh()
-
+                        
                 else:
                     self.dragId = -1
                     self.pdcTmp.RemoveId(self.idBoxTmp)
@@ -1224,17 +1308,31 @@ class PsMapBufferedWindow(wx.Window):
                 
             # resize object
             if self.mouse['use'] == 'resize':
-                bounds = self.pdcObj.GetIdBounds(self.dragId)
                 type = self.instruction[self.dragId].type
-                self.mouse['end'] = event.GetPosition()
-                diffX = self.mouse['end'][0] - self.begin[0]
-                diffY = self.mouse['end'][1] - self.begin[1]
-                bounds.Inflate(diffX, diffY)
+                pos = event.GetPosition()
+                x, y = self.mapBounds.GetX(), self.mapBounds.GetY()
+                width, height = self.mapBounds.GetWidth(), self.mapBounds.GetHeight()
+                diffX = pos[0] - self.mouse['begin'][0]
+                diffY = pos[1] - self.mouse['begin'][1]
+                # match given region
+                if self.constraint:
+                    if width > height:
+                        newWidth = width + diffX
+                        newHeight = height + diffX * (float(height) / width)
+                    else:
+                        newWidth = width + diffY * (float(width) / height)
+                        newHeight = height + diffY
+                else:
+                    newWidth = width + diffX
+                    newHeight = height + diffY
+                    
+                if newWidth < 10 or newHeight < 10:
+                    return
                 
+                bounds = wx.Rect(x, y, newWidth, newHeight)    
                 self.Draw(pen = self.pen[type], brush = self.brush[type], pdc = self.pdcObj, drawid = self.dragId,
                             pdctype = 'rectText', bb = bounds)
                 self.RedrawSelectBox(self.dragId)
-                self.begin = event.GetPosition()
                 
         elif event.LeftUp():
             # zoom in, zoom out
@@ -1363,7 +1461,11 @@ class PsMapBufferedWindow(wx.Window):
                 x, y = self.instruction[id]['coords'][0] - self.instruction[id]['xoffset'],\
                         self.instruction[id]['coords'][1] + self.instruction[id]['yoffset']
                 extent = self.parent.getTextExtent(textDict = self.instruction[id])
-                rot = float(self.instruction[id]['rotate'])/180*pi if self.instruction[id]['rotate'] is not None else 0
+                if self.instruction[id]['rotate'] is not None:
+                    rot = float(self.instruction[id]['rotate'])/180*pi 
+                else:
+                    rot = 0
+
                 if self.instruction[id]['ref'].split()[0] == 'lower':
                     y += extent[1]
                 elif self.instruction[id]['ref'].split()[0] == 'center':
@@ -1396,7 +1498,11 @@ class PsMapBufferedWindow(wx.Window):
             rW, rH = float(rect.GetWidth()), float(rect.GetHeight())
             zoomFactor = 1/max(rW/cW, rH/cH)
             # when zooming to full extent, in some cases, there was zoom 1.01..., which causes problem
-            zoomFactor = zoomFactor if abs(zoomFactor - 1) > 0.01 else 1.
+            if abs(zoomFactor - 1) > 0.01:
+                zoomFactor = zoomFactor 
+            else:
+                zoomFactor = 1.
+
 
             if self.mouse['use'] == 'zoomout':
                 zoomFactor = min(rW/cW, rH/cH) 
@@ -1445,7 +1551,11 @@ class PsMapBufferedWindow(wx.Window):
                     self.DrawRotText(pdc = self.pdcObj, drawId = id, textDict = self.instruction[id],
                      coords = coords, bounds = oRect )
                     extent = self.parent.getTextExtent(textDict = self.instruction[id])
-                    rot = float(self.instruction[id]['rotate']) if self.instruction[id]['rotate'] else 0
+                    if self.instruction[id]['rotate']:
+                        rot = float(self.instruction[id]['rotate']) 
+                    else:
+                        rot = 0
+
                     self.instruction[id]['rect'] = bounds = self.parent.getModifiedTextBounds(coords[0], coords[1], extent, rot)
                     self.pdcObj.SetIdBounds(id, bounds)
                 else:
@@ -1517,9 +1627,17 @@ class PsMapBufferedWindow(wx.Window):
         return drawid
     
     def DrawRotText(self, pdc, drawId, textDict, coords, bounds):
-        rot = float(textDict['rotate']) if textDict['rotate'] else 0
+        if textDict['rotate']:
+            rot = float(textDict['rotate']) 
+        else:
+            rot = 0
+
         fontsize = str(textDict['fontsize'] * self.currScale)
-        background = textDict['background'] if textDict['background'] != 'none' else None
+        if textDict['background'] != 'none':
+            background = textDict['background'] 
+        else:
+            background = None
+
         
         pdc.RemoveId(drawId)
         pdc.SetId(drawId)
@@ -1616,9 +1734,17 @@ class PsMapBufferedWindow(wx.Window):
         """!Updates map frame label"""
 
         vector = self.instruction.FindInstructionByType('vector')
-        vectorId = vector.id if vector else None
+        if vector:
+            vectorId = vector.id 
+        else:
+            vectorId = None
+
         raster = self.instruction.FindInstructionByType('raster')
-        rasterId = raster.id if raster else None
+        if raster:
+            rasterId = raster.id 
+        else:
+            rasterId = None
+
         rasterName = 'None'
         if rasterId:
             rasterName = self.instruction[rasterId]['raster'].split('@')[0]

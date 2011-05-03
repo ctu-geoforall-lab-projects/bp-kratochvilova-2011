@@ -1,0 +1,8 @@
+COMMAND: v.in.ogr -t -o dsn="/home/anna/Documents/grassdata/ArcCR500_v12/shapes/vod_pl.shp" output="vod_pl" layer="vod_pl" min_area=0.0001 snap=-1
+GISDBASE: /home/anna/Documents/grassdata
+LOCATION: krovak MAPSET: PERMANENT USER: anna DATE: Thu Apr 21 17:33:47 2011
+-----------------------------------------------------
+69 input polygons
+Total area: 4.45341E+07 (69 areas)
+Overlapping area: 0 (0 areas)
+Area without category: 0 (0 areas)

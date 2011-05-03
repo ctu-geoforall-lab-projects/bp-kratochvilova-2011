@@ -1,0 +1,215 @@
+#!/bin/sh
+############################################################################
+#
+# MODULE:	r.proj.freegeodatacz
+# AUTHOR(S):	Martin Landa <landa.martin@gmail.com>
+# PURPOSE:	Re-project an image from UTM location into the current location
+#
+# COPYRIGHT:	(C) 2006 by the GRASS Development Team
+#
+#		This program is free software under the GNU General Public
+#		License (>=v2). Read the file COPYING that comes with GRASS
+#		for details.
+#
+#############################################################################
+
+#%module
+#% description: Re-project image from UTM location
+#%end
+#%flag
+#%  key: l
+#%  description: Print all available images in the source UTM location
+#%end
+#%flag
+#%  key: v
+#%  description: Verbose
+#%end
+#%option
+#% key: cat
+#% type: string
+#% description: Image identifier
+#% required : yes
+#%end
+#%option
+#% key: locutm
+#% type: string
+#% description: UTM location
+#% answer: cr-utm
+#% required : no
+#%end
+#%option
+#% key: maputm
+#% type: string
+#% description: UTM location mapset
+#% answer: PERMANENT
+#% required : no
+#%end
+#%option
+#% key: vecref
+#% type: string
+#% description: Vector reference map layer
+#% answer: dsnimky
+#% required : no
+#%end
+
+if test -z "$GISBASE"; then
+ echo "You must be in GRASS GIS to run this program." 1>&2
+ exit 1
+fi   
+
+if [ "$1" != "@ARGS_PARSED@" ] ; then
+  exec g.parser "$0" "$@"
+fi
+
+# setting environment, so that awk works properly in all languages
+unset LC_ALL
+LC_NUMERIC=C
+export LC_NUMERIC
+
+
+TMP="`g.tempfile pid=$$`"
+if [ $? -ne 0 ] || [ -z "$TMP" ] ; then
+    echo "ERROR: unable to create temporary files" 1>&2
+    exit 1
+fi
+
+PROG=`basename $0`
+
+#############################################################################
+
+check4software ()
+{
+    program="$1"
+    if test -n "$program" ; then
+	if [ ! -x "`which $program`" ] ; then
+	    echo "$PROG: $program required, please install $program first" 2>&1
+	    exit 1
+	fi
+    fi
+}
+
+cleanup() 
+{
+    echo "Cleaning ..."
+    rm -f $TMP
+#    g.region region_old 
+    g.remove region=region_old 1>/dev/null
+}
+
+# what to do in case of user break
+exitprocedure()
+{
+    echo "User break!"
+    cleanup
+    exit 1
+}
+
+command_utm ()
+{
+    command="$1"
+    gisrc_orig=$GISRC
+    cat $GISRC | sed 's/LOCATION_NAME:.*/LOCATION_NAME: cr-utm/g' | \
+	sed 's/MAPSET:.*/MAPSET: PERMANENT/g' > R_PROJ_FREEGEODATACA_grassrc6
+    export GISRC="R_PROJ_FREEGEODATACA_grassrc6"
+    eval $command
+    export GISRC=$gisrc_orig
+}
+
+# shell check for user break (signal list: trap -l)
+trap "exitprocedure" 2 3 15
+
+#############################################################################
+
+# check for required software
+check4software "sed"
+check4software "awk"
+
+cat="$GIS_OPT_CAT"
+location_name_utm="$GIS_OPT_LOCUTM"
+mapset_utm="$GIS_OPT_MAPUTM"
+vecref="$GIS_OPT_VECREF"
+
+verbose="2>/dev/null"
+if [ $GIS_FLAG_V -eq 1 ] ; then
+    verbose="2>&1"
+fi
+
+eval `g.gisenv`
+: ${GISBASE?} ${GISDBASE?} ${LOCATION_NAME?} ${MAPSET?}
+LOCATION=$GISDBASE/$LOCATION_NAME/$MAPSET
+location_utm=$GISDBASE/$location_name_utm/$mapset_utm
+
+# check if UTM location exists
+if test ! -d "$location_utm" ; then
+    echo -n "ERROR: UTM location <${location_name_utm}> and/or its mapset "
+    echo "<${mapset_utm}> does not exist"
+    exit 1
+fi
+
+if [ `g.findfile element=vector file=$vecref 1>/dev/null; echo $?` -eq 1 ] ; then
+    echo "ERROR: Cannot find vector map <$vecref>"
+    exit 1
+fi
+
+if [ $GIS_FLAG_L -eq 1 ] ; then
+    command_utm "g.mlist rast pat=ds_*_1 | sed 's/ds_//g' | sed 's/_1//g'"
+    exit 0
+fi
+
+g.region save=region_old
+
+images=`command_utm "g.mlist rast pat=ds_${cat}_* sep=" ""`
+
+echo "Image: $cat"
+
+i=1
+
+for gimage in  ${images[@]}
+  do
+    if [ "$i" -ne 1 ] ; then
+	echo " *"
+    fi
+    echo " * setting region"
+    resol=`command_utm "r.info $gimage | grep Res | head -n1 | cut -d: -f4 | \
+	sed 's/|//g' | sed 's/ //g'"`
+    proj=`g.proj -p | grep 'proj' | cut -d: -f2 | sed 's/ //g'`
+
+    if [ "$proj" == "ll" ] ; then
+	r=6378000
+	ro=`echo "180 / 3.14" | bc -l`
+	nsresol=`echo "( ${resol} / ${r} ) * ${ro}" | sed 's/ans = //g'`
+	phi=50
+	rr=`echo "$r * ( cos ( $phi / $ro ) )" | bc -l | sed 's/ans = //g'`
+	ewresol=`echo "( ${resol} / ${rr} ) * ${ro}" | bc -l | sed 's/ans = //g'`
+	g.region vect=$vecref nsres=${nsresol} ewres=${ewresol}
+    else
+	g.region vect=$vecref res=${resol}
+    fi
+
+    echo " * re-projecting <$gimage>"
+    eval r.proj loc=${location_name_utm} map=${mapset_utm} in=$gimage out=$gimage $verbose
+    
+    echo " * updating metadata"
+
+    cat ${location_utm}/cats/$gimage | head -n 2 | tail -n 1 | \
+      awk '{printf "\n%s",$0}' | paste ${LOCATION}/cats/$gimage - | \
+	sed 's/\t//g' > ${LOCATION}/cats/${gimage}.tmp
+    mv ${LOCATION}/cats/${gimage}.tmp ${LOCATION}/cats/${gimage}
+
+    
+    data_source=`cat ${location_utm}/hist/$gimage | head -n 6 | tail -n 1`
+    comments=`cat ${location_utm}/hist/$gimage | head -n 9 | tail -n 1`
+    echo -e "\n\n\n\n\n${data_source}\n\n\n${comments}" | \
+	paste  - ${LOCATION}/hist/${gimage} | \
+	sed 's/\t//g' > ${LOCATION}/hist/${gimage}.tmp
+    mv ${LOCATION}/hist/${gimage}.tmp ${LOCATION}/hist/${gimage}
+    
+    i=$(($i+1))
+done
+
+echo " * setting region based on the image <$gimage>"
+g.region rast=$gimage
+
+cleanup
+
+exit 0

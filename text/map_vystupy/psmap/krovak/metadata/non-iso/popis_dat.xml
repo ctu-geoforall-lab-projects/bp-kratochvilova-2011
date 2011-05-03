@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="iso-8859-2"?>
+<!DOCTYPE dataset SYSTEM "http://gama.fsv.cvut.cz/~landa/grasswikicz_data/geodata_cr/geodataCR.dtd">
+<?xml-stylesheet href="geodataCR.xsl" type="text/xsl"?>
+
+<dataset popis="Geografická data ČR pro GRASS">
+  <mapset id="PERMANENT" verze="0.3.0" datum="2005-03-21">
+    <rastr>
+      <vrstva id="dem_gtopo30">
+	<nazev>digitální výškový model (GTOPO30)</nazev>
+	<popis>Jde o globální digitální výškový model s prostorovým rozlišením
+	30 úhlových vteřin (tj. pro území ČR přibližně 900 x 600 m).
+	Více informací naleznete na http://edcdaac.usgs.gov/gtopo30/README.asp.</popis>
+	<atributy>
+	  <atribut>výšková data, rozsah: 123 - 1511 m</atribut>
+	</atributy>
+	<zdroj title="GTOPO30">http://lpdaac.usgs.gov/gtopo30/gtopo30.asp</zdroj>
+	<historie text="přidáno">0.2.0</historie>
+      </vrstva>
+      <vrstva id="dem_srtm">
+	<nazev>digitální výškový model (SRTM)</nazev>
+	<popis>Prostorové rozlišení těchto dat jsou 3 úhlové vteřiny,
+	tj. pro území ČR přibližně 90 x 60 m. Data byla pořízena při
+	misi raketoplánu Endeavour - mohl tak vzniknout poměrně přesný globální
+	výškový model (nasnímáno 80% povrchu souše metodou radarové interferometrie).
+	Maximální přesnost tohoto modelu dosahuje 15 metrů v poloze a 12 metrů ve výšce.</popis>
+	<atributy>
+	  <atribut>výšková data, rozsah: 47 - 1594 m</atribut>
+	</atributy>
+	<zdroj title="SRTM">http://edcsgs9.cr.usgs.gov/pub/data/srtm/</zdroj>
+	<historie text="přidáno">0.2.0</historie>
+      </vrstva>
+    </rastr>
+    <vektor>
+      <vrstva id="casti_obce">
+	<nazev>části obce</nazev>
+	<popis>Vektorová mapa byla vygenerována na základě souřadnic uložených
+	ve sloupcích "sxcob" a "sycob".</popis>
+	<atributy>
+	  <atribut kod="kn">kód kraje (pracovní)</atribut>
+	  <atribut kod="knok">kód okresu (pracovní)</atribut>
+	  <atribut kod="kodnuts">klasifikační jednotka NUTS</atribut>
+	  <atribut kod="knuts">pracovní kódy okresů</atribut>
+ 	  <atribut kod="kodok">dosud platné kódy okresů</atribut>
+	  <atribut kod="kodob">kód obce</atribut>
+	  <atribut kod="ko">kontrolní znak</atribut>
+	  <atribut kod="icob">identifikační číslo obce</atribut>
+	  <atribut kod="iczuj">identifikační číslo základní územní jednotky</atribut>
+	  <atribut kod="mo">městský obvod</atribut>
+	  <atribut kod="mc">městská část</atribut>
+	  <atribut kod="kodcob">kód části obce</atribut>
+	  <atribut kod="kc"></atribut>
+	  <atribut kod="porcob">pořadí části obce v okrese</atribut>
+	  <atribut kod="nazcob">název části obce</atribut>
+	  <atribut kod="nazcob_a">název části obce (bez diakritiky)</atribut>
+	  <atribut kod="nazcoba"></atribut>
+	  <atribut kod="nazcoba_a"> (bez diakritiky)</atribut>
+	  <atribut kod="kodcob_m">kód nečleněné části obce podle MPSV</atribut>
+	  <atribut kod="kcm">kontrolní znak nečleněné části obce</atribut>
+	  <atribut kod="nazdomcob"></atribut>
+	  <atribut kod="nazdomcob_a"> (bez diakritiky)</atribut>
+	  <atribut kod="psc">PSČ</atribut>
+	  <atribut kod="psc_2">druhé PSČ v části obce</atribut>
+	  <atribut kod="psc_3">třetí PSČ v části obce</atribut>
+	  <atribut kod="psc_4">čtvrté PSČ v části obce</atribut>
+	  <atribut kod="psc_5">páté PSČ v části obce</atribut>
+	  <atribut kod="psc_6">šesté PSČ v části obce</atribut>
+	  <atribut kod="psc_7">sedmé PSČ v části obce</atribut>
+	  <atribut kod="psc2">souhrná složka pro PSČ</atribut>
+	  <atribut kod="ob91">počet obyvatel dle SLDB91</atribut>
+	  <atribut kod="ob01">počet obyvatel dle SLDB01</atribut>
+	  <atribut kod="mapa">mapový list ZM10</atribut>
+	  <atribut kod="sycob">souřadnice Y v S-JTSK</atribut>
+	  <atribut kod="sxcob">souřadnice X v S-JTSK</atribut>
+	  <atribut kod="porob">pořadí obce v okrese</atribut>
+	  <atribut kod="pormc">pořadové číslo městské části/městského obvodu</atribut>
+	  <atribut kod="kodmc">kód městské části/městského obvodu</atribut>
+	  <atribut kod="nazcs"></atribut>
+	  <atribut kod="alkcob">alternativní (původní) kód části obce</atribut>
+	  <atribut kod="akc">alternativní (původní) kontrolní znak části obce</atribut>
+	  <atribut kod="zmenazaz">změna záznamu</atribut>
+	  <atribut kod="zmenapol">změna položky</atribut>
+	</atributy>
+	<zdroj pozn="pouze atributy" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</zdroj>
+	<historie text="přidáno">0.2.1</historie>
+      </vrstva>
+      <vrstva id="cesty">
+	<nazev>turistické trasy (okres Žďár nad Sázavou)</nazev>
+	<popis></popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev">barva trasy</atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis">popis</atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>
+      <vrstva id="cfm">
+	<nazev>různé, nezařazeno</nazev>
+	<popis></popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev"></atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis"></atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj> 
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>
+      <vrstva id="cr">
+	<nazev>státní hranice ČR</nazev>
+	<popis>Ručně upravená hranice ČR z vrstvy hranice, převedená na plochu. Velmi přibližná!</popis>
+	<atributy>
+	  <atribut kod="nazev">oficiální název státu</atribut>
+	  <atribut kod="nazev_a">oficiální název státu (bez diakritiky)</atribut>
+	</atributy>
+	<zdroj></zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>  
+      <vrstva id="czfree_nodes"> 
+	<nazev>uzly sítě CZFree</nazev> 
+	<popis>CZFree.Net - projekt neziskové broadband telekomunikační sítě v České Republice.</popis>
+	<atributy></atributy>
+	<zdroj title="CZFree">http://www.czfree.net</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>
+      <vrstva id="dsnimky"> 
+	<nazev>náhledová mapa družicových snímků</nazev> 
+	<popis>Mapa zobrazuje území pokrytá družicovými daty, které jsou volně dostupná
+	na http://glcfapp.umiacs.umd.edu.</popis>
+	<atributy>
+	  <atribut kod="cat">číselný identifikátor snímku</atribut>
+	  <atribut kod="id">textový identifikátor</atribut>
+	  <atribut kod="datum">datum pořízení dat</atribut>
+	  <atribut kod="skener">použitý skener</atribut>
+	  <atribut kod="nosic">nosič</atribut>
+	  <atribut kod="georef">georeference</atribut>
+	  <atribut kod="format">formát dat</atribut> 
+	  <atribut kod="uzemi">dotčené státy</atribut>
+	  <atribut kod="ul_y">souřadnice Y (S-JTSK) horního levého rohu scény</atribut>
+	  <atribut kod="ul_x">souřadnice X (S-JTSK) horního levého rohu scény</atribut>
+	  <atribut kod="ll_y">souřadnice Y (S-JTSK) dolního levého rohu scény</atribut>
+	  <atribut kod="ll_x">souřadnice X (S-JTSK) dolního levého rohu scény</atribut>
+	  <atribut kod="ur_y">souřadnice Y (S-JTSK) horního pravého rohu scény</atribut>
+	  <atribut kod="ur_x">souřadnice X (S-JTSK) horního pravého rohu scény</atribut>
+	  <atribut kod="lr_y">souřadnice Y (S-JTSK) dolního pravého rohu scény</atribut>
+	  <atribut kod="lr_x">souřadnice X (S-JTSK) dolního pravého rohu scény</atribut>
+	  <atribut kod="ce_y">souřadnice Y (S-JTSK) středu scény</atribut>
+	  <atribut kod="ce_x">souřadnice X (S-JTSK) středu scény</atribut>
+	  <atribut kod="zona">UTM zóna originálních dat</atribut>
+	  <atribut kod="url">URL zdroje dat</atribut>
+	</atributy>
+	<zdroj title="Global Land Cover Facility">http://glcfapp.umiacs.umd.edu</zdroj>
+	<historie text="přidáno">0.3.0</historie>
+      </vrstva> 
+      <vrstva id="hranice" stav="0"> 
+	<nazev>administrativní hranice</nazev>
+	<popis></popis>
+	<atributy></atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+	<historie text="odebráno (nahrazeno kraje_pseudo)">0.2.0</historie>
+      </vrstva>  
+      <!--
+	  <vrstva id="kat_uz" stav="0"> 
+	  <nazev>referenční body katastrálních území</nazev>
+	  <popis></popis>
+	  <atributy>
+	  <atribut kod="kn">identifikátor kraje</atribut>
+	  <atribut kod="knok">identifikátor okresu</atribut>
+	  <atribut kod="kodnuts">kód NUTS</atribut>
+	  <atribut kod="knuts">pracovní kódy okresů</atribut>
+	  <atribut kod="kodok">dosud platné kódy okresů</atribut>
+	  <atribut kod="kodob">kód obce</atribut>
+	  <atribut kod="ko">kontrolní znak</atribut>
+	  <atribut kod="icob">identifikační číslo obce</atribut>
+	  <atribut kod="porob">pořadí obce v okrese</atribut>
+	  <atribut kod="kodku">kód katastrálního úřadu</atribut>
+	  <atribut kod="kodku">kód katastrálního úřadu</atribut>
+	  <atribut kod="kk"></atribut>
+	  <atribut kod="nazku">název katastrálního úřadu</atribut>
+	  <atribut kod="nazku_a">název katastrálního úřadu (bez diakritiky)</atribut>
+	  <atribut kod="vymera">výměra obce v ha</atribut>
+	  <atribut kod="tu">typ územně technické jednotky</atribut>
+	  <atribut kod="iczuj">identifikační číslo základní územní jednotky</atribut>
+	  <atribut kod="pormc">pořadové číslo městské části/městského obvodu</atribut>
+	  <atribut kod="kodocr"></atribut>
+	  <atribut kod="kodsra"></atribut>
+	  <atribut kod="syku">souřadnice Y v S-JTSK</atribut>
+	  <atribut kod="sxku">souřadnice X v S-JTSK</atribut>
+	  <atribut kod="mapa">mapový list ZM10</atribut>
+	  <atribut kod="nazcs"></atribut>
+	  <atribut kod="zmenazaz">změna záznamu</atribut>
+	  <atribut kod="zmenapol">změna položky</atribut>
+	  </atributy>
+	  <zdroj pozn="pouze atributy" title="Územně identifikační registr">
+	  http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</zdroj>
+	  <historie text="přidáno">0.2.1</historie>
+	  </vrstva>
+      -->    
+      <vrstva id="klad_zm10"> 
+	<nazev>klad listů Základní mapy 1:10 000</nazev> 
+	<popis></popis>
+	<atributy>
+	  <atribut kod="entity_nam"></atribut>
+	  <atribut kod="color"></atribut>
+	  <atribut kod="weight"></atribut>
+	  <atribut kod="layer"></atribut>
+	  <atribut kod="block"></atribut>
+	  <atribut kod="txt">textový popisek</atribut>
+	</atributy>
+	<zdroj title="ČÚZK">http://www.cuzk.cz</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>  
+      <vrstva id="kraje_pseudo"> 
+	<nazev>nepravá mapa krajů</nazev> 
+	<popis>Tato mapa vznikla na základě interpolace z vrstev <mapa>obce</mapa>,
+	<mapa>casti_obce</mapa> a <mapa>mes_casti</mapa>
+	(identifikační číslo kraje - položka kn). Hranice krajů jsou tedy velmi přibližné!
+	Nakonec byla ručně upravena (vnější hranice odpovídá vrstvě <mapa>cr</mapa>) tak,
+	aby rozdíl známé a vypočtené výměry nepřesahoval 5 000 ha.</popis>
+	<atributy> 
+	  <atribut kod="nk">kód kraje</atribut>
+	  <atribut kod="kn">identifikátor kraje</atribut>
+	  <atribut kod="kodnuts">kód NUTS</atribut>
+	  <atribut kod="nazkr">název kraje</atribut>
+	  <atribut kod="nazkr_a">název kraje (bez diakritiky)</atribut>
+	  <atribut kod="vymera">výměra v ha</atribut>
+	  <atribut kod="ob91">počet obyvatel dle SLDB91</atribut>
+	  <atribut kod="ob01">počet obyvatel dle SLDB01</atribut>
+	  <atribut kod="obakt">počet obyvatel aktuální (2004)</atribut>
+	  <atribut kod="nazcs"></atribut>
+	  <atribut kod="zmenazaz">změna záznamu</atribut>
+	  <atribut kod="zmenapol">změna položky</atribut>
+	</atributy> 
+	<zdroj pozn="pouze atributy" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</zdroj>
+	<historie text="přidáno">0.2.1</historie>
+      </vrstva>  
+      <vrstva id="mes_casti"> 
+	<nazev>městské části</nazev>
+	<popis>Vektorová mapa byla vygenerována na základě souřadnic uložených
+	ve sloupcích "sxmc" a "symc".</popis>
+	<atributy>	   
+	  <atribut kod="kn">kód kraje (pracovní)</atribut>
+	  <atribut kod="knok">kód okresu (pracovní)</atribut>
+	  <atribut kod="kodnuts">klasifikační jednotka NUTS</atribut>
+	  <atribut kod="kodok">dosud platné kódy okresů</atribut>
+	  <atribut kod="kodob">kód obce</atribut>
+	  <atribut kod="ko">kontrolní znak</atribut>
+	  <atribut kod="icob">identifikační číslo obce</atribut>
+	  <atribut kod="porob">pořadí obce v okrese</atribut>
+	  <atribut kod="iczuj">identifikační číslo základní územní jednotky</atribut>
+	  <atribut kod="kodmc">kód městské části/městského obvodu</atribut>
+	  <atribut kod="mo">městský obvod</atribut>
+	  <atribut kod="mc">městská část</atribut>
+	  <atribut kod="pormc">pořadové číslo městské části/městského obvodu</atribut>
+	  <atribut kod="pormcs">pořadové číslo městské části v rámci správního obvodu</atribut>
+	  <atribut kod="nazmc">název městské části</atribut>
+	  <atribut kod="nazmc_a">název městské části (bez diakritiky)</atribut>
+	  <atribut kod="nazevur">název úřadu</atribut>
+	  <atribut kod="nazevur_a">název úřadu (bez diakritiky)</atribut>
+	  <atribut kod="ico">identifikační číslo organizace</atribut>
+	  <atribut kod="ur">typ úřadu v obci</atribut>
+	  <atribut kod="sm"></atribut>
+	  <atribut kod="psc">PSČ</atribut>
+	  <atribut kod="ob91">počet obyvatel dle SLDB91</atribut>
+	  <atribut kod="ob01">počet obyvatel dle SLDB01</atribut>
+	  <atribut kod="spros">právní obvod v Hl.m. Praze, zřízen od 1.7.2001</atribut>
+	  <atribut kod="kodpo">kód obce s pověřeným obecním úřadem</atribut>
+	  <atribut kod="kodst">kód stavebního úřadu</atribut>
+	  <atribut kod="porcsu"></atribut>
+	  <atribut kod="kodfi">kód finančního úřadu</atribut>
+	  <atribut kod="cfu">číslo finančního úřadu</atribut>
+	  <atribut kod="kodma">kód matričního úřadu</atribut>
+	  <atribut kod="pcmat">pořadové číslo matričního úřadu podle číselníku ČSÚ</atribut>
+	  <atribut kod="symc">souřadnice Y v S-JTSK</atribut>
+	  <atribut kod="sxmc">souřadnice X v S-JTSK</atribut>
+	  <atribut kod="mapa">mapový list ZM10</atribut>
+	  <atribut kod="nazcs"></atribut>
+	  <atribut kod="zmenazaz">změna záznamu</atribut>
+	  <atribut kod="zmenapol">změna položky</atribut>
+	</atributy>
+	<zdroj pozn="pouze atributy" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</zdroj>
+	<historie text="přidáno">0.2.1</historie>
+      </vrstva>  
+      <vrstva id="mesta_b"> 
+	<nazev>obce</nazev>
+	<popis>K městům byla připojena data z ČSÚ (http://www.czso.cz), tam kde byl název
+	unikátní - jak v <mapa>mesta_b</mapa>, tak v číselníku obcí. Takto se podařilo připojit
+	3829 obcí z celkových 6248 uvedených v číselníku obcí. Bohužel i když byly použity
+	pouze unikátní názvy, obsahují tyto atributy některé chyby, tj. atributy přísluší
+	jiné obci. Atribut 'oby_celkem' je celkový počet obyvatel v roce 2002.</popis>
+	<atributy>
+	  <atribut kod="kod">kód obce</atribut>
+	  <atribut kod="nazev">název obce</atribut>
+	  <atribut kod="kod_popis">krátký popis</atribut>
+	  <atribut kod="dupl"></atribut>
+	  <atribut kod="obec_kod">kód obce</atribut>
+	  <atribut kod="postaveni"></atribut>
+	  <atribut kod="okres_id">identifikátor okresu</atribut>
+	  <atribut kod="okres_kod">kód okresu</atribut>
+	  <atribut kod="okres">název okresu</atribut>
+	  <atribut kod="kraj_id">identifikátor kraje</atribut>
+	  <atribut kod="kraj_kod">kód kraje</atribut>
+	  <atribut kod="kraj">název kraje</atribut>
+	  <atribut kod="oblast_id">identifikátor oblasti</atribut>
+	  <atribut kod="oblast_kod">kód oblasti</atribut>
+	  <atribut kod="oblast">název oblasti</atribut>
+	  <atribut kod="oby_celkem">obyvatel celkem</atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie> 
+      </vrstva>  
+      <vrstva id="mesta_p"> 
+	<nazev>města</nazev> 
+	<popis>Větší města (plocha).</popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev"></atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis"></atribut>
+	</atributy>
+	<zdroj title="ČÚZK">http://www.cuzk.cz</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>  
+      <vrstva id="obce"> 
+	<nazev>obce</nazev>
+	<popis>Vektorová mapa byla vygenerována na základě souřadnic uložených
+	ve sloupcích "sxob" a "syob".</popis>
+	<atributy>	   
+	  <atribut kod="nk">název kraje</atribut>
+	  <atribut kod="kn">kód kraje (pracovní)</atribut>
+	  <atribut kod="knok">kód okresu (pracovní)</atribut>
+	  <atribut kod="kodnuts">klasifikační jednotka NUTS</atribut>
+	  <atribut kod="knuts">pracovní kódy okresů</atribut>
+	  <atribut kod="kodok">dosud platné kódy okresů</atribut>
+	  <atribut kod="porob">pořadí obce v okrese</atribut>
+	  <atribut kod="kodob">kód obce</atribut>
+	  <atribut kod="ko">kontrolní znak</atribut>
+	  <atribut kod="icob">identifikační číslo obce</atribut>
+	  <atribut kod="iczuj">identifikační číslo základní územní jednotky</atribut>
+	  <atribut kod="nazob">název obce</atribut>
+	  <atribut kod="nazob_a">název obce (bez diakritiky)</atribut>
+	  <atribut kod="nazevur">název úřadu</atribut>
+	  <atribut kod="nazevur_a">název úřadu (bez diakritiky)</atribut>
+	  <atribut kod="ico">identifikační číslo organizace</atribut>
+	  <atribut kod="om">příznak okresního města (např. 1=hlavní město, 2=krajské město,
+	  3=krajské město v rámci krajů z roku 1960, 4=další krajské město (současné),
+	  9=jiná obec)</atribut>
+	  <atribut kod="ur">typ úřadu v obci</atribut>
+	  <atribut kod="sm"></atribut>
+	  <atribut kod="psc">PSČ</atribut>
+	  <atribut kod="vymera">výměra obce v ha</atribut>
+	  <atribut kod="ob91">počet obyvatel dle SLDB91</atribut>
+	  <atribut kod="ob01">počet obyvatel dle SLDB01</atribut>
+	  <atribut kod="obakt">počet obyvatel aktuální (2004)</atribut>
+	  <atribut kod="kodst">kód stavebního úřadu</atribut>
+	  <atribut kod="porcsu"></atribut>
+	  <atribut kod="kodfi">kód finančního úřadu</atribut>
+	  <atribut kod="cfu">číslo finančního úřadu</atribut>
+	  <atribut kod="kodma">kód matričního úřadu</atribut>
+	  <atribut kod="pcmat">pořadové číslo matričního úřadu podle číselníku ČSÚ</atribut>
+	  <atribut kod="probl">hospodářsky problémové oblasti (např. 1=celé okresy
+	  v letech 1996 a 1997, 2=mikroregiony, 3=strukturálně postižené regiony v 1998,
+	  4=hospodářsky slabé regiony)</atribut>
+	  <atribut kod="syob">souřadnice Y v S-JTSK</atribut>
+	  <atribut kod="sxob">souřadnice X v S-JTSK</atribut>
+	  <atribut kod="mapa">mapový list ZM10</atribut>
+	  <atribut kod="nazcs"></atribut>
+	  <atribut kod="zmenazaz">změna záznamu</atribut>
+	  <atribut kod="zmenapol">změna položky</atribut>
+	  <atribut kod="cispou">číslo (kód) správního obvodu obce s pověřeným obecním úřadem</atribut>
+	  <atribut kod="okpo">kód okresu obce s pověřeným obecním úřadem</atribut>
+	  <atribut kod="kodpo">kód obce s pověřeným obecním úřadem</atribut>
+	  <atribut kod="nazpo">název obce s pověřeným obecním úřadem</atribut>
+	  <atribut kod="nazpo_a">název obce s pověřeným obecním úřadem (bez diakritiky)</atribut>
+	  <atribut kod="cisorp">číslo (kód) správního obvodu obce s rozšířenou působností</atribut>
+	  <atribut kod="okorp">kód okresu obce s rozšířenou působností</atribut>
+	  <atribut kod="kodorp">kód obce s rozšířenou působností</atribut>
+	  <atribut kod="nazorp">název obce s rozšířenou působností</atribut>
+	  <atribut kod="nazorp_a">název obce s rozšířenou působností (bez diakritiky)</atribut>
+	</atributy>	   
+	<zdroj pozn="pouze atributy" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</zdroj>
+	<historie text="přidáno">0.2.1</historie>
+      </vrstva>  
+      <vrstva id="okresy_pseudo"> 
+	<nazev>nepravá mapa okresů</nazev> 
+	<popis>Tato mapa vznikla na základě interpolace z vrstev <mapa>obce</mapa>, <mapa>casti_obce</mapa>
+	a <mapa>mes_casti</mapa> (identifikační číslo okresu - položka knok). Hranice okresů jsou
+	tedy velmi přibližné! Nakonec byla ručně upravena (vnější hranice odpovídá
+	vrstvě <mapa>cr</mapa>) tak, aby rozdíl známé a vypočtené výměry nepřesahoval 5 000 ha.</popis>
+	<atributy>
+	  <atribut kod="nk">kód kraje</atribut>
+	  <atribut kod="kn">identifikátor kraje</atribut>
+	  <atribut kod="knok">identifikátor okresu</atribut>
+	  <atribut kod="kodnuts">kód NUTS</atribut>
+	  <atribut kod="knuts">pracovní kódy okresů</atribut>
+	  <atribut kod="kodok">dosud platné kódy okresů</atribut>
+	  <atribut kod="nazkr">název kraje</atribut>
+	  <atribut kod="nazkr_a">název kraje (bez diakritiky)</atribut>
+	  <atribut kod="nazok">název okresu</atribut>
+	  <atribut kod="nazok_a">název okresu (bez diakritiky)</atribut>
+	  <atribut kod="vymera">výměra v ha</atribut>
+	  <atribut kod="ob91">počet obyvatel dle SLDB91</atribut>
+	  <atribut kod="ob01">počet obyvatel dle SLDB01</atribut>
+	  <atribut kod="obakt">počet obyvatel aktuální (2004)</atribut>
+	  <atribut kod="nazcs"></atribut>
+	  <atribut kod="zmenazaz">změna záznamu</atribut>
+	  <atribut kod="zmenapol">změna položky</atribut>
+	</atributy>
+	<zdroj pozn="pouze atributy" title="Územně identifikační registr">
+	http://www0.mmr.cz/cgi-bin/sqw1250.cgi/uir/uir.sqw</zdroj>
+	<historie text="přidáno">0.2.1</historie>
+      </vrstva>  
+      <vrstva id="reky"> 
+	<nazev>vodní toky</nazev> 
+	<popis></popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev"></atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis"></atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie> 
+      </vrstva>  
+      <vrstva id="silnice_pasport"> 
+	<nazev>silniční síť - pasporty</nazev> 
+	<popis></popis>
+	<atributy>
+	  <atribut kod="dminj"></atribut>
+	  <atribut kod="silnice"></atribut>
+	  <atribut kod="poradi_us"></atribut>
+	  <atribut kod="cis_useku"></atribut>
+	  <atribut kod="cis_sekce"></atribut>
+	  <atribut kod="stan_zac"></atribut>
+	  <atribut kod="stan_kon"></atribut>
+	  <atribut kod="dopr_smer"></atribut>
+	  <atribut kod="sir_nepras"></atribut>
+	  <atribut kod="variace"></atribut>
+	  <atribut kod="poc_jpruhu"></atribut>
+	  <atribut kod="poc_jpruhl"></atribut>
+	  <atribut kod="druh_voz"></atribut>
+	  <atribut kod="iczuj"></atribut>
+	  <atribut kod="iczuj_text"></atribut>
+	  <atribut kod="tvar_kr_mk"></atribut>
+	  <atribut kod="riz_dopr"></atribut>
+	  <atribut kod="dat_zaznam"></atribut>
+	</atributy>
+	<zdroj title="Ředitelství silnic a dálnic ČR">http://www.rsd.cz</zdroj>
+	<historie text="přidáno">0.2.0</historie>
+      </vrstva>  
+      <vrstva id="silnice_useky"> 
+	<nazev>úseky silniční sítě</nazev>
+	<popis>Jedná se o spojnice jednotlivých uzlů (<mapa>silnice_uzly</mapa>) silniční sítě.
+	Spojnice jsou realizovány pouze jednou linií.</popis>
+	<atributy>
+	  <atribut kod="cis_useku"></atribut>
+	  <atribut kod="dat_zaznam"></atribut>
+	  <atribut kod="adminj"></atribut>
+	  <atribut kod="delka_us"></atribut>
+	  <atribut kod="dopr_smery"></atribut>
+	  <atribut kod="papr_vetev"></atribut>
+	  <atribut kod="kod_tr_kom"></atribut>
+	  <atribut kod="silnice"></atribut>
+	  <atribut kod="vybr_sit"></atribut>
+	  <atribut kod="vym_tahy"></atribut>
+	  <atribut kod="peaz_kom1"></atribut>
+	  <atribut kod="peaz_kom2"></atribut>
+	  <atribut kod="peaz_kom3"></atribut>
+	  <atribut kod="peaz_kom4"></atribut>
+	  <atribut kod="etah1"></atribut>
+	  <atribut kod="etah2"></atribut>
+	  <atribut kod="etah3"></atribut>
+	  <atribut kod="etah4"></atribut>
+	  <atribut kod="poradi_us"></atribut>
+	</atributy>
+	<zdroj title="Ředitelství silnic a dálnic ČR">http://www.rsd.cz</zdroj>
+	<historie text="přidáno">0.2.0</historie>
+      </vrstva>  
+      <vrstva id="silnice_uzly"> 
+	<nazev>uzly silniční sítě</nazev> 
+	<popis>Vrstva obsahuje uzly silniční sítě s poměrně rozsáhlými popisnými informacemi.</popis>
+	<atributy>
+	  <atribut kod="cislo_uzlu"></atribut>
+	  <atribut kod="adm1"></atribut>
+	  <atribut kod="adm2"></atribut>
+	  <atribut kod="iczuj"></atribut>
+	  <atribut kod="iczuj_text"></atribut>
+	  <atribut kod="sou_x"></atribut>
+	  <atribut kod="sou_y"></atribut>
+	  <atribut kod="vys_sou_z"></atribut>
+	  <atribut kod="char_uzlu"></atribut>
+	  <atribut kod="char_text"></atribut>
+	  <atribut kod="pockr_duz"></atribut>
+	  <atribut kod="pocv_duz"></atribut>
+	  <atribut kod="kr_uzel1"></atribut>
+	  <atribut kod="kr_uzel2"></atribut>
+	  <atribut kod="kr_uzel3"></atribut>
+	  <atribut kod="kr_uzel4"></atribut>
+	  <atribut kod="kr_uzel5"></atribut>
+	  <atribut kod="kr_uzel6"></atribut>
+	  <atribut kod="kr_uzel7"></atribut>
+	  <atribut kod="kr_uzel8"></atribut>
+	  <atribut kod="orient1"></atribut>
+	  <atribut kod="nav_uzel1"></atribut>
+	  <atribut kod="orient2"></atribut>
+	  <atribut kod="nav_uzel2"></atribut>
+	  <atribut kod="orient3"></atribut>
+	  <atribut kod="nav_uzel3"></atribut>
+	  <atribut kod="orient4"></atribut>
+	  <atribut kod="nav_uzel4"></atribut>
+	  <atribut kod="orient5"></atribut>
+	  <atribut kod="nav_uzel5"></atribut>
+	  <atribut kod="orient6"></atribut>
+	  <atribut kod="nav_uzel6"></atribut>
+	  <atribut kod="orient7"></atribut>
+	  <atribut kod="nav_uzel7"></atribut>
+	  <atribut kod="orient8"></atribut>
+	  <atribut kod="nav_uzel8"></atribut>
+	  <atribut kod="dat_zaznam"></atribut>
+	</atributy>
+	<zdroj title="Ředitelství silnic a dálnic ČR">http://www.rsd.cz</zdroj>
+	<historie text="přidáno">0.2.0</historie>
+      </vrstva>  
+      <vrstva id="silnice"> 
+	<nazev>silniční síť</nazev> 
+	<popis>Velmi přibližný a zjednodušený obraz silniční sítě.</popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev"></atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis"></atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie> 
+      </vrstva>  
+      <vrstva id="voda"> 
+	<nazev>vodní plochy</nazev> 
+	<popis></popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev"></atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis"></atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>  
+      <vrstva id="zeleznice"> 
+	<nazev>železniční síť</nazev>
+	<popis></popis>
+	<atributy>
+	  <atribut kod="rgntyp"></atribut>
+	  <atribut kod="kod"></atribut>
+	  <atribut kod="nazev"></atribut>
+	  <atribut kod="smer"></atribut>
+	  <atribut kod="poityp"></atribut>
+	  <atribut kod="kod_popis"></atribut>
+	</atributy>
+	<zdroj title="Free maps for Garmin Mapping GPS">http://gps-maps.info/cz/</zdroj>
+	<zdroj pozn="pouze atributy" title="TopoGuide CZ">
+	http://home.tiscali.cz:8080/bytebox/topoguide</zdroj>
+	<historie text="přidáno">0.1.0</historie>
+      </vrstva>
+    </vektor>
+  </mapset>
+  <mapset id="klimadata" verze="0.1" datum="2005-03-30" >
+    <rastr>
+      <vrstva id="bio_X">
+	<nazev>průměrná roční teplota</nazev>
+	<popis>Jednotlivé vrstvy byly interpolovány z průměru měsíčních hodnot pro     
+	příslušné klimatické stanice v rastru o čtverci 30 úhlových vteřin.     
+	
+	Popis dat: http://biogeo.berkeley.edu/worldclim/methods.htm.            
+	
+	Pouze práce tisíců lidí ze všech zemí světa (těch, kteří zaznamenávali  
+	data i těch, kteří je soustředili v národních i mezinárodních           
+	databázích) umožnila vytvoření zdrojových celosvětových klimatických    
+	vrstev. Vznik těchto vrstev rovněž podpořila organizace NatureServe.
+	
+	Tato data tedy připravili Robert J. Hijmans, Susan Cameron, 
+	Juan Parra z Muzea zoologie obratlovců při Kalifornské universitě      
+	v Berkeley ve spolupráci s Peter Jones a Andrew Jarvis (CIAT)          
+	a s Karen Richardson z Rainforest CRC.                                  
+	
+	Vrstvy ohraničené státními hranicemi České republiky do S-JTSK převedl     
+	zaboj.hrazsky@seznam.cz pomocí GRASSu 6.0.0.</popis>
+	<atributy>
+	  <atribut>hodnota = teplota * 10 [ve stupních Celsia]; rozlišení 00:00:30</atribut>
+	</atributy>
+	<zdroj title="biogeo.berkeley.edu">http://biogeo.berkeley.edu/worldclim/worldclim.htm</zdroj>
+	<historie text="přidáno">0.1</historie>
+      </vrstva>
+    </rastr>
+  </mapset>
+</dataset>

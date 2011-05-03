@@ -1,0 +1,1 @@
+1 kraje_pseudo cat $GISDBASE/$LOCATION_NAME/$MAPSET/dbf/ dbf

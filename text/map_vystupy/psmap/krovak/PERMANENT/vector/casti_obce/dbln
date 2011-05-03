@@ -1,0 +1,1 @@
+1 casti_obce cat $GISDBASE/$LOCATION_NAME/$MAPSET/dbf/ dbf

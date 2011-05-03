@@ -1,0 +1,108 @@
+COMMAND: v.in.ogr dsn="input/cfm-0.92/42001000.gml" output="cesty" layer="cesty" min_area=0.0001 snap=-1
+GISDBASE: /ssi0/ssi/blazek/gdata/cr
+LOCATION: wgs84 MAPSET: PERMANENT USER: blazek DATE: Sat Jan 10 11:07:54 2004
+---------------------------------------------------------------------------------
+COMMAND: v.proj input="cesty" location="wgs84" mapset="PERMANENT" output="cesty"
+GISDBASE: /ssi0/ssi/blazek/gdata/cr
+LOCATION: jtsk MAPSET: PERMANENT USER: blazek DATE: Sat Jan 10 12:01:42 2004
+---------------------------------------------------------------------------------
+COMMAND: g.copy -o vect="cesty,cesty"
+GISDBASE: /ssi0/ssi/blazek/gdata/cr/output/cr/0.1/
+LOCATION: jtsk MAPSET: PERMANENT USER: blazek DATE: Tue Jan 13 11:07:16 2004
+---------------------------------------------------------------------------------
+COMMAND: v.proj input="cesty" location="cr-jtsk" output="cesty"
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Wed Dec  1 14:47:31 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="cesty_1" driver="pg" database="g_cr" table="public.cesty_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:46:46 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty_1" driver="pg" database="g_cr" table="public.cesty_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:47:42 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="cesty" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:35 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:42 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:54 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="pg" database="grass_cr" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:49 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="pg" database="grass_cr" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:56 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="pg" database="grass_cr" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:01:07 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:03:58 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:52 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:03 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="'${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf'" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:32 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database=""${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf"" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:06:20 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:40 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:46 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="pg" database="grass_cr" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:01 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="pg" database="grass_cr" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:22:30 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:35:05 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="cesty" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:43:41 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="cesty" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="cesty" key="cat" layer=1
+GISDBASE: /ssi0/ssi/landa/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: landa DATE: Wed Feb 14 13:48:48 2007

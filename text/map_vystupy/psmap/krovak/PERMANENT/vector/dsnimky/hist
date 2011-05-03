@@ -1,0 +1,76 @@
+COMMAND: v.in.ascii output="dsnimky_1" format="standard" fs="|" skip=0 x=1 y=2 z=0 cat=0
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr-jtsk MAPSET: psql USER: martin DATE: Mon Mar 21 10:33:42 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="dsnimky_1" driver="pg" database="g_cr" table="public.dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr-jtsk MAPSET: psql USER: martin DATE: Mon Mar 21 10:34:05 2005
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="pg" database="grass_cr" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="pg" database="grass_cr" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:56 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="pg" database="grass_cr" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:01:07 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:03:59 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:52 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:03 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="'${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf'" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:33 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database=""${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf"" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:06:20 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:40 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:46 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="pg" database="grass_cr" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:01 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="pg" database="grass_cr" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:22:31 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:35:06 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="dsnimky" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:43:41 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="dsnimky" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="dsnimky" key="cat" layer=1
+GISDBASE: /ssi0/ssi/landa/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: landa DATE: Wed Feb 14 13:48:48 2007

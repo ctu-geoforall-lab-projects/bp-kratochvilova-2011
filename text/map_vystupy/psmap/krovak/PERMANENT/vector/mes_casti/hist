@@ -1,0 +1,110 @@
+COMMAND: v.in.db driver="pg" database="g_cr" table="mes_casti" x="-symc" y="-sxmc" key="cat" output="mes_casti"
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: temp USER: martin DATE: Mon Nov 22 23:23:55 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="g_cr" table="mes_casti" key="cat" field=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: temp USER: martin DATE: Mon Nov 22 23:24:22 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="g_cr" table="mes_casti_i" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Wed Dec  1 16:52:15 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="g_cr" table="public.mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Sun Dec  5 10:22:33 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="mes_casti_1" driver="pg" database="g_cr" table="public.mes_casti_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:46:47 2004
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti_1" driver="pg" database="g_cr" table="public.mes_casti_1" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr MAPSET: psql USER: martin DATE: Thu Dec 16 17:47:43 2004
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect map="mes_casti" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:36 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="$GISDBASE/$LOCATION_NAMW/$MAPSET/dbf/" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:44 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata/
+LOCATION: cr MAPSET: PERMANENT USER: martin DATE: Fri Mar 18 11:35:55 2005
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="grass_cr" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="grass_cr" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 21:59:56 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="grass_cr" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:01:08 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:03:59 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:04:52 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:03 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="'${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf'" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:05:33 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database=""${GISDBASE}/${LOCATION_NAME}/${MAPSET}/dbf"" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:06:21 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:40 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:07:46 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="grass_cr" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:01 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Wed Dec 27 22:08:50 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="pg" database="grass_cr" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:22:31 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:35:06 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="/home/martin/grassdata/cr-jtsk/PERMANENT/dbf" table="mes_casti" key="cat" layer=1
+GISDBASE: /home/martin/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: martin DATE: Thu Dec 28 13:43:41 2006
+---------------------------------------------------------------------------------
+COMMAND: v.db.connect -o map="mes_casti" driver="dbf" database="$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/" table="mes_casti" key="cat" layer=1
+GISDBASE: /ssi0/ssi/landa/grassdata
+LOCATION: cr-jtsk MAPSET: PERMANENT USER: landa DATE: Wed Feb 14 13:48:48 2007

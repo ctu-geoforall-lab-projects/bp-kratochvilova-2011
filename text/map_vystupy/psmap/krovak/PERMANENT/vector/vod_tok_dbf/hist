@@ -1,0 +1,3 @@
+COMMAND: v.in.ogr -o dsn="/home/anna/Documents/grassdata/ArcCR500_v12/shapes/vod_tok.dbf" output="vod_tok_dbf" min_area=0.0001 snap=-1
+GISDBASE: /home/anna/Documents/grassdata
+LOCATION: krovak MAPSET: PERMANENT USER: anna DATE: Thu Apr 21 17:39:08 2011

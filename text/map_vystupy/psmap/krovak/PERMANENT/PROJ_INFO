@@ -1,0 +1,4 @@
+name: Krovak
+proj: krovak
+ellps: bessel
+towgs84: 570.8,85.7,462.8,4.998,1.587,5.261,3.56
