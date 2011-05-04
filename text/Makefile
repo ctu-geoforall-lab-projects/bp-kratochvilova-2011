@@ -7,9 +7,9 @@ all: $(FILE).pdf
 
 $(FILE).pdf: *.tex Makefile
 	make pdf
-	@if grep "No file $(FILE).toc" $(FILE).log >/dev/null 2>&1 ; then \
+	@while grep Rerun $(FILE).log >/dev/null 2>&1 ; do \
 		make pdf; \
-	fi
+	done
 
 pdf: fig
 	pdflatex $(FILE).tex
