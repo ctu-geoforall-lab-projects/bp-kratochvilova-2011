@@ -186,7 +186,7 @@ ale důležité především kartografické znázornění dat.
 
 GRASS GIS\footnote{\url{http://grass.osgeo.org}} patří mezi nejpoužívanější
 geografické informační
-systémy v~kategorii svobodného softwaru. Je to mimo jiné výborný nástroj
+systémy v~kate\-gorii svobodného softwaru. Je to mimo jiné výborný nástroj
 pro zpracování geo\-grafických dat  a jejich analýzu, nicméně v~tvorbě mapových
 výstupů nevyhovuje dnešním požadavkům. GRASS disponuje modulem \modul{ps.map}%
 \footnote{\url{http://grass.osgeo.org/grass70/manuals/html70_user/ps.map.html}},
@@ -197,7 +197,7 @@ vytváří mapové výstupy ve formátu \emph{PostScript}%
 přívětivý z~důvodu absence grafického uživatelského rozhraní (\emph{GUI}).
 Úkolem této práce
 bylo tento nedostatek alespoň z~části napravit  poskytnutím
-komfortnějšího ovládání tohoto modulu přes GUI.
+komfortnějšího ovládání tohoto modu\-lu přes GUI.
 Nové GUI \emph{wx.psmap} je napsané za pomoci grafické knihovny
 \emph{wxPython}\footnote{\url{http://www.wxpython.org}} a tím navazuje na
 moderní wxGUI \cite{wxGUI_clanek} systému GRASS.
@@ -255,7 +255,7 @@ Toto porovnání si neklade za cíl vytvořit kompletní seznam
 funkcionality programů, což by bylo téma pro samostatnou práci,
 cílem je pouze zdůraznit některé zajímavé možnosti, které programy
 nabízí. Detailněji je pak popsán modul ps.map, jehož možnosti
-bylo třeba prozkoumat do nejmenších podrobností.
+bylo třeba proz\-koumat do nejmenších podrobností.
 
 \subsubsection{ArcGIS}
 \label{sec:porovnani_moznosti:ArcGIS}
@@ -366,7 +366,7 @@ poskytuje pouze ArcGIS.
 \label{sec:porovnani:gmt}
 \emph{GMT} neboli \emph{Generic Mapping Tools}%
 \footnote{\url{http://www.soest.hawaii.edu/gmt}} je software
-specializovaný na zobrazení dvourozměrných a třírozměrných dat v~mnoha
+specializovaný na zobrazení dvou\-rozměrných a třírozměrných dat v~mnoha
 kartografických projekcích, jejich
 analýzu a další zpracování (vzorkování, fitování, triangulace a jiné). Software
 GMT vznikal od roku 1998 pod licencí GNU GPL, skládá se z~více podprogramů (přes
@@ -467,7 +467,7 @@ vadí především u~mapového rámce (viz následující část).
 
 
 \paragraph*{Mapový rámec}
-Nevýhodou modulu ps.map je chybějící podpora pro více mapových
+Nevýhodou modulu ps.map je chybějící podpora pro více mapo\-vých
 rámců. V~jednom mapovém výstupu lze tak zobrazit pouze jednu
 oblast.\footnote{Toto omezení se dá obejít vložením EPS souboru s~mapou,
 ale to není dostatečně komfortní řešení.} Dalším omezením je
@@ -587,7 +587,7 @@ hranici mezi zpřístupnění veškeré funkcionality programu a složitostí
 jeho ovládání. I~velice obsáhlý software může být ovladatelný,
 pokud se použijí vhodné prostředky: průvodce nastavením, zakrytí
 pokročilých nastavení, použití vhodných implicitních hodnot či
-nabídka vzorových řešení (šablon).
+nabídka vzoro\-vých řešení (šablon).
 
 \item [Běžné činnosti musí být jednoduše dostupné.]  Je důležité rozlišit,
  kolik uži\-vatelů danou činnost provádí a jak často. Obecně
@@ -627,10 +627,10 @@ poměrně pomalá, může být vnímaná jako rychlá, pokud dává uživateli
 vědět, co se právě děje.
 
 \item [Testovat, vyhodnotit, opravit.] Některé chyby se dají zjistit,
-až když s~programem začnou uživatelé pracovat. Testování je třeba
-provést samozřejmě před uvolněním softwaru. Pokud je tedy vývoj
+až když s~progra\-mem začnou uživatelé pracovat. Testování je třeba
+provést samozřejmě před uvolně\-ním softwaru. Pokud je tedy vývoj
 programu časově omezen, je nutné počítat i s~časem stráveným nad
-vyhodnocením testování a následnými opravami.
+vyhodnocením testování a následnými opra\-vami.
  \end{description}
 
 Následující porovnání GUI
@@ -913,7 +913,7 @@ GUI, nastavování přes příkazovou řádku u~GMT totiž vyžaduje
 větší soustředění.
 
 Při rozhodování, který software zvolit, je dobré se zamyslet nad tím, jaká
-funkcionalita je potřebná a kolik financí a času lze investovat. Některé
+funkcio\-nalita je potřebná a kolik financí a času lze investovat. Některé
 programy jako GMT (či proprietární software \emph{OCAD}%
 \footnote{\url{http://www.ocad.com/en/index.htm}})
 jsou specializované na tvorbu mapových výstupů, v
@@ -1038,7 +1038,7 @@ vytvoření GUI. První GUI nazývané \emph{TCLTKGRASS}
 bylo napsáno v~roce 1999 v~programovacím jazyce \emph{Tcl} s~využitím
 knihovny \emph{Tk}\footnote{\url{http://www.tcl.tk}}.
 Nástupcem byly v~dalších verzích GRASS 6 \emph{Display
-Manager} a poté \emph{GIS Manager}, stále napsané pomocí Tcl/Tk. Vzhledem
+Manager} a poté \emph{GIS Mana\-ger}, stále napsané pomocí Tcl/Tk. Vzhledem
 k~omezením Tcl/Tk bylo rozhodnuto přepsat GUI pomocí
 modernější knihovny. Po zvážení různých aspektů (přenositel\-nost,
 dostatečná funkcionalita, oblíbenost u~vývojářů) 
@@ -1080,7 +1080,7 @@ pro GRASS a mnoho uživatelů si tento způsob oblíbilo.
 \label{sec:psmap}
 Modul ps.map je v~současnosti nejvhodnější prostředek pro tvorbu
 mapových vý\-stupů v~GRASSu. Další alternativou je zobrazit si potřebné
-mapové vrstvy v~mapovém okně (Map Display Window)  a upravit jejich vzhled,
+mapové vrstvy v~mapo\-vém okně (Map Display Window)  a upravit jejich vzhled,
 případně zobrazit i legendu či měřítko. Zde jsou možnosti poměrně
 omezené, navíc lze výstup uložit pouze jako rastrový obrázek a celkově
 tento způsob není příliš vhodný pro tvorbu mapového výstupu.
@@ -1157,12 +1157,12 @@ výšku mapového rámce. Rozměry lze nepřímo ovlivnit také instrukcí
 Nehledě na zadané rozměry rámce a měřítko, modul ps.map vykresluje stále stejný
 územní rozsah, který je dán tzv. \emph{výpočetním regionem}.
 Proto je třeba před vlastním generováním mapového výstupu
-nastavit výpočetní region tak, aby odpovídal území, které chceme
+nastavit výpočetní region tak, aby odpoví\-dal území, které chceme
 zobrazit. K~tomu slouží modul g.region%
 \footnote{\url{http://grass.osgeo.org/grass70/manuals/html70_user/g.region.html}}.
  V~konfigu\-račním souboru
 tedy nelze rozsah území ovlivnit.
-Modul ps.map tedy nejprve zjistí požadované rozměry a měřítko
+Modul ps.map tedy nejprve zjistí poža\-dované rozměry a měřítko
 z~konfiguračního souboru (jsou-li uvedeny) a následně se je pokusí
 aplikovat na rozměry současného výpočetního regionu. Pokud by se mapový
 rámec při požadovaném měřítku nevešel na daný formát papíru,
@@ -1221,11 +1221,11 @@ Je-li poloha určena v~tomto systému, očekávanou jednotkou je inch\footnote{
 
 Druhý souřadnicový systém -- systém mapového rámce -- má počátek souřadnic
 v~levém dolním rohu mapového rámce s~pravotočivou orientací os obvyklou
-v~matematice. Souřad\-nice lze v~tomto systému zadávat dvěma způsoby. Buď
+v~mate\-matice. Souřad\-nice lze v~tomto systému zadávat dvěma způsoby. Buď
 v~procentech výpočetního regionu nebo přímo v~souřadnicích
 mapy. Například, při souřadnicích [100\%, 0\%] je objekt umístěn
 v~pravém dolním rohu mapového rámce, ať už je mapový rámec na papíře
-umístěn kdekoli. Alternativně bychom toho samého umístění dosáhli
+umístěn kdekoli. Alternativně bychom toho samého umístě\-ní dosáhli
 zadáním mapových souřadnic bodu položeného co nejvíce na východ
 a jih v~rozsahu výpočet\-ního regionu. Oběma způsoby lze dosáhnout i
 umístění objektu mimo mapový rámec, a to zadáním záporné hodnoty
@@ -1303,7 +1303,7 @@ vertikálně zarovná k~mapovému rámci, neboli převezme \emph{x}-ovou
 souřadnici rámce. Dalším problémem je špatné barevné vykreslení barvy
 pozadí a ohraničující linie. Barvy se nevykreslí, když je mapinfo
 mimo mapový rámec.
-Do budoucna bych navrhovala mapinfo přepsat do takové podoby, aby umožnil
+Do budoucna bych navrhovala mapinfo přepsat do takové podoby, aby umo\-žnil
 zobrazit své jednotlivé části samostatně (číselné měřítko, rozsah, síť), tím
 by se zvýšila jeho použitelnost.
 (hlášení \href{https://trac.osgeo.org/grass/ticket/1333}{\#1333},
@@ -1471,7 +1471,7 @@ skutečným (alespoň se o~to snaží, viz část \ref{sec:gui:problemy}).
 Jiný případ nastává při zobrazení textu v~konceptu, text je zde
 zobrazen v~zadané velikost fontu (ne však zadaným fontem). Zvolená
 barva písma se také zobrazí správně, nicméně je-li nastavena barva
-pozadí, vykreslí se pouze barva bílá. Pravděpodobně jde o~problém
+pozadí, vykreslí se pouze barva bílá. Pravdě\-podobně jde o~problém
 knihovny wxPython, je možné, že na různých platformách se toto chování
 liší. Stejně tak ostatní efekty textu jako zvýraz\-nění a rámeček
 se v~konceptu nezobrazují (bylo by to složité a zbytečné). Raději
@@ -1662,7 +1662,7 @@ zobrazují na
  a rozměrem. Právě určení rozměru prvku je problém, který není
  uspokojivě vyřešen. Velikost mapového prvku je totiž v~zásadě dána
  velikostí fontu, ale i dalšími parametry, například počtem sloupců
- a počtem kategorií u~legendy. Aplikace wx.psmap na základě těchto
+ a počtem kategorií u~legen\-dy. Aplikace wx.psmap na základě těchto
  vlastností odhaduje přibližné rozměry, ty se ovšem do jisté míry
  mohou lišit od rozměrů výsledného objektu vykresleného modulem
  ps.map. Ve wx.psmap tak opět dochází ke zbytečnému (a ne
@@ -1707,7 +1707,7 @@ Poznámky k~vývoji aplikace a jejím možnostem jsou popsány na webových str�
 Cílem této práce  bylo vytvoření GUI  pro modul
 ps.map systému GRASS. Tento modul slouží ke tvorbě mapových
 výstupů, a přestože nepodporuje tak širokou funkcionalitu jako některé jiné
-programy, pro běžné kartografické práce plně postačuje. Jeho nevýhoda spočívá
+programy, pro běžné kartografické práce plně posta\-čuje. Jeho nevýhoda spočívá
 převážně ve způsobu ovládání, vytvoření konfiguračního souboru je totiž poměrně
 pracné.
 
