@@ -1,4 +1,4 @@
-FILE=bc_draft
+FILE=BP
 
 SVGFILES = $(shell ls *.svg)
 SVGPDF = $(patsubst %.svg, %.pdf, $(SVGFILES))

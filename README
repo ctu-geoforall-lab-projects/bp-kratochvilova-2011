@@ -24,7 +24,7 @@ Obsah CD
 * Text bakalarske prace s pouzitymi obrazky:
 
     ./text:
-    bc_draft.pdf  bc_draft.tex  listsezadanim.tex  prohlaseniapodekovani.tex  
+    BP.pdf  BP.tex  listsezadanim.tex  prohlaseniapodekovani.tex  
     titulbp.tex  mapinfo.svg  sour_systemy.svg  logo_cvut_cb.pdf
     Makefile
 
