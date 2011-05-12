@@ -1,0 +1,22 @@
+Author: Anna Kratochvilova
+
+Presentation title: Graphical User Interface for composing hardcopy map outputs in GRASS GIS
+
+Keywords: GIS, GRASS GIS, ps.map, GUI, wxPython, hardcopy map output
+
+Adress: Luhovská 1731, Praha
+
+Phone number: 720283139
+
+Biography:
+student of Bachelor degree study programme Geodesy and Cartography,
+branch of study Geoinformatics, graduating in June 2011
+
+Abstract:
+Presentation deals with new graphical user interface for composing hardcopy map outputs in GRASS GIS. New GUI was developed within my bachelor project.
+Hardcopy maps are created by module ps.map which requires a text file with
+instructions. New graphical interface allows to compose maps interactively to make it more comfortable for users. GUI implements most of the ps.map functionality
+and it is developed with the GUI toolkit wxPython.
+
+
+
